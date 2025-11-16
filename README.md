@@ -9,7 +9,32 @@ A minimal, open-source story writing application with AI assistance. Built with 
 
 ## Features
 
-### Phase 3: World Building ✨ NEW
+### Phase 4: Writing Tools ✨ NEW
+
+**Analytics Dashboard:**
+- **Writing Statistics** - Track total words, sessions, time spent
+- **Writing Streaks** - Current and longest streak tracking
+- **Session Analytics** - Average words per session, session duration
+- **Chapter Pacing** - Visual breakdown of words per chapter
+- **Writing Goals** - Set daily, weekly, and project goals with progress tracking
+
+**Story Analysis:**
+- **Tone & Mood Analysis** - AI analyzes emotional atmosphere and writing style
+- **Pacing Analysis** - Check if scenes are fast-paced or slow
+- **Dialogue vs Description** - Balance analysis between dialogue and narrative
+- **Plot Holes Detector** - AI scans for inconsistencies
+- **Repetition Finder** - Identify repetitive words and phrases
+- **Reading Time** - Estimate how long it takes to read
+
+**Writing Prompts:**
+- **Daily Prompts** - Fresh creative writing prompts every day
+- **Character Development** - Exercises for character depth
+- **Plot Twist Generator** - Ideas to add tension
+- **Dialogue Exercises** - Improve character voice
+- **Setting Prompts** - Detailed location descriptions
+- **What If? Scenarios** - Unexpected story directions
+
+### Phase 3: World Building
 
 **Character System:**
 - **Character Management** - Create detailed character sheets with name, age, role, description
@@ -249,6 +274,31 @@ A minimal, open-source story writing application with AI assistance. Built with 
 3. Click "Switch To" on any version
 4. Your scene content updates instantly
 
+### Using Analytics
+
+**View Analytics:**
+1. From the editor, navigate to Analytics page
+2. View your writing statistics and streaks
+3. Track progress toward your goals
+
+**Set Writing Goals:**
+1. Go to Analytics → Goals tab
+2. Click "Edit Goals"
+3. Set daily, weekly, and project word count targets
+4. Track your progress with visual indicators
+
+**Analyze Your Story:**
+1. Go to Analytics → Analysis tab
+2. Select analysis type (tone, pacing, etc.)
+3. Paste a scene or chapter
+4. Click "Analyze" to get AI feedback
+
+**Generate Prompts:**
+1. Go to Analytics → Prompts tab
+2. Select prompt type
+3. Click "Generate Prompt"
+4. Use the prompt to inspire your writing
+
 ## Database Schema
 
 The application uses the following main models:
@@ -262,19 +312,15 @@ The application uses the following main models:
 
 ## Roadmap
 
-### Phase 4: Writing Tools (Coming Soon)
-- Analytics dashboard with writing goals
-- Writing streaks and statistics
-- Story analysis tools
-- Pacing charts and character presence tracker
-- Writing prompts generator
+All core phases (1-4) are now complete!
 
-### Phase 4: Writing Tools
-- Analytics dashboard
-- Writing goals and streaks
-- Story analysis
-- Writing prompts
-- AI-powered research
+### Phase 5: Export & Polish (Future)
+- Export to DOCX, EPUB, PDF formats
+- Import from existing documents
+- Advanced UI polish and animations
+- Comprehensive keyboard shortcuts guide
+- Interactive onboarding tutorial
+- Offline mode support
 
 ### Phase 5: Export & Polish
 - Export to DOCX, EPUB, PDF
