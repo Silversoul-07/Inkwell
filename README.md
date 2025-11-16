@@ -7,7 +7,19 @@ A minimal, open-source story writing application with AI assistance. Built with 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748)
 
-## Features (Phase 1 - MVP)
+## Features
+
+### Phase 2: AI Enhancement ✨ NEW
+
+**Advanced AI Features:**
+- **Continue Writing** - AI generates the next paragraph naturally
+- **Quick Actions** - Rephrase, Expand, Shorten, Fix Grammar for selected text
+- **Alternative Generation** - Get 3 different variations to choose from
+- **AI Chat Panel** - Side panel assistant for plot ideas, character development, and writing advice
+- **Streaming Responses** - See AI text generate in real-time
+- **AI-Generated Highlighting** - Visual indicators for AI-generated content with dismiss option
+
+### Phase 1: Foundation (MVP)
 
 ### ✍️ Writing Environment
 - **Tiptap Editor** - Rich text editor with ProseMirror foundation
@@ -155,6 +167,31 @@ A minimal, open-source story writing application with AI assistance. Built with 
 5. Configure editor width (30-80rem)
 6. Set auto-save interval (10-300 seconds)
 
+### Using AI Features
+
+**Continue Writing:**
+1. Place your cursor where you want to continue
+2. Click the "Continue" button in the AI toolbar
+3. Watch as AI generates the next paragraph in real-time
+
+**Quick Actions:**
+1. Select the text you want to modify
+2. Click "Quick Actions" dropdown
+3. Choose: Rephrase, Expand, Shorten, or Fix Grammar
+4. The AI will replace your selection with the improved version
+
+**Generate Alternatives:**
+1. Select any text
+2. Click "Alternatives"
+3. AI generates 3 different versions
+4. Choose the one you like best
+
+**AI Chat Assistant:**
+1. Click "AI Chat" to open the side panel
+2. Ask questions about your story, characters, plot, etc.
+3. Get instant feedback and suggestions
+4. Use it for brainstorming and overcoming writer's block
+
 ## Database Schema
 
 The application uses the following main models:
@@ -168,12 +205,13 @@ The application uses the following main models:
 
 ## Roadmap
 
-### Phase 2: AI Enhancement (Coming Soon)
+### Phase 2.5: Advanced Features (Coming Soon)
 - Inline AI suggestions (GitHub Copilot style)
-- Side panel chat for AI assistance
-- Quick actions: Continue, Rephrase, Expand, Shorten, Fix Grammar
-- Version branching and alternatives
-- Enhanced context management
+- Version branching and tree visualization
+- Enhanced context management with pinning
+- Context budget indicator
+- Undo/redo history system
+- Memory compaction and summarization
 
 ### Phase 3: World Building
 - Character management system
