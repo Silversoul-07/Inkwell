@@ -10,8 +10,9 @@ import { ArrowLeft } from 'lucide-react'
 export default async function AnalyticsPage({
   params,
 }: {
-  params: { projectId: string }
+  params: Promise<{ projectId: string }>
 }) {
+  const { projectId } = await params
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -20,7 +21,7 @@ export default async function AnalyticsPage({
 
   const project = await prisma.project.findUnique({
     where: {
-      id: params.projectId,
+      id: projectId,
       userId: session.user.id,
     },
   })
@@ -33,7 +34,7 @@ export default async function AnalyticsPage({
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-6">
-          <Link href={`/editor/${params.projectId}`}>
+          <Link href={`/editor/${projectId}`}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Editor
@@ -48,7 +49,7 @@ export default async function AnalyticsPage({
           </p>
         </div>
 
-        <AnalyticsDashboard projectId={params.projectId} />
+        <AnalyticsDashboard projectId={projectId} />
       </div>
     </div>
   )

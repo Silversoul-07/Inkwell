@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Home, PanelLeft, Maximize, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ExportImportDialog } from './export-import-dialog'
 
 interface Project {
   id: string
@@ -45,6 +46,8 @@ export function EditorToolbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <ExportImportDialog projectId={project.id} />
+
         <Button
           variant="ghost"
           size="sm"

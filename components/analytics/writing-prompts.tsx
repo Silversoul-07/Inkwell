@@ -84,7 +84,7 @@ export function WritingPrompts() {
           </div>
           <div className="mt-4 pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              Use this prompt to overcome writer's block or try something new!
+              Use this prompt to overcome writer&apos;s block or try something new!
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export function WritingPrompts() {
         <ul className="text-xs text-muted-foreground space-y-1">
           <li>• Try a daily prompt to keep your creativity flowing</li>
           <li>• Use character prompts to develop backstories</li>
-          <li>• Plot twists can help when you're stuck</li>
+          <li>• Plot twists can help when you&apos;re stuck</li>
           <li>• Dialogue exercises improve character voice</li>
         </ul>
       </div>
