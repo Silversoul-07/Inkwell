@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects        Project[]
+  settings        Settings?
+  writingSessions WritingSession[]
+}
+
+model Settings {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // AI Configuration (stored as JSON)
+  aiProvider       String   @default("openai")
+  aiEndpoint       String   @default("https://api.openai.com/v1")
+  aiApiKey         String?  // Encrypted
+  aiModel          String   @default("gpt-4")
+  aiTemperature    Float    @default(0.7)
+  aiMaxTokens      Int      @default(2000)
+  aiSystemPrompt   String?
+
+  // Editor Preferences (stored as JSON)
+  editorFont       String   @default("serif")
+  editorFontSize   Int      @default(18)
+  editorLineHeight Float    @default(1.8)
+  editorWidth      Int      @default(42)
+  editorTheme      String   @default("light")
+  autoSaveInterval Int      @default(30)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  settings    String?  // JSON for project-specific settings
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chapters         Chapter[]
+  characters       Character[]
+  lorebookEntries  LorebookEntry[]
+  writingSessions  WritingSession[]
+}
+
+model Chapter {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title     String
+  order     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scenes    Scene[]
+
+  @@index([projectId, order])
+}
+
+model Scene {
+  id        String   @id @default(uuid())
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  title     String?
+  content   String   @default("")
+  wordCount Int      @default(0)
+  order     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions  Version[]
+
+  @@index([chapterId, order])
+}
+
+model Version {
+  id         String   @id @default(uuid())
+  sceneId    String
+  scene      Scene    @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  content    String
+  branchName String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([sceneId])
+}
+
+model Character {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name          String
+  age           String?
+  role          String?
+  description   String?  // Physical description
+  traits        String?  // JSON array of personality traits
+  background    String?  // Background/history
+  relationships String?  // JSON for relationships with other characters
+  goals         String?  // Goals and motivations
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model LorebookEntry {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  key       String   // The keyword/trigger
+  value     String   // The actual lore content
+  category  String?  // Characters, Locations, Magic, Technology, History, Culture
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, category])
+}
+
+model WritingSession {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  date         DateTime @default(now())
+  wordsWritten Int      @default(0)
+  duration     Int      @default(0) // in seconds
+
+  @@index([userId, date])
+  @@index([projectId, date])
+}
