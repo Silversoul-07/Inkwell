@@ -9,7 +9,33 @@ A minimal, open-source story writing application with AI assistance. Built with 
 
 ## Features
 
-### Phase 2: AI Enhancement ✨ NEW
+### Phase 3: World Building ✨ NEW
+
+**Character System:**
+- **Character Management** - Create detailed character sheets with name, age, role, description
+- **Personality & Traits** - Define personality traits, background, relationships, and goals
+- **Character Chat** - Talk to your characters with AI to develop dialogue and personality
+- **Character Cards** - Beautiful card-based UI for character organization
+
+**Lorebook:**
+- **World Information** - Store and manage lorebook entries
+- **Category Organization** - Characters, Locations, Magic, Technology, History, Culture
+- **API Integration** - Auto-inject relevant entries based on context
+
+### Phase 2.5: Advanced Features
+
+**Version Branching:**
+- **Save Branches** - Create named version branches of any scene
+- **Switch Versions** - Easily switch between different versions
+- **Version History** - Track all versions with timestamps and word counts
+- **Branch Management** - Activate, delete, and organize your branches
+
+**Context Management:**
+- **Context Budget** - Visual indicator showing context usage with color coding
+- **Context Panel** - See what's included in AI context
+- **Smart Sections** - Current scene, pinned items, chapters, characters, lorebook
+
+### Phase 2: AI Enhancement
 
 **Advanced AI Features:**
 - **Continue Writing** - AI generates the next paragraph naturally
@@ -192,6 +218,37 @@ A minimal, open-source story writing application with AI assistance. Built with 
 3. Get instant feedback and suggestions
 4. Use it for brainstorming and overcoming writer's block
 
+### Managing Characters
+
+**Create Characters:**
+1. Go to Characters page from the editor
+2. Click "New Character"
+3. Fill in details across three tabs:
+   - Basic Info: Name, age, role, physical description
+   - Details: Personality traits, background
+   - Story: Relationships, goals, motivations
+4. Save your character
+
+**Character Chat:**
+1. Click "Chat" button on any character card
+2. Have a conversation with your character
+3. AI responds in-character based on their personality
+4. Use this to develop dialogue and explore character voice
+
+### Version Branching
+
+**Create Branches:**
+1. Open version branch dialog while editing
+2. Enter a branch name (e.g., "Alternative ending")
+3. Click "Create" to save current content
+4. Continue writing or switch to other branches
+
+**Switch Versions:**
+1. Open version branch dialog
+2. View all saved versions with timestamps
+3. Click "Switch To" on any version
+4. Your scene content updates instantly
+
 ## Database Schema
 
 The application uses the following main models:
@@ -205,20 +262,12 @@ The application uses the following main models:
 
 ## Roadmap
 
-### Phase 2.5: Advanced Features (Coming Soon)
-- Inline AI suggestions (GitHub Copilot style)
-- Version branching and tree visualization
-- Enhanced context management with pinning
-- Context budget indicator
-- Undo/redo history system
-- Memory compaction and summarization
-
-### Phase 3: World Building
-- Character management system
-- Lorebook/world info entries
-- Character chat interface
-- Relationship mapping
-- Consistency checker
+### Phase 4: Writing Tools (Coming Soon)
+- Analytics dashboard with writing goals
+- Writing streaks and statistics
+- Story analysis tools
+- Pacing charts and character presence tracker
+- Writing prompts generator
 
 ### Phase 4: Writing Tools
 - Analytics dashboard

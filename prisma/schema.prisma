@@ -108,10 +108,14 @@ model Version {
 
   content    String
   branchName String?
+  parentId   String?  // For version tree
+  isActive   Boolean  @default(false)
+  wordCount  Int      @default(0)
 
   createdAt  DateTime @default(now())
 
   @@index([sceneId])
+  @@index([parentId])
 }
 
 model Character {
