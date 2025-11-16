@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -43,13 +43,7 @@ export function VersionBranchDialog({
   const [branchName, setBranchName] = useState('')
   const [creatingBranch, setCreatingBranch] = useState(false)
 
-  useEffect(() => {
-    if (open) {
-      loadVersions()
-    }
-  }, [open, sceneId])
-
-  const loadVersions = async () => {
+  const loadVersions = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch(`/api/versions?sceneId=${sceneId}`)
@@ -62,7 +56,13 @@ export function VersionBranchDialog({
     } finally {
       setLoading(false)
     }
-  }
+  }, [sceneId])
+
+  useEffect(() => {
+    if (open) {
+      loadVersions()
+    }
+  }, [open, loadVersions])
 
   const createBranch = async () => {
     if (!branchName.trim()) return

@@ -5,9 +5,10 @@ import { prisma } from '@/lib/prisma'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -17,7 +18,7 @@ export async function PATCH(
 
     // Verify ownership
     const character = await prisma.character.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { project: true },
     })
 
@@ -26,7 +27,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.character.update({
-      where: { id: params.id },
+      where: { id },
       data: body,
     })
 
@@ -39,9 +40,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -49,7 +51,7 @@ export async function DELETE(
 
     // Verify ownership
     const character = await prisma.character.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { project: true },
     })
 
@@ -58,7 +60,7 @@ export async function DELETE(
     }
 
     await prisma.character.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

@@ -7,8 +7,9 @@ import { EditorView } from '@/components/editor/editor-view'
 export default async function EditorPage({
   params,
 }: {
-  params: { projectId: string }
+  params: Promise<{ projectId: string }>
 }) {
+  const { projectId } = await params
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -17,7 +18,7 @@ export default async function EditorPage({
 
   const project = await prisma.project.findUnique({
     where: {
-      id: params.projectId,
+      id: projectId,
       userId: session.user.id,
     },
     include: {

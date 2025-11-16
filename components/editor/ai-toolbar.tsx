@@ -7,7 +7,7 @@ import {
   RefreshCw,
   Maximize2,
   Minimize2,
-  WandSparkles,
+  Wand2,
   MessageSquare,
   GitBranch,
 } from 'lucide-react'
@@ -63,7 +63,7 @@ export function AIToolbar({
             size="sm"
             disabled={!hasSelection || isGenerating}
           >
-            <WandSparkles className="h-4 w-4 mr-2" />
+            <Wand2 className="h-4 w-4 mr-2" />
             Quick Actions
           </Button>
         </DropdownMenuTrigger>
@@ -81,7 +81,7 @@ export function AIToolbar({
             Shorten
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onFixGrammar}>
-            <WandSparkles className="h-4 w-4 mr-2" />
+            <Wand2 className="h-4 w-4 mr-2" />
             Fix Grammar
           </DropdownMenuItem>
         </DropdownMenuContent>

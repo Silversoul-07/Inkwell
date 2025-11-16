@@ -6,16 +6,17 @@ import { prisma } from '@/lib/prisma'
 // Activate a specific version (make it the current scene content)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const version = await prisma.version.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         scene: {
           include: {
@@ -47,7 +48,7 @@ export async function POST(
     })
 
     await prisma.version.update({
-      where: { id: params.id },
+      where: { id },
       data: { isActive: true },
     })
 
@@ -64,16 +65,17 @@ export async function POST(
 // Delete a version
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const version = await prisma.version.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         scene: {
           include: {
@@ -90,7 +92,7 @@ export async function DELETE(
     }
 
     await prisma.version.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

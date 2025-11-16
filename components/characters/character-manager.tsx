@@ -17,8 +17,8 @@ interface Character {
   background: string | null
   relationships: string | null
   goals: string | null
-  createdAt: Date
-  updatedAt: Date
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 interface CharacterManagerProps {

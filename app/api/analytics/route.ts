@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
 
     // Calculate statistics
     const totalWords = project.chapters.reduce(
-      (total, chapter) =>
-        total + chapter.scenes.reduce((sum, scene) => sum + scene.wordCount, 0),
+      (total: number, chapter: any) =>
+        total + chapter.scenes.reduce((sum: number, scene: any) => sum + scene.wordCount, 0),
       0
     )
 
@@ -49,12 +49,12 @@ export async function GET(request: NextRequest) {
     })
 
     const totalDuration = project.writingSessions.reduce(
-      (sum, session) => sum + session.duration,
+      (sum: number, session: any) => sum + session.duration,
       0
     )
 
     const totalWordsWritten = project.writingSessions.reduce(
-      (sum, session) => sum + session.wordsWritten,
+      (sum: number, session: any) => sum + session.wordsWritten,
       0
     )
 
@@ -71,13 +71,13 @@ export async function GET(request: NextRequest) {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const sessionDates = allSessions.map((s) => {
+    const sessionDates = allSessions.map((s: any) => {
       const d = new Date(s.date)
       d.setHours(0, 0, 0, 0)
       return d.getTime()
     })
 
-    const uniqueDates = [...new Set(sessionDates)].sort((a, b) => b - a)
+    const uniqueDates = ([...new Set(sessionDates)] as number[]).sort((a, b) => b - a)
 
     for (let i = 0; i < uniqueDates.length; i++) {
       const date = uniqueDates[i]
@@ -132,10 +132,10 @@ export async function GET(request: NextRequest) {
       totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0
 
     // Chapter pacing (words per chapter)
-    const chapterPacing = project.chapters.map((chapter) => ({
+    const chapterPacing = project.chapters.map((chapter: any) => ({
       id: chapter.id,
       title: chapter.title,
-      wordCount: chapter.scenes.reduce((sum, scene) => sum + scene.wordCount, 0),
+      wordCount: chapter.scenes.reduce((sum: number, scene: any) => sum + scene.wordCount, 0),
       sceneCount: chapter.scenes.length,
     }))
 

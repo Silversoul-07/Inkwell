@@ -10,8 +10,9 @@ import { ArrowLeft } from 'lucide-react'
 export default async function CharactersPage({
   params,
 }: {
-  params: { projectId: string }
+  params: Promise<{ projectId: string }>
 }) {
+  const { projectId } = await params
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -20,7 +21,7 @@ export default async function CharactersPage({
 
   const project = await prisma.project.findUnique({
     where: {
-      id: params.projectId,
+      id: projectId,
       userId: session.user.id,
     },
   })
@@ -30,7 +31,7 @@ export default async function CharactersPage({
   }
 
   const characters = await prisma.character.findMany({
-    where: { projectId: params.projectId },
+    where: { projectId },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -38,7 +39,7 @@ export default async function CharactersPage({
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-6">
-          <Link href={`/editor/${params.projectId}`}>
+          <Link href={`/editor/${projectId}`}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Editor
@@ -53,7 +54,7 @@ export default async function CharactersPage({
           </p>
         </div>
 
-        <CharacterManager projectId={params.projectId} initialCharacters={characters} />
+        <CharacterManager projectId={projectId} initialCharacters={characters} />
       </div>
     </div>
   )
