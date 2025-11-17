@@ -29,7 +29,7 @@ export function EditorBottomToolbar({
     return `${minutes}m`
   }
 
-  const formatLastSaved = (date: Date | null) => {
+  const formatLastSaved = (date: Date | null | undefined) => {
     if (!date) return 'Not saved'
 
     const now = new Date()

@@ -114,17 +114,6 @@ export function TiptapEditorNovelAI({
     loadTemplates()
   }, [])
 
-  // Build context variables for templates
-  const buildPromptVariables = useCallback((action: string, customText?: string) => {
-    return buildEditorVariables({
-      selection: selectedText || customText || '',
-      sceneContext: editor?.getText().slice(-4000) || '',
-      genre: projectMetadata?.genre || '',
-      pov: projectMetadata?.pov || '',
-      tense: projectMetadata?.tense || '',
-    })
-  }, [selectedText, editor, projectMetadata])
-
   const editor = useEditor({
     extensions: [StarterKit, Comment],
     content: scene.content,
@@ -153,6 +142,17 @@ export function TiptapEditorNovelAI({
       }
     },
   })
+
+  // Build context variables for templates
+  const buildPromptVariables = useCallback((action: string, customText?: string) => {
+    return buildEditorVariables({
+      selection: selectedText || customText || '',
+      sceneContext: editor?.getText().slice(-4000) || '',
+      genre: projectMetadata?.genre || '',
+      pov: projectMetadata?.pov || '',
+      tense: projectMetadata?.tense || '',
+    })
+  }, [selectedText, editor, projectMetadata])
 
   // Auto-save functionality
   const saveContent = useCallback(async () => {
@@ -573,8 +573,9 @@ export function TiptapEditorNovelAI({
   useEffect(() => {
     if (!editorRef.current) return
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
+    const handleMouseMove = (e: Event) => {
+      const mouseEvent = e as unknown as MouseEvent
+      const target = mouseEvent.target as HTMLElement
 
       // Check if hovering over a comment mark
       if (target.tagName === 'MARK' && target.hasAttribute('data-comment-id')) {
