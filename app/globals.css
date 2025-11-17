@@ -231,14 +231,54 @@
 /* Editor specific styles */
 .ProseMirror {
   outline: none;
+  min-height: 300px;
+  cursor: text;
 }
 
+/* Blinking cursor */
+.ProseMirror-focused {
+  caret-color: hsl(var(--primary));
+}
+
+/* Placeholder */
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--muted-foreground) / 0.6);
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
+  font-style: italic;
+}
+
+.ProseMirror p.is-empty::before {
+  color: hsl(var(--muted-foreground) / 0.4);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  font-style: italic;
+}
+
+/* Make cursor more visible */
+.ProseMirror .ProseMirror-gapcursor {
+  pointer-events: none;
+  position: relative;
+}
+
+.ProseMirror .ProseMirror-gapcursor:after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 1px solid hsl(var(--primary));
+  animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes ProseMirror-cursor-blink {
+  to {
+    visibility: hidden;
+  }
 }
 
 /* Scrollbar styling */

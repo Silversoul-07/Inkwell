@@ -2,10 +2,8 @@
 
 import { useState } from 'react'
 import { EditorSidebar } from './editor-sidebar'
-import { TiptapEditor } from './tiptap-editor'
-import { TiptapEditorEnhanced } from './tiptap-editor-enhanced'
+import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
 import { EditorToolbar } from './editor-toolbar'
-import { AIChatPanel } from './ai-chat-panel'
 
 interface Scene {
   id: string
@@ -49,7 +47,6 @@ export function EditorView({ project, settings }: EditorViewProps) {
   )
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [zenMode, setZenMode] = useState(false)
-  const [showAIChat, setShowAIChat] = useState(false)
 
   const selectedScene = project.chapters
     .flatMap((c) => c.scenes)
@@ -76,27 +73,15 @@ export function EditorView({ project, settings }: EditorViewProps) {
           />
         )}
 
-        <div className="flex-1 overflow-auto flex">
-          <div className="flex-1">
-            {selectedScene && (
-              <TiptapEditorEnhanced
-                key={selectedScene.id}
-                scene={selectedScene}
-                projectId={project.id}
-                settings={settings}
-                zenMode={zenMode}
-                onExitZen={() => setZenMode(false)}
-                showAIChat={showAIChat}
-                onToggleAIChat={() => setShowAIChat(!showAIChat)}
-              />
-            )}
-          </div>
-
-          {/* AI Chat Panel */}
-          {showAIChat && !zenMode && (
-            <AIChatPanel
-              onClose={() => setShowAIChat(false)}
-              sceneContext={selectedScene?.content || ''}
+        <div className="flex-1 overflow-auto">
+          {selectedScene && (
+            <TiptapEditorNovelAI
+              key={selectedScene.id}
+              scene={selectedScene}
+              projectId={project.id}
+              settings={settings}
+              zenMode={zenMode}
+              onExitZen={() => setZenMode(false)}
             />
           )}
         </div>
