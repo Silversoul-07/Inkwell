@@ -617,12 +617,6 @@ export function TiptapEditorNovelAI({
         <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>{wordCount.toLocaleString()} words</span>
-            <WritingModeSelector
-              projectId={projectId}
-              activeModeId={activeWritingMode?.id}
-              onModeChange={setActiveWritingMode}
-              compact
-            />
             {isSaving && (
               <span className="flex items-center gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -676,6 +670,7 @@ export function TiptapEditorNovelAI({
           onShorten={handleShorten}
           onFixGrammar={handleFixGrammar}
           onGenerateAlternatives={handleGenerateAlternatives}
+          onCommentClick={handleCommentButtonClick}
           onUndo={handleUndo}
           onRedo={handleRedo}
           hasSelection={hasSelection}
@@ -684,6 +679,9 @@ export function TiptapEditorNovelAI({
           canRedo={canRedo}
           useCustomTemplates={useCustomTemplates}
           templatesLoaded={Object.keys(selectedTemplates).length}
+          projectId={projectId}
+          activeModeId={activeWritingMode?.id}
+          onModeChange={setActiveWritingMode}
         />
       )}
 
@@ -695,13 +693,11 @@ export function TiptapEditorNovelAI({
         onSelect={handleSelectAlternative}
       />
 
-      {/* Bottom Editor Toolbar with Comment Button */}
+      {/* Bottom Editor Toolbar */}
       {!zenMode && (
         <EditorBottomToolbar
           wordCount={wordCount}
           characterCount={characterCount}
-          hasSelection={hasSelection}
-          onCommentClick={handleCommentButtonClick}
           lastSaved={lastSaved}
           chapterTitle={chapterTitle}
           sceneTitle={sceneTitle}

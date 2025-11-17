@@ -1,14 +1,10 @@
 'use client'
 
-import { MessageSquare, Clock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { Clock } from 'lucide-react'
 
 interface EditorBottomToolbarProps {
   wordCount: number
   characterCount: number
-  hasSelection: boolean
-  onCommentClick: () => void
   writingTime?: number
   lastSaved?: Date | null
   chapterTitle?: string
@@ -18,8 +14,6 @@ interface EditorBottomToolbarProps {
 export function EditorBottomToolbar({
   wordCount,
   characterCount,
-  hasSelection,
-  onCommentClick,
   writingTime = 0,
   lastSaved,
   chapterTitle,
@@ -50,8 +44,8 @@ export function EditorBottomToolbar({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-sm z-40">
-      <div className="flex items-center justify-between px-4 py-2">
-        {/* Left Section - Stats & Context */}
+      <div className="flex items-center px-4 py-2">
+        {/* Stats & Context */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {/* Chapter/Scene Indicator */}
           {(chapterTitle || sceneTitle) && (
@@ -86,26 +80,6 @@ export function EditorBottomToolbar({
             <span>Last saved: {formatLastSaved(lastSaved)}</span>
           </div>
         </div>
-
-        {/* Center Section - Comment Button */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <Button
-            variant={hasSelection ? "default" : "ghost"}
-            size="sm"
-            onClick={onCommentClick}
-            disabled={!hasSelection}
-            className={cn(
-              "h-8 gap-2 transition-all",
-              hasSelection && "shadow-lg scale-105"
-            )}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Add Comment</span>
-          </Button>
-        </div>
-
-        {/* Right Section - Additional Actions (placeholder for future) */}
-        <div className="w-[100px]" />
       </div>
     </div>
   )
