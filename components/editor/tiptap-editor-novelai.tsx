@@ -71,6 +71,34 @@ export function TiptapEditorNovelAI({
   // Writing mode state
   const [activeWritingMode, setActiveWritingMode] = useState<any>(null)
 
+  // Load templates on mount
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        // Load default templates for each action
+        const actions = ['continue', 'rephrase', 'expand', 'shorten', 'grammar']
+        const templates: Record<string, any> = {}
+
+        for (const action of actions) {
+          const response = await fetch(`/api/prompt-templates?action=${action}`)
+          if (response.ok) {
+            const data = await response.json()
+            const defaultTemplate = data.find((t: any) => t.isDefault)
+            if (defaultTemplate) {
+              templates[action] = defaultTemplate
+            }
+          }
+        }
+
+        setSelectedTemplates(templates)
+      } catch (error) {
+        console.error('Failed to load templates:', error)
+      }
+    }
+
+    loadTemplates()
+  }, [])
+
   // Build context variables for templates
   const buildPromptVariables = useCallback((action: string, customText?: string) => {
     return buildEditorVariables({
@@ -515,6 +543,8 @@ export function TiptapEditorNovelAI({
           isGenerating={isGenerating}
           canUndo={canUndo}
           canRedo={canRedo}
+          useCustomTemplates={useCustomTemplates}
+          templatesLoaded={Object.keys(selectedTemplates).length}
         />
       )}
 
