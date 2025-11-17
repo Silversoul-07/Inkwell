@@ -525,6 +525,7 @@ export function TiptapEditorNovelAI({
           onClose={onRightSidebarClose}
           sceneContext={editor?.getText() || ''}
           selectedText={selectedText}
+          projectId={projectId}
           onReplaceSelection={handleReplaceSelection}
           onInsertText={handleInsertText}
         />
