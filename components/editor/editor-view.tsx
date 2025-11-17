@@ -7,7 +7,6 @@ import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
 import { EditorToolbar } from './editor-toolbar'
 import { AISidebar } from './ai-sidebar'
 import { DebugSidebar } from './debug-sidebar'
-import { EditorIconBar } from './editor-icon-bar'
 import { PomodoroTimer } from './pomodoro-timer'
 
 interface Scene {
@@ -123,20 +122,6 @@ export function EditorView({ project, settings }: EditorViewProps) {
             />
           )}
         </div>
-
-        {/* Icon Bar - Always visible when not in zen mode */}
-        {!zenMode && (
-          <EditorIconBar
-            aiSidebarOpen={aiSidebarOpen}
-            setAiSidebarOpen={setAiSidebarOpen}
-            debugSidebarOpen={debugSidebarOpen}
-            setDebugSidebarOpen={setDebugSidebarOpen}
-            pomodoroOpen={pomodoroOpen}
-            setPomodoroOpen={setPomodoroOpen}
-            zenMode={zenMode}
-            setZenMode={setZenMode}
-          />
-        )}
 
         {/* AI Sidebar - Push Layout */}
         {!zenMode && selectedScene && (

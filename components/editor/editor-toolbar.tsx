@@ -13,6 +13,9 @@ import {
   ChevronDown,
   Download,
   Upload,
+  Sparkles,
+  Bug,
+  Timer,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeSelector } from '@/components/ui/theme-selector'
@@ -157,10 +160,45 @@ export function EditorToolbar({
         </div>
       </div>
 
-      {/* Right Section - Tools & Settings */}
+      {/* Right Section - AI Controls & Settings */}
       <div className="flex items-center gap-1.5">
+        {/* AI Assist */}
+        <Button
+          variant={aiSidebarOpen ? "secondary" : "ghost"}
+          size="sm"
+          className="h-8 gap-1.5"
+          onClick={() => setAiSidebarOpen(!aiSidebarOpen)}
+          title="AI Assist"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="text-xs font-medium">AI Assist</span>
+        </Button>
+
         <Separator orientation="vertical" className="h-6 mx-1" />
 
+        {/* Debug */}
+        <Button
+          variant={debugSidebarOpen ? "secondary" : "ghost"}
+          size="icon"
+          className="h-9 w-9"
+          onClick={() => setDebugSidebarOpen(!debugSidebarOpen)}
+          title="Debug"
+        >
+          <Bug className="h-4 w-4" />
+        </Button>
+
+        {/* Pomodoro */}
+        <Button
+          variant={pomodoroOpen ? "secondary" : "ghost"}
+          size="icon"
+          className="h-9 w-9"
+          onClick={() => setPomodoroOpen(!pomodoroOpen)}
+          title="Pomodoro Timer"
+        >
+          <Timer className="h-4 w-4" />
+        </Button>
+
+        {/* Zen Mode */}
         <Button
           variant={zenMode ? "secondary" : "ghost"}
           size="icon"
@@ -171,8 +209,10 @@ export function EditorToolbar({
           <Minimize2 className="h-4 w-4" />
         </Button>
 
+        {/* Theme */}
         <ThemeSelector />
 
+        {/* Settings */}
         <Link href="/settings">
           <Button variant="ghost" size="icon" className="h-9 w-9" title="Settings">
             <Settings className="h-4 w-4" />
