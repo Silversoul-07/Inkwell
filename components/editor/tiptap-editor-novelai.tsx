@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Loader2, X } from 'lucide-react'
 import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
-import { RightSidebar } from './right-sidebar'
+import { RightSidebarPanel } from './right-sidebar-panel'
 import { Button } from '@/components/ui/button'
 
 interface Scene {
@@ -30,6 +30,8 @@ interface TiptapEditorNovelAIProps {
   settings: Settings | null
   zenMode: boolean
   onExitZen: () => void
+  rightSidebarOpen: boolean
+  onRightSidebarClose: () => void
 }
 
 export function TiptapEditorNovelAI({
@@ -38,12 +40,15 @@ export function TiptapEditorNovelAI({
   settings,
   zenMode,
   onExitZen,
+  rightSidebarOpen,
+  onRightSidebarClose,
 }: TiptapEditorNovelAIProps) {
   const [wordCount, setWordCount] = useState(scene.wordCount)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [hasSelection, setHasSelection] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
   const [aiGeneratedRange, setAiGeneratedRange] = useState<{
     from: number
     to: number
@@ -67,7 +72,14 @@ export function TiptapEditorNovelAI({
     },
     onSelectionUpdate: ({ editor }) => {
       const { from, to } = editor.state.selection
-      setHasSelection(from !== to)
+      const hasText = from !== to
+      setHasSelection(hasText)
+      if (hasText) {
+        const text = editor.state.doc.textBetween(from, to, ' ')
+        setSelectedText(text)
+      } else {
+        setSelectedText('')
+      }
     },
   })
 
@@ -329,13 +341,19 @@ export function TiptapEditorNovelAI({
     editor.chain().focus().insertContentAt(pos, `\n\n${text}`).run()
   }
 
+  const handleReplaceSelection = (text: string) => {
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, text).run()
+  }
+
   const dismissAIHighlight = () => {
     setAiGeneratedRange(null)
   }
 
   const fontSize = settings?.editorFontSize || 18
   const lineHeight = settings?.editorLineHeight || 1.8
-  const maxWidth = settings?.editorWidth || 42
+  const maxWidth = settings?.editorWidth || 56 // Wider default for desktop
 
   const canUndo = editor?.can().undo() || false
   const canRedo = editor?.can().redo() || false
@@ -409,10 +427,14 @@ export function TiptapEditorNovelAI({
         />
       )}
 
-      {/* Right Sidebar */}
+      {/* Right Sidebar Panel */}
       {!zenMode && (
-        <RightSidebar
+        <RightSidebarPanel
+          isOpen={rightSidebarOpen}
+          onClose={onRightSidebarClose}
           sceneContext={editor?.getText() || ''}
+          selectedText={selectedText}
+          onReplaceSelection={handleReplaceSelection}
           onInsertText={handleInsertText}
         />
       )}
