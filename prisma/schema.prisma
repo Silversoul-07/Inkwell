@@ -21,6 +21,7 @@ model User {
   projects         Project[]
   settings         Settings?
   writingSessions  WritingSession[]
+  writingGoals     WritingGoal[]
   aiModels         AIModel[]
   promptTemplates  PromptTemplate[]
   userInstructions UserInstructions[]
@@ -118,6 +119,7 @@ model Project {
   characters        Character[]
   lorebookEntries   LorebookEntry[]
   writingSessions   WritingSession[]
+  writingGoals      WritingGoal[]
   userInstructions  UserInstructions[]
   pomodoroSessions  PomodoroSession[]
 }
@@ -234,6 +236,26 @@ model WritingSession {
 
   @@index([userId, date])
   @@index([projectId, date])
+}
+
+model WritingGoal {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  type        String   // "daily", "weekly", "project"
+  targetWords Int
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, isActive])
+  @@index([projectId])
 }
 
 model PromptTemplate {
