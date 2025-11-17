@@ -10,6 +10,7 @@ import {
   GitBranch,
   Undo2,
   Redo2,
+  MessageSquare,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { WritingModeSelector } from './writing-mode-selector'
 
 interface AIToolbarBottomProps {
   onContinue: () => void
@@ -25,6 +27,7 @@ interface AIToolbarBottomProps {
   onShorten: () => void
   onFixGrammar: () => void
   onGenerateAlternatives: () => void
+  onCommentClick: () => void
   onUndo?: () => void
   onRedo?: () => void
   hasSelection: boolean
@@ -33,6 +36,9 @@ interface AIToolbarBottomProps {
   canRedo?: boolean
   useCustomTemplates?: boolean
   templatesLoaded?: number
+  projectId: string
+  activeModeId?: string
+  onModeChange: (mode: any) => void
 }
 
 export function AIToolbarBottom({
@@ -42,6 +48,7 @@ export function AIToolbarBottom({
   onShorten,
   onFixGrammar,
   onGenerateAlternatives,
+  onCommentClick,
   onUndo,
   onRedo,
   hasSelection,
@@ -50,6 +57,9 @@ export function AIToolbarBottom({
   canRedo = true,
   useCustomTemplates = false,
   templatesLoaded = 0,
+  projectId,
+  activeModeId,
+  onModeChange,
 }: AIToolbarBottomProps) {
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30">
@@ -144,6 +154,30 @@ export function AIToolbarBottom({
           Alternatives
           {onUndo && <Undo2 className="h-3 w-3 opacity-50" />}
         </Button>
+
+        {/* Add Comment */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onCommentClick}
+          disabled={!hasSelection || isGenerating}
+          title="Add comment to selection"
+          className="rounded-xl gap-2"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Comment
+        </Button>
+
+        {/* Separator */}
+        <div className="w-px h-6 bg-border mx-1" />
+
+        {/* Writing Mode Selector */}
+        <WritingModeSelector
+          projectId={projectId}
+          activeModeId={activeModeId}
+          onModeChange={onModeChange}
+          compact
+        />
 
         {isGenerating && (
           <>

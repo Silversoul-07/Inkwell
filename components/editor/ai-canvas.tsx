@@ -3,8 +3,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Loader2, Wand2, Edit3, Sparkles, RotateCcw } from 'lucide-react'
+import { Send, Loader2, Wand2, Edit3, Sparkles, RotateCcw, ChevronDown } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/ai/markdown-renderer'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -29,7 +36,34 @@ export function AICanvas({
   const [isLoading, setIsLoading] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [editingText, setEditingText] = useState('')
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet')
+  const [availableModels, setAvailableModels] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Load available AI models from settings
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const response = await fetch('/api/ai-models')
+        if (response.ok) {
+          const models = await response.json()
+          setAvailableModels(models.filter((m: any) => m.isEnabled))
+          if (models.length > 0) {
+            const defaultModel = models.find((m: any) => m.isDefault) || models[0]
+            setSelectedModel(defaultModel.id)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load models:', error)
+        // Fallback to default models
+        setAvailableModels([
+          { id: 'claude-sonnet', name: 'Claude Sonnet', provider: 'anthropic' },
+          { id: 'gpt-4', name: 'GPT-4', provider: 'openai' },
+        ])
+      }
+    }
+    loadModels()
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -118,7 +152,17 @@ export function AICanvas({
     }
   }
 
-  const handleSend = () => sendMessage()
+  const handleSend = async () => {
+    // Check if input is a slash command
+    if (input.trim().startsWith('/')) {
+      const handled = await handleSlashCommand(input)
+      if (handled) {
+        setInput('')
+        return
+      }
+    }
+    sendMessage()
+  }
 
   const handleImprove = () => {
     if (!editingText.trim()) return
@@ -156,28 +200,37 @@ export function AICanvas({
     setEditingText(selectedText || '')
   }
 
+  // Handle slash commands
+  const handleSlashCommand = async (command: string) => {
+    const trimmed = command.trim().toLowerCase()
+
+    if (trimmed.startsWith('/character ')) {
+      const name = command.slice(11).trim()
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: `/character ${name}` },
+        { role: 'assistant', content: `Creating character: ${name}...\n\nPlease provide character details in the Characters page.` },
+      ])
+      // TODO: Open character creation dialog or navigate to characters page
+    } else if (trimmed.startsWith('/lorebook ')) {
+      const entry = command.slice(10).trim()
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: `/lorebook ${entry}` },
+        { role: 'assistant', content: `Creating lorebook entry: ${entry}...\n\nPlease add details in the Lorebook page.` },
+      ])
+      // TODO: Open lorebook creation dialog or navigate to lorebook page
+    } else if (trimmed === '/analyze') {
+      sendMessage('Analyze the current scene for plot, pacing, and character development.')
+    } else {
+      // Regular message
+      return false
+    }
+    return true
+  }
+
   return (
     <div className="w-full h-full flex flex-col bg-background">
-      {/* Canvas Mode Selector */}
-      <div className="p-4 border-b border-border flex items-center gap-2">
-        <Button
-          variant={editMode ? 'outline' : 'default'}
-          size="sm"
-          onClick={() => setEditMode(false)}
-        >
-          <Sparkles className="h-4 w-4 mr-2" />
-          Chat
-        </Button>
-        <Button
-          variant={editMode ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setEditMode(true)}
-          disabled={!selectedText}
-        >
-          <Edit3 className="h-4 w-4 mr-2" />
-          Edit
-        </Button>
-      </div>
 
       {/* Edit Mode */}
       {editMode && (
@@ -337,7 +390,45 @@ export function AICanvas({
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-3">
+            {/* Model selector and Ask/Edit toggle */}
+            <div className="flex items-center gap-2">
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger className="h-8 text-xs w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableModels.map((model) => (
+                    <SelectItem key={model.id} value={model.id} className="text-xs">
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
+                <Button
+                  variant={editMode ? 'ghost' : 'secondary'}
+                  size="sm"
+                  onClick={() => setEditMode(false)}
+                  className="h-7 px-3"
+                >
+                  <Sparkles className="h-3 w-3 mr-1.5" />
+                  Ask
+                </Button>
+                <Button
+                  variant={editMode ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setEditMode(true)}
+                  disabled={!selectedText}
+                  className="h-7 px-3"
+                >
+                  <Edit3 className="h-3 w-3 mr-1.5" />
+                  Edit
+                </Button>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <Textarea
                 value={input}
@@ -348,7 +439,7 @@ export function AICanvas({
                     handleSend()
                   }
                 }}
-                placeholder="Ask for help with your story..."
+                placeholder="Ask for help... (Type / for commands)"
                 className="resize-none"
                 rows={3}
                 disabled={isLoading}
@@ -367,7 +458,7 @@ export function AICanvas({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Press Enter to send, Shift+Enter for new line
+              Press Enter to send • Type / for commands
             </p>
           </div>
         </>
