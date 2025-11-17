@@ -170,6 +170,10 @@ export function TiptapEditorNovelAI({
       const requestBody: any = {
         prompt,
         context,
+        projectId, // Pass projectId for context building
+        includeUserInstructions: true,
+        includeLorebook: true,
+        includeCharacters: false, // TODO: Add character selection
       }
 
       // Apply writing mode settings if active
@@ -264,7 +268,7 @@ export function TiptapEditorNovelAI({
         setIsGenerating(false)
       }
     },
-    [editor, activeWritingMode]
+    [editor, activeWritingMode, projectId]
   )
 
   // Build prompt using template or fallback to default
