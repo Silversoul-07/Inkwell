@@ -1,3 +1,4 @@
+import OpenAI from 'openai'
 import { prisma } from '@/lib/prisma'
 
 export interface AIGenerationOptions {
@@ -21,15 +22,29 @@ export async function generateWithAI(
     throw new Error('AI settings not configured')
   }
 
-  const messages = []
+  // Normalize endpoint URL
+  let baseURL = settings.aiEndpoint.trim()
+  if (baseURL.endsWith('/')) {
+    baseURL = baseURL.slice(0, -1)
+  }
 
+  // Create OpenAI client with custom endpoint
+  const openai = new OpenAI({
+    apiKey: settings.aiApiKey,
+    baseURL: baseURL,
+  })
+
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = []
+
+  // Add system prompt if provided
   if (options.systemPrompt || settings.aiSystemPrompt) {
     messages.push({
       role: 'system',
-      content: options.systemPrompt || settings.aiSystemPrompt,
+      content: options.systemPrompt || settings.aiSystemPrompt || '',
     })
   }
 
+  // Add context if provided
   if (options.context) {
     messages.push({
       role: 'user',
@@ -37,72 +52,48 @@ export async function generateWithAI(
     })
   }
 
+  // Add the main prompt
   messages.push({
     role: 'user',
     content: options.prompt,
   })
 
-  const response = await fetch(`${settings.aiEndpoint}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${settings.aiApiKey}`,
-    },
-    body: JSON.stringify({
-      model: settings.aiModel,
-      messages,
-      temperature: options.temperature ?? settings.aiTemperature,
-      max_tokens: options.maxTokens ?? settings.aiMaxTokens,
-      stream: !!onChunk,
-    }),
-  })
+  try {
+    if (onChunk) {
+      // Streaming response
+      const stream = await openai.chat.completions.create({
+        model: settings.aiModel,
+        messages,
+        temperature: options.temperature ?? settings.aiTemperature,
+        max_tokens: options.maxTokens ?? settings.aiMaxTokens,
+        stream: true,
+      })
 
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`AI generation failed: ${error}`)
-  }
-
-  if (onChunk) {
-    // Streaming response
-    const reader = response.body?.getReader()
-    const decoder = new TextDecoder()
-    let fullText = ''
-
-    if (!reader) {
-      throw new Error('No response body')
-    }
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n').filter((line) => line.trim() !== '')
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6)
-          if (data === '[DONE]') continue
-
-          try {
-            const parsed = JSON.parse(data)
-            const content = parsed.choices[0]?.delta?.content || ''
-            if (content) {
-              fullText += content
-              onChunk(content)
-            }
-          } catch (e) {
-            // Skip parsing errors
-          }
+      let fullText = ''
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || ''
+        if (content) {
+          fullText += content
+          onChunk(content)
         }
       }
-    }
 
-    return fullText
-  } else {
-    // Non-streaming response
-    const data = await response.json()
-    return data.choices[0]?.message?.content || ''
+      return fullText
+    } else {
+      // Non-streaming response
+      const completion = await openai.chat.completions.create({
+        model: settings.aiModel,
+        messages,
+        temperature: options.temperature ?? settings.aiTemperature,
+        max_tokens: options.maxTokens ?? settings.aiMaxTokens,
+        stream: false,
+      })
+
+      return completion.choices[0]?.message?.content || ''
+    }
+  } catch (error: any) {
+    console.error('AI generation error:', error)
+    throw new Error(`AI generation failed: ${error.message || 'Unknown error'}`)
   }
 }
 

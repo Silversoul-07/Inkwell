@@ -125,19 +125,30 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <h3 className="text-lg font-semibold">API Configuration</h3>
             <p className="text-sm text-muted-foreground">
-              Configure your AI provider. Inkwell supports OpenAI, Anthropic, Groq, Ollama, and any OpenAI-compatible API.
+              Configure your AI provider. Inkwell uses OpenAI-compatible API format and supports:
             </p>
+            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mb-2">
+              <li><strong>OpenAI:</strong> https://api.openai.com/v1</li>
+              <li><strong>Groq:</strong> https://api.groq.com/openai/v1</li>
+              <li><strong>Together AI:</strong> https://api.together.xyz/v1</li>
+              <li><strong>OpenRouter:</strong> https://openrouter.ai/api/v1</li>
+              <li><strong>Local (Ollama/LM Studio):</strong> http://localhost:1234/v1</li>
+              <li>Any other OpenAI-compatible API</li>
+            </ul>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="aiProvider">Provider</Label>
+                <Label htmlFor="aiProvider">Provider (optional label)</Label>
                 <Input
                   id="aiProvider"
                   value={aiProvider}
                   onChange={(e) => setAiProvider(e.target.value)}
-                  placeholder="openai"
+                  placeholder="openai, groq, together, ollama, etc."
                   disabled={loading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  This is just a label for your reference
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -149,6 +160,9 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                   placeholder="https://api.openai.com/v1"
                   disabled={loading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Must be an OpenAI-compatible endpoint (ends with /v1)
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -169,9 +183,12 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                   id="aiModel"
                   value={aiModel}
                   onChange={(e) => setAiModel(e.target.value)}
-                  placeholder="gpt-4"
+                  placeholder="gpt-4, gpt-3.5-turbo, llama-3.1-70b-versatile, etc."
                   disabled={loading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Model name depends on your provider (e.g., gpt-4 for OpenAI, llama3-70b for Groq)
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

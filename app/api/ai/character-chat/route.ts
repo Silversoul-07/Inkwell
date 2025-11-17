@@ -1,3 +1,4 @@
+import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
@@ -34,6 +35,18 @@ export async function POST(request: NextRequest) {
       return new Response('AI settings not configured', { status: 400 })
     }
 
+    // Normalize endpoint URL
+    let baseURL = settings.aiEndpoint.trim()
+    if (baseURL.endsWith('/')) {
+      baseURL = baseURL.slice(0, -1)
+    }
+
+    // Create OpenAI client with custom endpoint
+    const openai = new OpenAI({
+      apiKey: settings.aiApiKey,
+      baseURL: baseURL,
+    })
+
     // Build system prompt from character
     const systemPrompt = `You are ${character.name}${character.role ? `, a ${character.role}` : ''}.
 
@@ -44,81 +57,47 @@ ${character.goals ? `Goals: ${character.goals}\n` : ''}
 
 Respond to the user's messages in character, maintaining the personality, speech patterns, and knowledge that ${character.name} would have. Be creative and engaging.`
 
-    const messages = [
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt },
       ...(conversationHistory || []),
       { role: 'user', content: message },
     ]
 
-    const response = await fetch(`${settings.aiEndpoint}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${settings.aiApiKey}`,
-      },
-      body: JSON.stringify({
-        model: settings.aiModel,
-        messages,
-        temperature: 0.9, // Higher temperature for more creative character responses
-        max_tokens: settings.aiMaxTokens,
-        stream: true,
-      }),
+    const stream = await openai.chat.completions.create({
+      model: settings.aiModel,
+      messages,
+      temperature: 0.9, // Higher temperature for more creative character responses
+      max_tokens: settings.aiMaxTokens,
+      stream: true,
     })
 
-    if (!response.ok) {
-      return new Response('AI generation failed', { status: 500 })
-    }
-
     const encoder = new TextEncoder()
-    const stream = new ReadableStream({
+    const readableStream = new ReadableStream({
       async start(controller) {
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
-
-        if (!reader) {
-          controller.close()
-          return
-        }
-
         try {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-
-            const chunk = decoder.decode(value)
-            const lines = chunk.split('\n').filter((line) => line.trim() !== '')
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6)
-                if (data === '[DONE]') {
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-                  continue
-                }
-
-                try {
-                  const parsed = JSON.parse(data)
-                  const content = parsed.choices[0]?.delta?.content || ''
-                  if (content) {
-                    controller.enqueue(
-                      encoder.encode(`data: ${JSON.stringify({ chunk: content })}\n\n`)
-                    )
-                  }
-                } catch (e) {
-                  // Skip parsing errors
-                }
-              }
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || ''
+            if (content) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ chunk: content })}\n\n`)
+              )
             }
           }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         } catch (error) {
           console.error('Streaming error:', error)
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ error: 'Streaming failed' })}\n\n`
+            )
+          )
         } finally {
           controller.close()
         }
       },
     })
 
-    return new Response(stream, {
+    return new Response(readableStream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
