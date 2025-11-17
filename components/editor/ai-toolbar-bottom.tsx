@@ -31,6 +31,8 @@ interface AIToolbarBottomProps {
   isGenerating: boolean
   canUndo?: boolean
   canRedo?: boolean
+  useCustomTemplates?: boolean
+  templatesLoaded?: number
 }
 
 export function AIToolbarBottom({
@@ -46,6 +48,8 @@ export function AIToolbarBottom({
   isGenerating,
   canUndo = true,
   canRedo = true,
+  useCustomTemplates = false,
+  templatesLoaded = 0,
 }: AIToolbarBottomProps) {
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30">
@@ -146,6 +150,20 @@ export function AIToolbarBottom({
             <div className="w-px h-6 bg-border mx-1" />
             <span className="text-sm text-muted-foreground animate-pulse px-2">
               Generating...
+            </span>
+          </>
+        )}
+
+        {/* Template Indicator */}
+        {useCustomTemplates && templatesLoaded > 0 && !isGenerating && (
+          <>
+            <div className="w-px h-6 bg-border mx-1" />
+            <span
+              className="text-xs text-muted-foreground px-2 flex items-center gap-1"
+              title={`${templatesLoaded} custom templates active`}
+            >
+              <Wand2 className="h-3 w-3" />
+              {templatesLoaded}
             </span>
           </>
         )}

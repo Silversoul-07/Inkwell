@@ -7,7 +7,9 @@ import { Loader2, X } from 'lucide-react'
 import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
 import { RightSidebarPanel } from './right-sidebar-panel'
+import { WritingModeSelector } from './writing-mode-selector'
 import { Button } from '@/components/ui/button'
+import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 
 interface Scene {
   id: string
@@ -32,6 +34,11 @@ interface TiptapEditorNovelAIProps {
   onExitZen: () => void
   rightSidebarOpen: boolean
   onRightSidebarClose: () => void
+  projectMetadata?: {
+    genre?: string
+    pov?: string
+    tense?: string
+  }
 }
 
 export function TiptapEditorNovelAI({
@@ -42,6 +49,7 @@ export function TiptapEditorNovelAI({
   onExitZen,
   rightSidebarOpen,
   onRightSidebarClose,
+  projectMetadata,
 }: TiptapEditorNovelAIProps) {
   const [wordCount, setWordCount] = useState(scene.wordCount)
   const [isSaving, setIsSaving] = useState(false)
@@ -55,6 +63,52 @@ export function TiptapEditorNovelAI({
   } | null>(null)
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [alternatives, setAlternatives] = useState<string[]>([])
+
+  // Template-based prompt generation
+  const [useCustomTemplates, setUseCustomTemplates] = useState(true)
+  const [selectedTemplates, setSelectedTemplates] = useState<Record<string, any>>({})
+
+  // Writing mode state
+  const [activeWritingMode, setActiveWritingMode] = useState<any>(null)
+
+  // Load templates on mount
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        // Load default templates for each action
+        const actions = ['continue', 'rephrase', 'expand', 'shorten', 'grammar']
+        const templates: Record<string, any> = {}
+
+        for (const action of actions) {
+          const response = await fetch(`/api/prompt-templates?action=${action}`)
+          if (response.ok) {
+            const data = await response.json()
+            const defaultTemplate = data.find((t: any) => t.isDefault)
+            if (defaultTemplate) {
+              templates[action] = defaultTemplate
+            }
+          }
+        }
+
+        setSelectedTemplates(templates)
+      } catch (error) {
+        console.error('Failed to load templates:', error)
+      }
+    }
+
+    loadTemplates()
+  }, [])
+
+  // Build context variables for templates
+  const buildPromptVariables = useCallback((action: string, customText?: string) => {
+    return buildEditorVariables({
+      selection: selectedText || customText || '',
+      sceneContext: editor?.getText().slice(-4000) || '',
+      genre: projectMetadata?.genre || '',
+      pov: projectMetadata?.pov || '',
+      tense: projectMetadata?.tense || '',
+    })
+  }, [selectedText, editor, projectMetadata])
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -140,11 +194,34 @@ export function TiptapEditorNovelAI({
       setIsGenerating(true)
       const context = editor.getText().slice(-4000) // Last 4000 chars as context
 
+      // Build request with writing mode settings
+      const requestBody: any = {
+        prompt,
+        context,
+        projectId, // Pass projectId for context building
+        includeUserInstructions: true,
+        includeLorebook: true,
+        includeCharacters: false, // TODO: Add character selection
+      }
+
+      // Apply writing mode settings if active
+      if (activeWritingMode) {
+        if (activeWritingMode.temperature !== undefined) {
+          requestBody.temperature = activeWritingMode.temperature
+        }
+        if (activeWritingMode.maxTokens !== undefined) {
+          requestBody.maxTokens = activeWritingMode.maxTokens
+        }
+        if (activeWritingMode.systemPrompt) {
+          requestBody.systemPrompt = activeWritingMode.systemPrompt
+        }
+      }
+
       try {
         const response = await fetch('/api/ai/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, context }),
+          body: JSON.stringify(requestBody),
         })
 
         if (!response.ok) {
@@ -219,40 +296,76 @@ export function TiptapEditorNovelAI({
         setIsGenerating(false)
       }
     },
-    [editor]
+    [editor, activeWritingMode, projectId]
   )
+
+  // Build prompt using template or fallback to default
+  const buildPrompt = useCallback((action: string, fallbackPrompt: string, customText?: string) => {
+    if (useCustomTemplates && selectedTemplates[action]?.template) {
+      const variables = buildPromptVariables(action, customText)
+      return processTemplate(selectedTemplates[action].template, variables)
+    }
+    return fallbackPrompt
+  }, [useCustomTemplates, selectedTemplates, buildPromptVariables])
 
   // AI Actions
   const handleContinue = () => {
-    generateAI('Continue writing this story naturally, maintaining the same tone and style.')
+    // Use mode's continuePrompt if available, otherwise use template or fallback
+    let fallbackPrompt = 'Continue writing this story naturally, maintaining the same tone and style.'
+    if (activeWritingMode?.continuePrompt) {
+      fallbackPrompt = activeWritingMode.continuePrompt
+    }
+
+    const prompt = buildPrompt('continue', fallbackPrompt)
+    generateAI(prompt)
   }
 
   const handleRephrase = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Rephrase this text while keeping the same meaning: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'rephrase',
+      `Rephrase this text while keeping the same meaning: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleExpand = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Expand on this text with more detail and description: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'expand',
+      `Expand on this text with more detail and description: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleShorten = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Make this text more concise while keeping the key points: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'shorten',
+      `Make this text more concise while keeping the key points: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleFixGrammar = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Fix any grammar, spelling, or punctuation errors in this text: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'grammar',
+      `Fix any grammar, spelling, or punctuation errors in this text: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleGenerateAlternatives = async () => {
@@ -365,6 +478,12 @@ export function TiptapEditorNovelAI({
         <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>{wordCount.toLocaleString()} words</span>
+            <WritingModeSelector
+              projectId={projectId}
+              activeModeId={activeWritingMode?.id}
+              onModeChange={setActiveWritingMode}
+              compact
+            />
             {isSaving && (
               <span className="flex items-center gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -424,6 +543,8 @@ export function TiptapEditorNovelAI({
           isGenerating={isGenerating}
           canUndo={canUndo}
           canRedo={canRedo}
+          useCustomTemplates={useCustomTemplates}
+          templatesLoaded={Object.keys(selectedTemplates).length}
         />
       )}
 
@@ -434,6 +555,7 @@ export function TiptapEditorNovelAI({
           onClose={onRightSidebarClose}
           sceneContext={editor?.getText() || ''}
           selectedText={selectedText}
+          projectId={projectId}
           onReplaceSelection={handleReplaceSelection}
           onInsertText={handleInsertText}
         />

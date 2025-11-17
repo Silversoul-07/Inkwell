@@ -18,10 +18,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  projects        Project[]
-  settings        Settings?
-  writingSessions WritingSession[]
-  aiModels        AIModel[]
+  projects         Project[]
+  settings         Settings?
+  writingSessions  WritingSession[]
+  aiModels         AIModel[]
+  promptTemplates  PromptTemplate[]
+  userInstructions UserInstructions[]
+  writingModes     WritingMode[]
+  pomodoroSessions PomodoroSession[]
+  comments         Comment[]
+  commentReplies   CommentReply[]
 }
 
 model AIModel {
@@ -47,7 +53,7 @@ model Settings {
   userId           String   @unique
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // AI Configuration (stored as JSON)
+  // AI Configuration
   aiProvider       String   @default("openai")
   aiEndpoint       String   @default("https://api.openai.com/v1")
   aiApiKey         String?  // Encrypted
@@ -56,13 +62,22 @@ model Settings {
   aiMaxTokens      Int      @default(2000)
   aiSystemPrompt   String?
 
-  // Editor Preferences (stored as JSON)
+  // Editor Preferences
   editorFont       String   @default("serif")
   editorFontSize   Int      @default(18)
   editorLineHeight Float    @default(1.8)
   editorWidth      Int      @default(42)
   editorTheme      String   @default("light")
   autoSaveInterval Int      @default(30)
+
+  // Context Control Settings
+  contextStrategy      String   @default("smart")     // "recent", "smart", "manual", "summarized"
+  contextWindowSize    Int      @default(8000)        // Tokens to use for context
+  includeChapters      Boolean  @default(true)        // Include chapter summaries
+  includeCharacters    Boolean  @default(true)        // Include character info
+  includeLorebook      Boolean  @default(true)        // Include triggered lorebook
+  summarizeOldContent  Boolean  @default(false)       // Summarize content beyond context window
+  alwaysIncludePinned  Boolean  @default(true)        // Always include pinned items
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -77,13 +92,34 @@ model Project {
   description String?
   settings    String?  // JSON for project-specific settings
 
+  // Project Metadata
+  genre             String?
+  subgenre          String?
+  targetAudience    String?  // "Middle Grade", "YA", "Adult"
+  pov               String?  // "First Person", "Third Limited", "Third Omniscient"
+  tense             String?  // "Past", "Present", "Future"
+  targetWordCount   Int?
+  tags              String?  // JSON array of tags
+  notes             String?
+  coverImage        String?
+  status            String   @default("draft")  // "draft", "revision", "complete", "archived"
+
+  // Project-specific AI settings
+  defaultTemperature  Float?
+  defaultMaxTokens    Int?
+  contextWindowSize   Int     @default(8000)
+  activeWritingMode   String? // Currently active mode ID
+  metadata            String? // JSON for flexible metadata storage
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  chapters         Chapter[]
-  characters       Character[]
-  lorebookEntries  LorebookEntry[]
-  writingSessions  WritingSession[]
+  chapters          Chapter[]
+  characters        Character[]
+  lorebookEntries   LorebookEntry[]
+  writingSessions   WritingSession[]
+  userInstructions  UserInstructions[]
+  pomodoroSessions  PomodoroSession[]
 }
 
 model Chapter {
@@ -116,6 +152,7 @@ model Scene {
   updatedAt DateTime @updatedAt
 
   versions  Version[]
+  comments  Comment[]
 
   @@index([chapterId, order])
 }
@@ -154,6 +191,8 @@ model Character {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  userInstructions UserInstructions[]
+
   @@index([projectId])
 }
 
@@ -165,6 +204,16 @@ model LorebookEntry {
   key       String   // The keyword/trigger
   value     String   // The actual lore content
   category  String?  // Characters, Locations, Magic, Technology, History, Culture
+
+  // Smart Integration Fields
+  keys             String?  // JSON array of trigger keywords
+  triggerMode      String   @default("auto")  // "auto", "manual", "always", "keyword", "regex"
+  priority         Int      @default(0)       // Higher priority = included first when context limited
+  searchable       Boolean  @default(true)    // Include in semantic search
+  lastUsed         DateTime?                  // Track when last injected
+  useCount         Int      @default(0)       // How many times used
+  regexPattern     String?                    // Optional regex trigger
+  contextStrategy  String   @default("full")  // "full", "summary", "reference"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -185,4 +234,124 @@ model WritingSession {
 
   @@index([userId, date])
   @@index([projectId, date])
+}
+
+model PromptTemplate {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  action      String   // "continue", "rephrase", "expand", "shorten", "grammar", "custom"
+  template    String   // The actual prompt with {{variables}}
+  variables   String?  // JSON array of variable names used in template
+  isDefault   Boolean  @default(false)  // Is this the default for this action?
+  isBuiltin   Boolean  @default(false)  // System-provided templates can't be deleted
+  category    String?  // "genre", "style", "custom"
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, action])
+}
+
+model UserInstructions {
+  id           String   @id @default(uuid())
+  userId       String?
+  projectId    String?
+  characterId  String?
+
+  scope        String   // "global", "project", "character"
+  instructions String   // The instruction text
+  isEnabled    Boolean  @default(true)
+  priority     Int      @default(0)  // Higher = more important
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  character    Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([characterId])
+}
+
+model WritingMode {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name             String   // "Dialogue Master", "Action Mode"
+  description      String?
+  isBuiltin        Boolean  @default(false)
+  temperature      Float    @default(0.7)
+  maxTokens        Int      @default(500)
+  systemPrompt     String?  // Additional system prompt for this mode
+  continuePrompt   String?  // Custom continue prompt
+  preferredActions String?  // JSON array of preferred actions
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model PomodoroSession {
+  id              String   @id @default(uuid())
+  userId          String
+  projectId       String?
+
+  startTime       DateTime
+  endTime         DateTime?
+  duration        Int      // Minutes
+  wordsWritten    Int      @default(0)
+  completed       Boolean  @default(false)
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project         Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+model Comment {
+  id              String   @id @default(uuid())
+  sceneId         String
+  userId          String
+
+  content         String   // The comment text
+  startPos        Int      // Character position in text
+  endPos          Int      // Character position in text
+  highlightedText String?  // The text that was highlighted
+  type            String   @default("note")  // "note", "question", "todo", "issue", "idea"
+  status          String   @default("open")  // "open", "resolved", "archived"
+  priority        String   @default("normal")  // "low", "normal", "high"
+  color           String?  // Optional color for categorization
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  scene           Scene    @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies         CommentReply[]
+
+  @@index([sceneId])
+  @@index([userId])
+}
+
+model CommentReply {
+  id         String   @id @default(uuid())
+  commentId  String
+  userId     String
+
+  content    String   // The reply text
+
+  createdAt  DateTime @default(now())
+
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
 }

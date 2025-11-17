@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { X, MessageSquare, Settings, Sliders } from 'lucide-react'
+import { X, MessageSquare, Settings, Sliders, Bug } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AICanvas } from './ai-canvas'
 import { ModelConfig } from '@/components/ai/model-config'
+import { ContextDebugPanel } from './context-debug-panel'
 import { cn } from '@/lib/utils'
 
 interface RightSidebarPanelProps {
@@ -12,6 +13,7 @@ interface RightSidebarPanelProps {
   onClose: () => void
   sceneContext: string
   selectedText: string
+  projectId: string
   onReplaceSelection?: (text: string) => void
   onInsertText?: (text: string) => void
 }
@@ -21,10 +23,11 @@ export function RightSidebarPanel({
   onClose,
   sceneContext,
   selectedText,
+  projectId,
   onReplaceSelection,
   onInsertText,
 }: RightSidebarPanelProps) {
-  const [activeTab, setActiveTab] = useState<'canvas' | 'model' | 'writer'>('canvas')
+  const [activeTab, setActiveTab] = useState<'canvas' | 'model' | 'writer' | 'debug'>('canvas')
 
   if (!isOpen) return null
 
@@ -76,6 +79,18 @@ export function RightSidebarPanel({
           <Sliders className="h-4 w-4" />
           Writer
         </button>
+        <button
+          onClick={() => setActiveTab('debug')}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'debug'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-background hover:bg-accent text-muted-foreground'
+          )}
+        >
+          <Bug className="h-4 w-4" />
+          Debug
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -119,6 +134,15 @@ export function RightSidebarPanel({
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'debug' && (
+          <div className="h-full overflow-auto">
+            <ContextDebugPanel
+              projectId={projectId}
+              sceneContext={sceneContext}
+            />
           </div>
         )}
       </div>

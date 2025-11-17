@@ -10,7 +10,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { projectId, key, value, category } = await request.json()
+    const body = await request.json()
+    const {
+      projectId,
+      key,
+      value,
+      category,
+      keys,
+      triggerMode = 'auto',
+      priority = 0,
+      searchable = true,
+      regexPattern,
+      contextStrategy = 'full',
+    } = body
 
     const project = await prisma.project.findUnique({
       where: { id: projectId, userId: session.user.id },
@@ -21,7 +33,18 @@ export async function POST(request: NextRequest) {
     }
 
     const entry = await prisma.lorebookEntry.create({
-      data: { projectId, key, value, category },
+      data: {
+        projectId,
+        key,
+        value,
+        category,
+        keys,
+        triggerMode,
+        priority,
+        searchable,
+        regexPattern,
+        contextStrategy,
+      },
     })
 
     return NextResponse.json(entry, { status: 201 })
@@ -40,6 +63,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get('projectId')
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const category = searchParams.get('category')
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId required' }, { status: 400 })
@@ -53,9 +78,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
+    const where: any = { projectId }
+    if (category) {
+      where.category = category
+    }
+
+    const orderBy: any = {}
+    if (sortBy === 'priority') {
+      orderBy.priority = 'desc'
+    } else if (sortBy === 'useCount') {
+      orderBy.useCount = 'desc'
+    } else if (sortBy === 'lastUsed') {
+      orderBy.lastUsed = 'desc'
+    } else {
+      orderBy.createdAt = 'desc'
+    }
+
     const entries = await prisma.lorebookEntry.findMany({
-      where: { projectId },
-      orderBy: { createdAt: 'desc' },
+      where,
+      orderBy,
     })
 
     return NextResponse.json(entries)
