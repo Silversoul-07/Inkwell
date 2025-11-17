@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Home, PanelLeft, Maximize, Settings } from 'lucide-react'
+import { Home, PanelLeft, PanelRight, Maximize, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ExportImportDialog } from './export-import-dialog'
 import { ThemeSelector } from '@/components/ui/theme-selector'
@@ -15,6 +15,8 @@ interface EditorToolbarProps {
   project: Project
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
+  rightSidebarOpen: boolean
+  setRightSidebarOpen: (open: boolean) => void
   zenMode: boolean
   setZenMode: (zen: boolean) => void
 }
@@ -23,6 +25,8 @@ export function EditorToolbar({
   project,
   sidebarOpen,
   setSidebarOpen,
+  rightSidebarOpen,
+  setRightSidebarOpen,
   zenMode,
   setZenMode,
 }: EditorToolbarProps) {
@@ -50,6 +54,15 @@ export function EditorToolbar({
         <ExportImportDialog projectId={project.id} />
 
         <ThemeSelector />
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+          title="AI Assistant"
+        >
+          <PanelRight className="h-4 w-4" />
+        </Button>
 
         <Button
           variant="ghost"

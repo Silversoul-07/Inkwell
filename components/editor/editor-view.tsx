@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { EditorSidebar } from './editor-sidebar'
 import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
 import { EditorToolbar } from './editor-toolbar'
@@ -42,15 +43,21 @@ interface EditorViewProps {
 }
 
 export function EditorView({ project, settings }: EditorViewProps) {
+  const router = useRouter()
   const [selectedSceneId, setSelectedSceneId] = useState<string>(
     project.chapters[0]?.scenes[0]?.id || ''
   )
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false)
   const [zenMode, setZenMode] = useState(false)
 
   const selectedScene = project.chapters
     .flatMap((c) => c.scenes)
     .find((s) => s.id === selectedSceneId)
+
+  const handleRefresh = useCallback(() => {
+    router.refresh()
+  }, [router])
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -59,6 +66,8 @@ export function EditorView({ project, settings }: EditorViewProps) {
           project={project}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          rightSidebarOpen={rightSidebarOpen}
+          setRightSidebarOpen={setRightSidebarOpen}
           zenMode={zenMode}
           setZenMode={setZenMode}
         />
@@ -70,6 +79,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
             project={project}
             selectedSceneId={selectedSceneId}
             onSelectScene={setSelectedSceneId}
+            onRefresh={handleRefresh}
           />
         )}
 
@@ -82,6 +92,8 @@ export function EditorView({ project, settings }: EditorViewProps) {
               settings={settings}
               zenMode={zenMode}
               onExitZen={() => setZenMode(false)}
+              rightSidebarOpen={rightSidebarOpen}
+              onRightSidebarClose={() => setRightSidebarOpen(false)}
             />
           )}
         </div>
