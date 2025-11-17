@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Home, PanelLeft, PanelRight, Maximize, Settings } from 'lucide-react'
+import { Home, PanelLeft, PanelRight, Maximize, Settings, BarChart3, Users, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ExportImportDialog } from './export-import-dialog'
 import { ThemeSelector } from '@/components/ui/theme-selector'
@@ -48,6 +48,29 @@ export function EditorToolbar({
         </Button>
 
         <h1 className="text-lg font-semibold ml-2">{project.title}</h1>
+      </div>
+
+      <div className="flex items-center gap-1">
+        <Link href={`/analytics/${project.id}`}>
+          <Button variant="ghost" size="sm" title="Analytics">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </Button>
+        </Link>
+
+        <Link href={`/characters/${project.id}`}>
+          <Button variant="ghost" size="sm" title="Characters">
+            <Users className="h-4 w-4 mr-2" />
+            Characters
+          </Button>
+        </Link>
+
+        <Link href={`/lorebook/${project.id}`}>
+          <Button variant="ghost" size="sm" title="Lorebook">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Lorebook
+          </Button>
+        </Link>
       </div>
 
       <div className="flex items-center gap-2">

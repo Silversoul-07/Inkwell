@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Book, Calendar, FileText } from 'lucide-react'
+import { Plus, Book, FileText, BarChart3, Users, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CreateProjectDialog } from './create-project-dialog'
 
@@ -61,33 +61,54 @@ export function ProjectList({ projects }: ProjectListProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map((project) => (
-            <Link
+            <div
               key={project.id}
-              href={`/editor/${project.id}`}
-              className="block"
+              className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow flex flex-col"
             >
-              <div className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow">
-                <h3 className="text-xl font-semibold mb-2">{project.title}</h3>
+              <Link href={`/editor/${project.id}`} className="block mb-4">
+                <h3 className="text-xl font-semibold mb-2 hover:text-primary transition-colors">
+                  {project.title}
+                </h3>
                 {project.description && (
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                  <p className="text-muted-foreground text-sm line-clamp-2">
                     {project.description}
                   </p>
                 )}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Book className="h-4 w-4" />
-                    <span>{project.chapters.length} chapters</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    <span>{getTotalWords(project).toLocaleString()} words</span>
-                  </div>
+              </Link>
+
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                <div className="flex items-center gap-1">
+                  <Book className="h-4 w-4" />
+                  <span>{project.chapters.length} chapters</span>
                 </div>
-                <div className="mt-4 text-xs text-muted-foreground">
-                  Updated {new Date(project.updatedAt).toLocaleDateString()}
+                <div className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  <span>{getTotalWords(project).toLocaleString()} words</span>
                 </div>
               </div>
-            </Link>
+
+              <div className="text-xs text-muted-foreground mb-4">
+                Updated {new Date(project.updatedAt).toLocaleDateString()}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mt-auto pt-4 border-t border-border">
+                <Link href={`/analytics/${project.id}`}>
+                  <Button variant="outline" size="sm" className="w-full" title="Analytics">
+                    <BarChart3 className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href={`/characters/${project.id}`}>
+                  <Button variant="outline" size="sm" className="w-full" title="Characters">
+                    <Users className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href={`/lorebook/${project.id}`}>
+                  <Button variant="outline" size="sm" className="w-full" title="Lorebook">
+                    <BookOpen className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
       )}
