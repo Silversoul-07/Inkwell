@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { prisma } from '@/lib/prisma'
+import {
+  findRepetitions,
+  calculateReadingTime,
+  analyzeDialogueRatio,
+  analyzeSentenceStructure,
+  getPacingSuggestion,
+} from '@/lib/story-analysis'
 
+/**
+ * POST /api/analytics/analyze - Analyze story content
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -10,79 +20,74 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { projectId, content, type } = await request.json()
+    const body = await request.json()
+    const { text, sceneId, projectId } = body
 
-    // Verify project ownership
-    const project = await prisma.project.findUnique({
-      where: { id: projectId, userId: session.user.id },
+    let contentToAnalyze = text
+
+    // If sceneId provided, fetch scene content
+    if (sceneId && !text) {
+      const scene = await prisma.scene.findFirst({
+        where: { id: sceneId },
+        include: { chapter: { include: { project: true } } },
+      })
+
+      if (!scene || scene.chapter.project.userId !== session.user.id) {
+        return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
+      }
+
+      contentToAnalyze = scene.content
+    }
+
+    // If projectId provided, analyze entire project
+    if (projectId && !text && !sceneId) {
+      const project = await prisma.project.findFirst({
+        where: {
+          id: projectId,
+          userId: session.user.id,
+        },
+        include: {
+          chapters: {
+            include: {
+              scenes: true,
+            },
+            orderBy: { order: 'asc' },
+          },
+        },
+      })
+
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      }
+
+      // Combine all scene content
+      const allScenes = project.chapters.flatMap((ch) => ch.scenes)
+      contentToAnalyze = allScenes.map((s) => s.content).join('\n\n')
+    }
+
+    if (!contentToAnalyze) {
+      return NextResponse.json({ error: 'No content to analyze' }, { status: 400 })
+    }
+
+    // Perform all analyses
+    const repetitions = findRepetitions(contentToAnalyze)
+    const readingTime = calculateReadingTime(contentToAnalyze)
+    const dialogueAnalysis = analyzeDialogueRatio(contentToAnalyze)
+    const sentenceStructure = analyzeSentenceStructure(contentToAnalyze)
+    const pacingSuggestion = getPacingSuggestion(sentenceStructure)
+
+    return NextResponse.json({
+      repetitions,
+      readingTime,
+      dialogueAnalysis,
+      sentenceStructure,
+      pacingSuggestion,
     })
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
-    }
-
-    const settings = await prisma.settings.findUnique({
-      where: { userId: session.user.id },
-    })
-
-    if (!settings?.aiApiKey) {
-      return NextResponse.json({ error: 'AI not configured' }, { status: 400 })
-    }
-
-    let prompt = ''
-
-    switch (type) {
-      case 'tone':
-        prompt = `Analyze the tone and mood of this text. Describe the emotional atmosphere, writing style, and overall feeling it conveys:\n\n${content}`
-        break
-      case 'pacing':
-        prompt = `Analyze the pacing of this text. Is it fast-paced or slow? Are there areas that drag or rush? Provide specific feedback:\n\n${content}`
-        break
-      case 'dialogue_ratio':
-        prompt = `Analyze the balance between dialogue and description in this text. Calculate the approximate ratio and suggest if adjustments are needed:\n\n${content}`
-        break
-      case 'plot_holes':
-        prompt = `Carefully analyze this text for any plot holes, inconsistencies, or logical gaps. List any issues you find:\n\n${content}`
-        break
-      case 'repetition':
-        prompt = `Identify any repetitive words, phrases, or ideas in this text that should be varied:\n\n${content}`
-        break
-      case 'reading_time':
-        const wordCount = content.split(/\s+/).length
-        const readingTime = Math.ceil(wordCount / 200) // 200 words per minute
-        return NextResponse.json({
-          readingTime,
-          wordCount,
-          message: `Estimated reading time: ${readingTime} minute${readingTime !== 1 ? 's' : ''} (${wordCount} words at 200 wpm)`,
-        })
-      default:
-        return NextResponse.json({ error: 'Invalid analysis type' }, { status: 400 })
-    }
-
-    const response = await fetch(`${settings.aiEndpoint}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${settings.aiApiKey}`,
-      },
-      body: JSON.stringify({
-        model: settings.aiModel,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error('AI analysis failed')
-    }
-
-    const data = await response.json()
-    const analysis = data.choices[0]?.message?.content || ''
-
-    return NextResponse.json({ analysis })
   } catch (error) {
-    console.error('Analysis error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Story analysis error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
