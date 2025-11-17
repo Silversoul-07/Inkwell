@@ -6,7 +6,6 @@ import { useEffect, useState, useCallback } from 'react'
 import { Loader2, X } from 'lucide-react'
 import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
-import { RightSidebarPanel } from './right-sidebar-panel'
 import { WritingModeSelector } from './writing-mode-selector'
 import { PomodoroTimer } from './pomodoro-timer'
 import { Button } from '@/components/ui/button'
@@ -546,20 +545,6 @@ export function TiptapEditorNovelAI({
           canRedo={canRedo}
           useCustomTemplates={useCustomTemplates}
           templatesLoaded={Object.keys(selectedTemplates).length}
-        />
-      )}
-
-      {/* Right Sidebar Panel */}
-      {!zenMode && (
-        <RightSidebarPanel
-          isOpen={rightSidebarOpen}
-          onClose={onRightSidebarClose}
-          sceneContext={editor?.getText() || ''}
-          selectedText={selectedText}
-          projectId={projectId}
-          sceneId={scene.id}
-          onReplaceSelection={handleReplaceSelection}
-          onInsertText={handleInsertText}
         />
       )}
 

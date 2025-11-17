@@ -15,7 +15,35 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json(models)
+    // If no models configured, return default fallback models
+    if (models.length === 0) {
+      return NextResponse.json([
+        {
+          id: 'claude-sonnet',
+          name: 'Claude Sonnet 3.5',
+          provider: 'anthropic',
+          model: 'claude-3-5-sonnet-20241022',
+          isDefault: true,
+          isEnabled: true,
+        },
+        {
+          id: 'gpt-4',
+          name: 'GPT-4',
+          provider: 'openai',
+          model: 'gpt-4',
+          isDefault: false,
+          isEnabled: true,
+        },
+      ])
+    }
+
+    // Add isEnabled field if it doesn't exist (for compatibility)
+    const modelsWithEnabled = models.map(m => ({
+      ...m,
+      isEnabled: (m as any).isEnabled !== false,
+    }))
+
+    return NextResponse.json(modelsWithEnabled)
   } catch (error) {
     console.error('AI models fetch error:', error)
     return NextResponse.json(

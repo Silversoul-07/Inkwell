@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { EditorSidebar } from './editor-sidebar'
 import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
 import { EditorToolbar } from './editor-toolbar'
+import { RightSidebarPanel } from './right-sidebar-panel'
 
 interface Scene {
   id: string
@@ -50,6 +51,8 @@ export function EditorView({ project, settings }: EditorViewProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false)
   const [zenMode, setZenMode] = useState(false)
+  const [sceneContext, setSceneContext] = useState('')
+  const [selectedText, setSelectedText] = useState('')
 
   const selectedScene = project.chapters
     .flatMap((c) => c.scenes)
@@ -58,6 +61,16 @@ export function EditorView({ project, settings }: EditorViewProps) {
   const handleRefresh = useCallback(() => {
     router.refresh()
   }, [router])
+
+  const handleReplaceSelection = useCallback((text: string) => {
+    // This will be called from AICanvas to replace selected text
+    console.log('Replace selection:', text)
+  }, [])
+
+  const handleInsertText = useCallback((text: string) => {
+    // This will be called from AICanvas to insert text
+    console.log('Insert text:', text)
+  }, [])
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -83,7 +96,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
           />
         )}
 
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto relative">
           {selectedScene && (
             <TiptapEditorNovelAI
               key={selectedScene.id}
@@ -97,6 +110,22 @@ export function EditorView({ project, settings }: EditorViewProps) {
             />
           )}
         </div>
+
+        {/* Right Sidebar - Push Layout */}
+        {!zenMode && rightSidebarOpen && selectedScene && (
+          <div className="w-[360px] border-l border-border bg-card flex-shrink-0">
+            <RightSidebarPanel
+              isOpen={rightSidebarOpen}
+              onClose={() => setRightSidebarOpen(false)}
+              sceneContext={sceneContext}
+              selectedText={selectedText}
+              projectId={project.id}
+              sceneId={selectedScene.id}
+              onReplaceSelection={handleReplaceSelection}
+              onInsertText={handleInsertText}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
