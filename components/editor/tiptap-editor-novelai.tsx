@@ -7,6 +7,7 @@ import { Loader2, X } from 'lucide-react'
 import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
 import { RightSidebarPanel } from './right-sidebar-panel'
+import { WritingModeSelector } from './writing-mode-selector'
 import { Button } from '@/components/ui/button'
 import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 
@@ -66,6 +67,9 @@ export function TiptapEditorNovelAI({
   // Template-based prompt generation
   const [useCustomTemplates, setUseCustomTemplates] = useState(true)
   const [selectedTemplates, setSelectedTemplates] = useState<Record<string, any>>({})
+
+  // Writing mode state
+  const [activeWritingMode, setActiveWritingMode] = useState<any>(null)
 
   // Build context variables for templates
   const buildPromptVariables = useCallback((action: string, customText?: string) => {
@@ -162,11 +166,30 @@ export function TiptapEditorNovelAI({
       setIsGenerating(true)
       const context = editor.getText().slice(-4000) // Last 4000 chars as context
 
+      // Build request with writing mode settings
+      const requestBody: any = {
+        prompt,
+        context,
+      }
+
+      // Apply writing mode settings if active
+      if (activeWritingMode) {
+        if (activeWritingMode.temperature !== undefined) {
+          requestBody.temperature = activeWritingMode.temperature
+        }
+        if (activeWritingMode.maxTokens !== undefined) {
+          requestBody.maxTokens = activeWritingMode.maxTokens
+        }
+        if (activeWritingMode.systemPrompt) {
+          requestBody.systemPrompt = activeWritingMode.systemPrompt
+        }
+      }
+
       try {
         const response = await fetch('/api/ai/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, context }),
+          body: JSON.stringify(requestBody),
         })
 
         if (!response.ok) {
@@ -241,7 +264,7 @@ export function TiptapEditorNovelAI({
         setIsGenerating(false)
       }
     },
-    [editor]
+    [editor, activeWritingMode]
   )
 
   // Build prompt using template or fallback to default
@@ -255,10 +278,13 @@ export function TiptapEditorNovelAI({
 
   // AI Actions
   const handleContinue = () => {
-    const prompt = buildPrompt(
-      'continue',
-      'Continue writing this story naturally, maintaining the same tone and style.'
-    )
+    // Use mode's continuePrompt if available, otherwise use template or fallback
+    let fallbackPrompt = 'Continue writing this story naturally, maintaining the same tone and style.'
+    if (activeWritingMode?.continuePrompt) {
+      fallbackPrompt = activeWritingMode.continuePrompt
+    }
+
+    const prompt = buildPrompt('continue', fallbackPrompt)
     generateAI(prompt)
   }
 
@@ -420,6 +446,12 @@ export function TiptapEditorNovelAI({
         <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>{wordCount.toLocaleString()} words</span>
+            <WritingModeSelector
+              projectId={projectId}
+              activeModeId={activeWritingMode?.id}
+              onModeChange={setActiveWritingMode}
+              compact
+            />
             {isSaving && (
               <span className="flex items-center gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" />
