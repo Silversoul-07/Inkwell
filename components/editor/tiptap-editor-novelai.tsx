@@ -8,6 +8,7 @@ import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
 import { RightSidebarPanel } from './right-sidebar-panel'
 import { Button } from '@/components/ui/button'
+import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 
 interface Scene {
   id: string
@@ -32,6 +33,11 @@ interface TiptapEditorNovelAIProps {
   onExitZen: () => void
   rightSidebarOpen: boolean
   onRightSidebarClose: () => void
+  projectMetadata?: {
+    genre?: string
+    pov?: string
+    tense?: string
+  }
 }
 
 export function TiptapEditorNovelAI({
@@ -42,6 +48,7 @@ export function TiptapEditorNovelAI({
   onExitZen,
   rightSidebarOpen,
   onRightSidebarClose,
+  projectMetadata,
 }: TiptapEditorNovelAIProps) {
   const [wordCount, setWordCount] = useState(scene.wordCount)
   const [isSaving, setIsSaving] = useState(false)
@@ -55,6 +62,21 @@ export function TiptapEditorNovelAI({
   } | null>(null)
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [alternatives, setAlternatives] = useState<string[]>([])
+
+  // Template-based prompt generation
+  const [useCustomTemplates, setUseCustomTemplates] = useState(true)
+  const [selectedTemplates, setSelectedTemplates] = useState<Record<string, any>>({})
+
+  // Build context variables for templates
+  const buildPromptVariables = useCallback((action: string, customText?: string) => {
+    return buildEditorVariables({
+      selection: selectedText || customText || '',
+      sceneContext: editor?.getText().slice(-4000) || '',
+      genre: projectMetadata?.genre || '',
+      pov: projectMetadata?.pov || '',
+      tense: projectMetadata?.tense || '',
+    })
+  }, [selectedText, editor, projectMetadata])
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -222,37 +244,70 @@ export function TiptapEditorNovelAI({
     [editor]
   )
 
+  // Build prompt using template or fallback to default
+  const buildPrompt = useCallback((action: string, fallbackPrompt: string, customText?: string) => {
+    if (useCustomTemplates && selectedTemplates[action]?.template) {
+      const variables = buildPromptVariables(action, customText)
+      return processTemplate(selectedTemplates[action].template, variables)
+    }
+    return fallbackPrompt
+  }, [useCustomTemplates, selectedTemplates, buildPromptVariables])
+
   // AI Actions
   const handleContinue = () => {
-    generateAI('Continue writing this story naturally, maintaining the same tone and style.')
+    const prompt = buildPrompt(
+      'continue',
+      'Continue writing this story naturally, maintaining the same tone and style.'
+    )
+    generateAI(prompt)
   }
 
   const handleRephrase = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Rephrase this text while keeping the same meaning: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'rephrase',
+      `Rephrase this text while keeping the same meaning: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleExpand = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Expand on this text with more detail and description: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'expand',
+      `Expand on this text with more detail and description: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleShorten = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Make this text more concise while keeping the key points: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'shorten',
+      `Make this text more concise while keeping the key points: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleFixGrammar = () => {
     if (!editor) return
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    generateAI(`Fix any grammar, spelling, or punctuation errors in this text: "${selectedText}"`, true)
+    const prompt = buildPrompt(
+      'grammar',
+      `Fix any grammar, spelling, or punctuation errors in this text: "${selectedText}"`,
+      selectedText
+    )
+    generateAI(prompt, true)
   }
 
   const handleGenerateAlternatives = async () => {
