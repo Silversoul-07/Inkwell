@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   Home,
@@ -28,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
+import { SettingsDialogWrapper } from '@/components/dialogs/settings-dialog-wrapper'
 
 interface Project {
   id: string
@@ -61,6 +63,8 @@ export function EditorToolbar({
   pomodoroOpen,
   setPomodoroOpen,
 }: EditorToolbarProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
   const handleExport = async (format: 'txt' | 'md' | 'docx') => {
     try {
       const response = await fetch(`/api/export?projectId=${project.id}&format=${format}`)
@@ -255,12 +259,19 @@ export function EditorToolbar({
         <ThemeSelector />
 
         {/* Settings */}
-        <Link href="/settings">
-          <Button variant="ghost" size="icon" className="h-9 w-9" title="Settings">
-            <Settings className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9"
+          title="Settings"
+          onClick={() => setSettingsOpen(true)}
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* Settings Dialog */}
+      <SettingsDialogWrapper open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }
