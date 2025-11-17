@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, ChevronRight, ChevronDown, FileText, FilePlus } from 'lucide-react'
+import { Plus, ChevronRight, ChevronDown, FileText, FilePlus, Trash2, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 
 interface Scene {
@@ -103,6 +104,45 @@ export function EditorSidebar({
     }
   }
 
+  const handleDeleteChapter = async (chapterId: string) => {
+    if (!confirm('Are you sure you want to delete this chapter? This will delete all scenes in it.')) return
+
+    try {
+      const response = await fetch(`/api/chapters/${chapterId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        onRefresh()
+      } else {
+        alert('Failed to delete chapter')
+      }
+    } catch (error) {
+      console.error('Error deleting chapter:', error)
+      alert('Error deleting chapter')
+    }
+  }
+
+  const handleDeleteScene = async (sceneId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Are you sure you want to delete this scene?')) return
+
+    try {
+      const response = await fetch(`/api/scenes/${sceneId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        onRefresh()
+      } else {
+        alert('Failed to delete scene')
+      }
+    } catch (error) {
+      console.error('Error deleting scene:', error)
+      alert('Error deleting scene')
+    }
+  }
+
   return (
     <div className="w-64 border-r border-border bg-card overflow-auto">
       <div className="p-4 space-y-2">
@@ -139,38 +179,63 @@ export function EditorSidebar({
                   {chapter.title}
                 </span>
               </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleCreateScene(chapter.id)}
-                disabled={isCreating}
-                title="Add scene"
-              >
-                <FilePlus className="h-3 w-3" />
-              </Button>
+              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => handleCreateScene(chapter.id)}
+                  disabled={isCreating}
+                  title="Add scene"
+                >
+                  <FilePlus className="h-3 w-3" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <MoreVertical className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDeleteChapter(chapter.id)} className="text-destructive focus:text-destructive">
+                      <Trash2 className="h-3 w-3 mr-2" />
+                      Delete Chapter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             {expandedChapters.has(chapter.id) && (
               <div className="ml-6 space-y-1">
                 {chapter.scenes.map((scene, index) => (
-                  <button
-                    key={scene.id}
-                    onClick={() => onSelectScene(scene.id)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md ${
-                      selectedSceneId === scene.id
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-accent/50'
-                    }`}
-                  >
-                    <FileText className="h-3 w-3" />
-                    <span className="flex-1 text-left truncate">
-                      {scene.title || `Scene ${index + 1}`}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {scene.wordCount}
-                    </span>
-                  </button>
+                  <div key={scene.id} className="group flex items-center gap-1">
+                    <button
+                      onClick={() => onSelectScene(scene.id)}
+                      className={`flex-1 flex items-center gap-2 px-2 py-1.5 text-sm rounded-md ${
+                        selectedSceneId === scene.id
+                          ? 'bg-accent text-accent-foreground'
+                          : 'hover:bg-accent/50'
+                      }`}
+                    >
+                      <FileText className="h-3 w-3" />
+                      <span className="flex-1 text-left truncate">
+                        {scene.title || `Scene ${index + 1}`}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {scene.wordCount}
+                      </span>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => handleDeleteScene(scene.id, e)}
+                      title="Delete scene"
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             )}
