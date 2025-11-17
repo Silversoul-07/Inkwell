@@ -7,7 +7,6 @@ import { Loader2, X } from 'lucide-react'
 import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
 import { WritingModeSelector } from './writing-mode-selector'
-import { PomodoroTimer } from './pomodoro-timer'
 import { EditorBottomToolbar } from './editor-bottom-toolbar'
 import { CommentDialog } from './comment-dialog'
 import { CommentTooltip } from './comment-tooltip'
@@ -36,8 +35,8 @@ interface TiptapEditorNovelAIProps {
   settings: Settings | null
   zenMode: boolean
   onExitZen: () => void
-  rightSidebarOpen: boolean
-  onRightSidebarClose: () => void
+  chapterTitle?: string
+  sceneTitle?: string
   projectMetadata?: {
     genre?: string
     pov?: string
@@ -51,8 +50,8 @@ export function TiptapEditorNovelAI({
   settings,
   zenMode,
   onExitZen,
-  rightSidebarOpen,
-  onRightSidebarClose,
+  chapterTitle,
+  sceneTitle,
   projectMetadata,
 }: TiptapEditorNovelAIProps) {
   const [wordCount, setWordCount] = useState(scene.wordCount)
@@ -696,9 +695,6 @@ export function TiptapEditorNovelAI({
         onSelect={handleSelectAlternative}
       />
 
-      {/* Pomodoro Timer */}
-      {!zenMode && <PomodoroTimer projectId={projectId} />}
-
       {/* Bottom Editor Toolbar with Comment Button */}
       {!zenMode && (
         <EditorBottomToolbar
@@ -706,6 +702,9 @@ export function TiptapEditorNovelAI({
           characterCount={characterCount}
           hasSelection={hasSelection}
           onCommentClick={handleCommentButtonClick}
+          lastSaved={lastSaved}
+          chapterTitle={chapterTitle}
+          sceneTitle={sceneTitle}
         />
       )}
 

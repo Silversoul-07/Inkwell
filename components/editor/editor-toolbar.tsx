@@ -4,17 +4,17 @@ import Link from 'next/link'
 import {
   Home,
   PanelLeft,
-  PanelRight,
-  Maximize,
+  Minimize2,
   Settings,
   BarChart3,
   Users,
   BookOpen,
-  Sparkles,
-  ChevronDown
+  FolderOpen,
+  ChevronDown,
+  Download,
+  Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ExportImportDialog } from './export-import-dialog'
 import { ThemeSelector } from '@/components/ui/theme-selector'
 import {
   DropdownMenu,
@@ -35,21 +35,52 @@ interface EditorToolbarProps {
   project: Project
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
-  rightSidebarOpen: boolean
-  setRightSidebarOpen: (open: boolean) => void
+  aiSidebarOpen: boolean
+  setAiSidebarOpen: (open: boolean) => void
+  debugSidebarOpen: boolean
+  setDebugSidebarOpen: (open: boolean) => void
   zenMode: boolean
   setZenMode: (zen: boolean) => void
+  pomodoroOpen: boolean
+  setPomodoroOpen: (open: boolean) => void
 }
 
 export function EditorToolbar({
   project,
   sidebarOpen,
   setSidebarOpen,
-  rightSidebarOpen,
-  setRightSidebarOpen,
+  aiSidebarOpen,
+  setAiSidebarOpen,
+  debugSidebarOpen,
+  setDebugSidebarOpen,
   zenMode,
   setZenMode,
+  pomodoroOpen,
+  setPomodoroOpen,
 }: EditorToolbarProps) {
+  const handleExport = async (format: 'txt' | 'md' | 'docx') => {
+    try {
+      const response = await fetch(`/api/export?projectId=${project.id}&format=${format}`)
+      if (!response.ok) throw new Error('Export failed')
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const contentDisposition = response.headers.get('Content-Disposition')
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+      const filename = filenameMatch ? filenameMatch[1] : `export.${format}`
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Export error:', error)
+      alert('Failed to export file')
+    }
+  }
+
   return (
     <div className="border-b border-border bg-gradient-to-b from-card to-card/80 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between shadow-sm">
       {/* Left Section - Navigation & Project */}
@@ -81,7 +112,7 @@ export function EditorToolbar({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 gap-1">
-                <Sparkles className="h-3.5 w-3.5" />
+                <FolderOpen className="h-3.5 w-3.5" />
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
@@ -108,6 +139,19 @@ export function EditorToolbar({
                   Lorebook
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleExport('md')}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as Markdown
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('txt')}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as Text
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('docx')}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as DOCX
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -115,33 +159,17 @@ export function EditorToolbar({
 
       {/* Right Section - Tools & Settings */}
       <div className="flex items-center gap-1.5">
-        <ExportImportDialog projectId={project.id} />
-
         <Separator orientation="vertical" className="h-6 mx-1" />
-
-        <Button
-          variant={rightSidebarOpen ? "secondary" : "ghost"}
-          size="sm"
-          className="h-8 gap-2"
-          onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-          title="AI Assistant"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-xs font-medium">AI Assistant</span>
-        </Button>
 
         <Button
           variant={zenMode ? "secondary" : "ghost"}
-          size="sm"
-          className="h-8 gap-2"
+          size="icon"
+          className="h-9 w-9"
           onClick={() => setZenMode(!zenMode)}
-          title="Toggle Zen Mode"
+          title="Zen Mode"
         >
-          <Maximize className="h-4 w-4" />
-          <span className="text-xs font-medium">Zen</span>
+          <Minimize2 className="h-4 w-4" />
         </Button>
-
-        <Separator orientation="vertical" className="h-6 mx-1" />
 
         <ThemeSelector />
 
