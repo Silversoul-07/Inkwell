@@ -84,6 +84,38 @@ export function EditorToolbar({
     }
   }
 
+  const handleImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.txt,.md,.docx'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', project.id)
+
+      try {
+        const response = await fetch('/api/import', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (response.ok) {
+          alert('Import successful! Refreshing...')
+          window.location.reload()
+        } else {
+          alert('Import failed')
+        }
+      } catch (error) {
+        console.error('Import error:', error)
+        alert('Failed to import file')
+      }
+    }
+    input.click()
+  }
+
   return (
     <div className="border-b border-border bg-gradient-to-b from-card to-card/80 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between shadow-sm">
       {/* Left Section - Navigation & Project */}
@@ -143,6 +175,10 @@ export function EditorToolbar({
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleImport}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import File
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport('md')}>
                 <Download className="h-4 w-4 mr-2" />
                 Export as Markdown
@@ -167,7 +203,10 @@ export function EditorToolbar({
           variant={aiSidebarOpen ? "secondary" : "ghost"}
           size="sm"
           className="h-8 gap-1.5"
-          onClick={() => setAiSidebarOpen(!aiSidebarOpen)}
+          onClick={() => {
+            setAiSidebarOpen(!aiSidebarOpen)
+            if (!aiSidebarOpen) setDebugSidebarOpen(false) // Close debug when opening AI
+          }}
           title="AI Assist"
         >
           <Sparkles className="h-3.5 w-3.5" />
@@ -181,7 +220,10 @@ export function EditorToolbar({
           variant={debugSidebarOpen ? "secondary" : "ghost"}
           size="icon"
           className="h-9 w-9"
-          onClick={() => setDebugSidebarOpen(!debugSidebarOpen)}
+          onClick={() => {
+            setDebugSidebarOpen(!debugSidebarOpen)
+            if (!debugSidebarOpen) setAiSidebarOpen(false) // Close AI when opening debug
+          }}
           title="Debug"
         >
           <Bug className="h-4 w-4" />

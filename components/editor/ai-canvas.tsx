@@ -231,47 +231,6 @@ export function AICanvas({
 
   return (
     <div className="w-full h-full flex flex-col bg-background">
-      {/* Model Selector */}
-      <div className="p-3 border-b border-border/60 bg-muted/20">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Model:</span>
-          <Select value={selectedModel} onValueChange={setSelectedModel}>
-            <SelectTrigger className="h-7 text-xs flex-1 bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableModels.map((model) => (
-                <SelectItem key={model.id} value={model.id} className="text-xs">
-                  {model.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Ask/Edit Mode Toggle */}
-      <div className="p-2 border-b border-border flex items-center gap-1 bg-background">
-        <Button
-          variant={editMode ? 'ghost' : 'secondary'}
-          size="sm"
-          onClick={() => setEditMode(false)}
-          className="flex-1 h-8"
-        >
-          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-          Ask
-        </Button>
-        <Button
-          variant={editMode ? 'secondary' : 'ghost'}
-          size="sm"
-          onClick={() => setEditMode(true)}
-          disabled={!selectedText}
-          className="flex-1 h-8"
-        >
-          <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-          Edit
-        </Button>
-      </div>
 
       {/* Edit Mode */}
       {editMode && (
@@ -431,7 +390,45 @@ export function AICanvas({
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-3">
+            {/* Model selector and Ask/Edit toggle */}
+            <div className="flex items-center gap-2">
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger className="h-8 text-xs w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableModels.map((model) => (
+                    <SelectItem key={model.id} value={model.id} className="text-xs">
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
+                <Button
+                  variant={editMode ? 'ghost' : 'secondary'}
+                  size="sm"
+                  onClick={() => setEditMode(false)}
+                  className="h-7 px-3"
+                >
+                  <Sparkles className="h-3 w-3 mr-1.5" />
+                  Ask
+                </Button>
+                <Button
+                  variant={editMode ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setEditMode(true)}
+                  disabled={!selectedText}
+                  className="h-7 px-3"
+                >
+                  <Edit3 className="h-3 w-3 mr-1.5" />
+                  Edit
+                </Button>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <Textarea
                 value={input}
