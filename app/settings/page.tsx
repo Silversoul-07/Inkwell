@@ -6,6 +6,7 @@ import { SettingsForm } from '@/components/settings/settings-form'
 import { PromptTemplateManager } from '@/components/settings/prompt-template-manager'
 import { WritingModeManager } from '@/components/settings/writing-mode-manager'
 import { UserInstructionsManager } from '@/components/settings/user-instructions-manager'
+import { AIModelsManager } from '@/components/settings/ai-models-manager'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -39,8 +40,9 @@ export default async function SettingsPage() {
         <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
         <Tabs defaultValue="editor" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="editor">Editor</TabsTrigger>
+            <TabsTrigger value="ai-models">AI Models</TabsTrigger>
             <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="modes">Writing Modes</TabsTrigger>
             <TabsTrigger value="instructions">Instructions</TabsTrigger>
@@ -48,6 +50,10 @@ export default async function SettingsPage() {
 
           <TabsContent value="editor">
             <SettingsForm settings={settings} />
+          </TabsContent>
+
+          <TabsContent value="ai-models">
+            <AIModelsManager />
           </TabsContent>
 
           <TabsContent value="templates">
