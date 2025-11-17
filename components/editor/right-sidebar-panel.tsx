@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { X, MessageSquare, Settings, Sliders, Bug } from 'lucide-react'
+import { X, Settings, Bug, MessageCircle, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AICanvas } from './ai-canvas'
 import { ModelConfig } from '@/components/ai/model-config'
 import { ContextDebugPanel } from './context-debug-panel'
+import { CommentSidebar } from '@/components/comments/comment-sidebar'
 import { cn } from '@/lib/utils'
 
 interface RightSidebarPanelProps {
@@ -14,6 +15,7 @@ interface RightSidebarPanelProps {
   sceneContext: string
   selectedText: string
   projectId: string
+  sceneId: string
   onReplaceSelection?: (text: string) => void
   onInsertText?: (text: string) => void
 }
@@ -24,127 +26,147 @@ export function RightSidebarPanel({
   sceneContext,
   selectedText,
   projectId,
+  sceneId,
   onReplaceSelection,
   onInsertText,
 }: RightSidebarPanelProps) {
-  const [activeTab, setActiveTab] = useState<'canvas' | 'model' | 'writer' | 'debug'>('canvas')
+  const [activeTab, setActiveTab] = useState<'canvas' | 'model' | 'writer' | 'comments' | 'debug'>('canvas')
 
   if (!isOpen) return null
 
+  const tabs = [
+    {
+      id: 'canvas' as const,
+      label: 'AI Canvas',
+      icon: Sparkles,
+      description: 'AI writing assistance',
+    },
+    {
+      id: 'model' as const,
+      label: 'Model',
+      icon: Settings,
+      description: 'AI configuration',
+    },
+    {
+      id: 'comments' as const,
+      label: 'Comments',
+      icon: MessageCircle,
+      description: 'Scene comments',
+    },
+    {
+      id: 'debug' as const,
+      label: 'Debug',
+      icon: Bug,
+      description: 'Context info',
+    },
+  ]
+
   return (
-    <div className="fixed right-0 top-0 bottom-0 w-[420px] bg-card border-l border-border z-50 flex flex-col shadow-2xl">
-      {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="font-semibold">AI Assistant</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+    <div className="fixed right-0 top-0 bottom-0 w-[440px] bg-gradient-to-b from-card to-card/95 border-l border-border z-50 flex flex-col shadow-2xl backdrop-blur-sm">
+      {/* Enhanced Header */}
+      <div className="px-4 py-3.5 border-b border-border/60 flex items-center justify-between bg-gradient-to-r from-primary/5 to-transparent">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">AI Assistant</h2>
+            <p className="text-xs text-muted-foreground">
+              {tabs.find(t => t.id === activeTab)?.description}
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Rectangular Tabs */}
-      <div className="flex gap-2 p-2 border-b border-border bg-muted/30">
-        <button
-          onClick={() => setActiveTab('canvas')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'canvas'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-background hover:bg-accent text-muted-foreground'
-          )}
-        >
-          <MessageSquare className="h-4 w-4" />
-          AI Canvas
-        </button>
-        <button
-          onClick={() => setActiveTab('model')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'model'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-background hover:bg-accent text-muted-foreground'
-          )}
-        >
-          <Settings className="h-4 w-4" />
-          Model
-        </button>
-        <button
-          onClick={() => setActiveTab('writer')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'writer'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-background hover:bg-accent text-muted-foreground'
-          )}
-        >
-          <Sliders className="h-4 w-4" />
-          Writer
-        </button>
-        <button
-          onClick={() => setActiveTab('debug')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'debug'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-background hover:bg-accent text-muted-foreground'
-          )}
-        >
-          <Bug className="h-4 w-4" />
-          Debug
-        </button>
+      {/* Vertical Tab Navigation */}
+      <div className="flex border-b border-border/60 bg-muted/20">
+        {tabs.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex-1 flex flex-col items-center gap-1.5 px-3 py-3 text-xs font-medium transition-all relative',
+                isActive
+                  ? 'text-primary bg-background/80'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/40'
+              )}
+            >
+              {isActive && (
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+              )}
+              <Icon className={cn(
+                'h-4 w-4 transition-transform',
+                isActive && 'scale-110'
+              )} />
+              <span className="truncate w-full text-center">{tab.label}</span>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Tab Content */}
-      <div className="flex-1 overflow-hidden">
-        {activeTab === 'canvas' && (
+      {/* Tab Content with fade animation */}
+      <div className="flex-1 overflow-hidden relative">
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-200",
+            activeTab === 'canvas' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'
+          )}
+        >
           <AICanvas
             sceneContext={sceneContext}
             selectedText={selectedText}
             onReplaceSelection={onReplaceSelection}
             onInsertText={onInsertText}
           />
-        )}
+        </div>
 
-        {activeTab === 'model' && (
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-200",
+            activeTab === 'model' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'
+          )}
+        >
           <div className="h-full overflow-auto p-4">
             <ModelConfig />
           </div>
-        )}
+        </div>
 
-        {activeTab === 'writer' && (
-          <div className="h-full overflow-auto p-4">
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold mb-2">Writer Settings</h3>
-                <p className="text-sm text-muted-foreground">
-                  Configure your writing preferences and editor settings.
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-4">
-                <div className="text-sm">
-                  <p className="text-muted-foreground">
-                    Advanced writer settings coming soon:
-                  </p>
-                  <ul className="list-disc list-inside mt-2 space-y-1 text-muted-foreground">
-                    <li>Custom writing goals</li>
-                    <li>Daily word count targets</li>
-                    <li>Writing style preferences</li>
-                    <li>Auto-save configuration</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-200",
+            activeTab === 'comments' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'
+          )}
+        >
+          <div className="h-full overflow-auto">
+            <CommentSidebar sceneId={sceneId} />
           </div>
-        )}
+        </div>
 
-        {activeTab === 'debug' && (
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-200",
+            activeTab === 'debug' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'
+          )}
+        >
           <div className="h-full overflow-auto">
             <ContextDebugPanel
               projectId={projectId}
               sceneContext={sceneContext}
             />
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
