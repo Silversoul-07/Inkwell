@@ -21,6 +21,25 @@ model User {
   projects        Project[]
   settings        Settings?
   writingSessions WritingSession[]
+  aiModels        AIModel[]
+}
+
+model AIModel {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  provider  String   // "openai", "anthropic", "groq", "ollama", "custom"
+  apiKey    String?  // Optional for Ollama
+  baseUrl   String?  // Custom endpoint
+  model     String   // Model identifier (e.g., "gpt-4", "claude-3-opus")
+  isDefault Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Settings {
