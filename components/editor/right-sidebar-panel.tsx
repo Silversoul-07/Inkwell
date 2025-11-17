@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { X, MessageSquare, Settings, Sliders, Bug } from 'lucide-react'
+import { X, MessageSquare, Settings, Sliders, Bug, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AICanvas } from './ai-canvas'
 import { ModelConfig } from '@/components/ai/model-config'
 import { ContextDebugPanel } from './context-debug-panel'
+import { CommentSidebar } from '@/components/comments/comment-sidebar'
 import { cn } from '@/lib/utils'
 
 interface RightSidebarPanelProps {
@@ -14,6 +15,7 @@ interface RightSidebarPanelProps {
   sceneContext: string
   selectedText: string
   projectId: string
+  sceneId: string
   onReplaceSelection?: (text: string) => void
   onInsertText?: (text: string) => void
 }
@@ -24,10 +26,11 @@ export function RightSidebarPanel({
   sceneContext,
   selectedText,
   projectId,
+  sceneId,
   onReplaceSelection,
   onInsertText,
 }: RightSidebarPanelProps) {
-  const [activeTab, setActiveTab] = useState<'canvas' | 'model' | 'writer' | 'debug'>('canvas')
+  const [activeTab, setActiveTab] = useState<'canvas' | 'model' | 'writer' | 'comments' | 'debug'>('canvas')
 
   if (!isOpen) return null
 
@@ -68,16 +71,16 @@ export function RightSidebarPanel({
           Model
         </button>
         <button
-          onClick={() => setActiveTab('writer')}
+          onClick={() => setActiveTab('comments')}
           className={cn(
             'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'writer'
+            activeTab === 'comments'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'bg-background hover:bg-accent text-muted-foreground'
           )}
         >
-          <Sliders className="h-4 w-4" />
-          Writer
+          <MessageCircle className="h-4 w-4" />
+          Comments
         </button>
         <button
           onClick={() => setActiveTab('debug')}
@@ -110,30 +113,9 @@ export function RightSidebarPanel({
           </div>
         )}
 
-        {activeTab === 'writer' && (
-          <div className="h-full overflow-auto p-4">
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold mb-2">Writer Settings</h3>
-                <p className="text-sm text-muted-foreground">
-                  Configure your writing preferences and editor settings.
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-4">
-                <div className="text-sm">
-                  <p className="text-muted-foreground">
-                    Advanced writer settings coming soon:
-                  </p>
-                  <ul className="list-disc list-inside mt-2 space-y-1 text-muted-foreground">
-                    <li>Custom writing goals</li>
-                    <li>Daily word count targets</li>
-                    <li>Writing style preferences</li>
-                    <li>Auto-save configuration</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+        {activeTab === 'comments' && (
+          <div className="h-full overflow-auto">
+            <CommentSidebar sceneId={sceneId} />
           </div>
         )}
 

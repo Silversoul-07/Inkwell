@@ -8,6 +8,7 @@ import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
 import { RightSidebarPanel } from './right-sidebar-panel'
 import { WritingModeSelector } from './writing-mode-selector'
+import { PomodoroTimer } from './pomodoro-timer'
 import { Button } from '@/components/ui/button'
 import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 
@@ -556,6 +557,7 @@ export function TiptapEditorNovelAI({
           sceneContext={editor?.getText() || ''}
           selectedText={selectedText}
           projectId={projectId}
+          sceneId={scene.id}
           onReplaceSelection={handleReplaceSelection}
           onInsertText={handleInsertText}
         />
@@ -568,6 +570,9 @@ export function TiptapEditorNovelAI({
         alternatives={alternatives}
         onSelect={handleSelectAlternative}
       />
+
+      {/* Pomodoro Timer */}
+      {!zenMode && <PomodoroTimer projectId={projectId} />}
     </div>
   )
 }
