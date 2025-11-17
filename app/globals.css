@@ -333,3 +333,29 @@
   background-size: 200% 200%;
   animation: gradient-shift 15s ease infinite;
 }
+
+/* Comment Highlighting Styles */
+.comment-highlight {
+  background-color: hsl(var(--accent) / 0.15);
+  border-bottom: 2px solid hsl(var(--accent) / 0.5);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+.comment-highlight:hover {
+  background-color: hsl(var(--accent) / 0.25);
+  border-bottom-color: hsl(var(--accent) / 0.8);
+}
+
+/* Dark mode adjustments */
+.dark .comment-highlight {
+  background-color: hsl(var(--accent) / 0.2);
+  border-bottom-color: hsl(var(--accent) / 0.6);
+}
+
+.dark .comment-highlight:hover {
+  background-color: hsl(var(--accent) / 0.3);
+  border-bottom-color: hsl(var(--accent) / 0.9);
+}
