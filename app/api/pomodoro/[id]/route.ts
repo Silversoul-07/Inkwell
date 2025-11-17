@@ -35,12 +35,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
+    // Map completedAt to endTime and completed fields
+    const updateData: any = { ...body }
+    if (body.completedAt) {
+      updateData.endTime = new Date(body.completedAt)
+      updateData.completed = true
+      delete updateData.completedAt
+    }
+
     const updatedSession = await prisma.pomodoroSession.update({
       where: { id },
-      data: {
-        ...body,
-        completedAt: body.completedAt || new Date(),
-      },
+      data: updateData,
     })
 
     return NextResponse.json(updatedSession)

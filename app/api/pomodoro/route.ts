@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { projectId, duration, sessionType = 'work' } = body
+    const { projectId, duration } = body
 
     if (!projectId || !duration) {
       return NextResponse.json(
@@ -40,8 +40,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         projectId,
         duration,
-        sessionType,
-        startedAt: new Date(),
+        startTime: new Date(),
       },
     })
 
@@ -76,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     const sessions = await prisma.pomodoroSession.findMany({
       where,
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startTime: 'desc' },
       take: limit,
       include: {
         project: {

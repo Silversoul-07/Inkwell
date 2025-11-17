@@ -239,6 +239,40 @@ const builtinModes = [
   },
 ]
 
+// Example User Instructions
+const exampleInstructions = [
+  {
+    scope: 'global',
+    instructions: 'Always maintain consistency with established character personalities and backstories.',
+    isEnabled: true,
+    priority: 5,
+  },
+  {
+    scope: 'global',
+    instructions: 'Avoid clichés and overused phrases. Strive for fresh, original descriptions.',
+    isEnabled: true,
+    priority: 4,
+  },
+  {
+    scope: 'global',
+    instructions: 'Show emotions through actions and body language rather than telling.',
+    isEnabled: true,
+    priority: 3,
+  },
+  {
+    scope: 'global',
+    instructions: 'Keep dialogue natural and character-appropriate. Consider age, background, and personality.',
+    isEnabled: true,
+    priority: 4,
+  },
+  {
+    scope: 'global',
+    instructions: 'Use active voice when possible for more engaging prose.',
+    isEnabled: true,
+    priority: 2,
+  },
+]
+
 async function main() {
   console.log('Starting seed...')
 
@@ -249,6 +283,8 @@ async function main() {
   console.log(`- ${builtinTemplates.length} prompt templates`)
   console.log('Built-in modes structure:')
   console.log(`- ${builtinModes.length} writing modes`)
+  console.log('Example user instructions:')
+  console.log(`- ${exampleInstructions.length} global instructions`)
 
   console.log('Seed structure documented successfully!')
 }
@@ -263,4 +299,4 @@ main()
   })
 
 // Export the built-in data for use in signup/initialization
-export { builtinTemplates, builtinModes }
+export { builtinTemplates, builtinModes, exampleInstructions }

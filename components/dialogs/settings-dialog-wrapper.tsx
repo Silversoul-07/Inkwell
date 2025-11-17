@@ -14,6 +14,8 @@ import { PromptTemplateManager } from '@/components/settings/prompt-template-man
 import { WritingModeManager } from '@/components/settings/writing-mode-manager'
 import { UserInstructionsManager } from '@/components/settings/user-instructions-manager'
 import { AIModelsManager } from '@/components/settings/ai-models-manager'
+import { GettingStarted } from '@/components/settings/getting-started'
+import { PomodoroManager } from '@/components/settings/pomodoro-manager'
 
 interface SettingsDialogProps {
   open: boolean
@@ -47,9 +49,15 @@ export function SettingsDialogWrapper({ open, onOpenChange }: SettingsDialogProp
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="editor" className="flex gap-6 h-full overflow-hidden" orientation="vertical">
+        <Tabs defaultValue="getting-started" className="flex gap-6 h-full overflow-hidden" orientation="vertical">
           {/* Vertical Sidebar */}
           <TabsList className="flex flex-col h-fit w-56 bg-muted/30 p-2 rounded-lg gap-1 flex-shrink-0">
+            <TabsTrigger
+              value="getting-started"
+              className="w-full justify-start px-4 py-2.5 text-left data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Getting Started
+            </TabsTrigger>
             <TabsTrigger
               value="editor"
               className="w-full justify-start px-4 py-2.5 text-left data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -80,6 +88,12 @@ export function SettingsDialogWrapper({ open, onOpenChange }: SettingsDialogProp
             >
               User Instructions
             </TabsTrigger>
+            <TabsTrigger
+              value="pomodoro"
+              className="w-full justify-start px-4 py-2.5 text-left data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Pomodoro Sessions
+            </TabsTrigger>
           </TabsList>
 
           {/* Content Area */}
@@ -90,6 +104,10 @@ export function SettingsDialogWrapper({ open, onOpenChange }: SettingsDialogProp
               </div>
             ) : (
               <>
+                <TabsContent value="getting-started" className="mt-0">
+                  <GettingStarted />
+                </TabsContent>
+
                 <TabsContent value="editor" className="mt-0">
                   <SettingsForm settings={settings} />
                 </TabsContent>
@@ -108,6 +126,10 @@ export function SettingsDialogWrapper({ open, onOpenChange }: SettingsDialogProp
 
                 <TabsContent value="instructions" className="mt-0">
                   <UserInstructionsManager scope="global" />
+                </TabsContent>
+
+                <TabsContent value="pomodoro" className="mt-0">
+                  <PomodoroManager />
                 </TabsContent>
               </>
             )}

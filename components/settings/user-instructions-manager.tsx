@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/hooks/use-toast'
 import {
   Select,
   SelectContent,
@@ -52,6 +53,7 @@ export function UserInstructionsManager({
   projectId,
   characterId,
 }: UserInstructionsManagerProps) {
+  const { toast } = useToast()
   const [instructions, setInstructions] = useState<UserInstruction[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -80,9 +82,20 @@ export function UserInstructionsManager({
       if (response.ok) {
         const data = await response.json()
         setInstructions(data)
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load user instructions',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to load instructions:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load user instructions',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -105,9 +118,25 @@ export function UserInstructionsManager({
         await loadInstructions()
         setIsCreateOpen(false)
         resetForm()
+        toast({
+          title: 'Success',
+          description: 'User instruction created successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to create user instruction',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to create instruction:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create user instruction',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -123,9 +152,25 @@ export function UserInstructionsManager({
         await loadInstructions()
         setEditingInstruction(null)
         resetForm()
+        toast({
+          title: 'Success',
+          description: 'User instruction updated successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to update user instruction',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to update instruction:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update user instruction',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -139,9 +184,25 @@ export function UserInstructionsManager({
 
       if (response.ok) {
         await loadInstructions()
+        toast({
+          title: 'Success',
+          description: 'User instruction deleted successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete user instruction',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to delete instruction:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to delete user instruction',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -155,9 +216,25 @@ export function UserInstructionsManager({
 
       if (response.ok) {
         await loadInstructions()
+        toast({
+          title: 'Success',
+          description: `User instruction ${isEnabled ? 'enabled' : 'disabled'}`,
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to toggle user instruction',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to toggle instruction:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle user instruction',
+        variant: 'destructive',
+      })
     }
   }
 

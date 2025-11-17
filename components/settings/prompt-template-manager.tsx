@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/hooks/use-toast'
 import {
   Select,
   SelectContent,
@@ -63,6 +64,7 @@ const AVAILABLE_VARIABLES = [
 ]
 
 export function PromptTemplateManager() {
+  const { toast } = useToast()
   const [templates, setTemplates] = useState<PromptTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedAction, setSelectedAction] = useState<string>('all')
@@ -95,9 +97,20 @@ export function PromptTemplateManager() {
       if (response.ok) {
         const data = await response.json()
         setTemplates(data)
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load templates',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to load templates:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load templates',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -115,9 +128,25 @@ export function PromptTemplateManager() {
         await loadTemplates()
         setIsCreateOpen(false)
         resetForm()
+        toast({
+          title: 'Success',
+          description: 'Template created successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to create template',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to create template:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create template',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -133,9 +162,25 @@ export function PromptTemplateManager() {
         await loadTemplates()
         setEditingTemplate(null)
         resetForm()
+        toast({
+          title: 'Success',
+          description: 'Template updated successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to update template',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to update template:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update template',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -149,9 +194,25 @@ export function PromptTemplateManager() {
 
       if (response.ok) {
         await loadTemplates()
+        toast({
+          title: 'Success',
+          description: 'Template deleted successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete template. This may be a built-in template.',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to delete template:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to delete template',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -165,9 +226,25 @@ export function PromptTemplateManager() {
 
       if (response.ok) {
         await loadTemplates()
+        toast({
+          title: 'Success',
+          description: 'Default template set successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to set default template',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to set default:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to set default template',
+        variant: 'destructive',
+      })
     }
   }
 

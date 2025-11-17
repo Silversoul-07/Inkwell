@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { useToast } from '@/hooks/use-toast'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ interface WritingMode {
 }
 
 export function WritingModeManager() {
+  const { toast } = useToast()
   const [modes, setModes] = useState<WritingMode[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -63,9 +65,20 @@ export function WritingModeManager() {
       if (response.ok) {
         const data = await response.json()
         setModes(data)
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load writing modes',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to load writing modes:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load writing modes',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -83,9 +96,25 @@ export function WritingModeManager() {
         await loadModes()
         setIsCreateOpen(false)
         resetForm()
+        toast({
+          title: 'Success',
+          description: 'Writing mode created successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to create writing mode',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to create mode:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create writing mode',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -101,9 +130,25 @@ export function WritingModeManager() {
         await loadModes()
         setEditingMode(null)
         resetForm()
+        toast({
+          title: 'Success',
+          description: 'Writing mode updated successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to update writing mode',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to update mode:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update writing mode',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -117,9 +162,25 @@ export function WritingModeManager() {
 
       if (response.ok) {
         await loadModes()
+        toast({
+          title: 'Success',
+          description: 'Writing mode deleted successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete writing mode. This may be a built-in mode.',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to delete mode:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to delete writing mode',
+        variant: 'destructive',
+      })
     }
   }
 
