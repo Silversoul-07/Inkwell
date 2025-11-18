@@ -21,6 +21,7 @@ interface AgentChatProps {
   conversationId: string
   agentType: AgentType
   projectId?: string
+  modelId?: string
   initialMessages?: Message[]
   agentName: string
 }
@@ -29,6 +30,7 @@ export function AgentChat({
   conversationId,
   agentType,
   projectId,
+  modelId,
   initialMessages = [],
   agentName,
 }: AgentChatProps) {
@@ -67,6 +69,7 @@ export function AgentChat({
           projectId,
           message: input,
           agentType,
+          modelId,
         }),
       })
 

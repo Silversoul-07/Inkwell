@@ -19,6 +19,7 @@ export interface ExecuteAgentOptions {
   projectId?: string
   userMessage: string
   agentType: AgentType
+  modelId?: string
 }
 
 /**
@@ -29,7 +30,7 @@ export interface ExecuteAgentOptions {
  * - story-planning → Custom OpenAI (multi-phase planning)
  */
 export async function executeAgent(options: ExecuteAgentOptions): Promise<AgentMessage> {
-  const { conversationId, userId, projectId, userMessage, agentType } = options
+  const { conversationId, userId, projectId, userMessage, agentType, modelId } = options
 
   // Get conversation history
   const conversation = await prisma.agentConversation.findUnique({
@@ -56,6 +57,7 @@ export async function executeAgent(options: ExecuteAgentOptions): Promise<AgentM
     userId,
     projectId,
     conversationId,
+    modelId,
   }
 
   // Save user message to database

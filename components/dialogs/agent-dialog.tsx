@@ -31,14 +31,17 @@ interface AgentDialogProps {
 export function AgentDialog({ open, onOpenChange, currentProjectId, projects = [] }: AgentDialogProps) {
   const [activeConversation, setActiveConversation] = useState<any>(null)
   const [selectedProject, setSelectedProject] = useState<string | undefined>(currentProjectId)
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined)
+  const [availableModels, setAvailableModels] = useState<any[]>([])
   const [conversations, setConversations] = useState<any[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const { toast } = useToast()
 
-  // Fetch conversations when dialog opens
+  // Fetch conversations and models when dialog opens
   useEffect(() => {
     if (open) {
       fetchConversations()
+      fetchModels()
     }
   }, [open])
 
@@ -58,6 +61,23 @@ export function AgentDialog({ open, onOpenChange, currentProjectId, projects = [
       }
     } catch (error) {
       console.error('Error fetching conversations:', error)
+    }
+  }
+
+  const fetchModels = async () => {
+    try {
+      const response = await fetch('/api/ai-models')
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableModels(data.models || [])
+        // Set default model if available
+        const defaultModel = data.models?.find((m: any) => m.isDefault)
+        if (defaultModel) {
+          setSelectedModel(defaultModel.id)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching models:', error)
     }
   }
 
@@ -155,6 +175,7 @@ export function AgentDialog({ open, onOpenChange, currentProjectId, projects = [
                 conversationId={activeConversation.id}
                 agentType={activeConversation.agentType}
                 projectId={activeConversation.projectId}
+                modelId={selectedModel}
                 initialMessages={activeConversation.messages.map((m: any) => ({
                   id: m.id,
                   role: m.role,
@@ -171,25 +192,48 @@ export function AgentDialog({ open, onOpenChange, currentProjectId, projects = [
             {/* Agent Selector Header */}
             <DialogHeader className="border-b p-6 flex-shrink-0">
               <DialogTitle className="text-2xl">AI Writing Assistants</DialogTitle>
-              {projects.length > 0 && (
-                <div className="flex items-center gap-4 mt-4">
-                  <FolderOpen className="w-5 h-5 text-muted-foreground" />
-                  <label className="text-sm font-medium">Active Project:</label>
-                  <Select value={selectedProject} onValueChange={setSelectedProject}>
-                    <SelectTrigger className="w-[300px]">
-                      <SelectValue placeholder="No project selected" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No project</SelectItem>
-                      {projects.map(project => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="space-y-4 mt-4">
+                {/* Project Selector */}
+                {projects.length > 0 && (
+                  <div className="flex items-center gap-4">
+                    <FolderOpen className="w-5 h-5 text-muted-foreground" />
+                    <label className="text-sm font-medium min-w-[100px]">Project:</label>
+                    <Select value={selectedProject} onValueChange={setSelectedProject}>
+                      <SelectTrigger className="w-[300px]">
+                        <SelectValue placeholder="No project selected" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No project</SelectItem>
+                        {projects.map(project => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Model Selector */}
+                {availableModels.length > 0 && (
+                  <div className="flex items-center gap-4">
+                    <Settings className="w-5 h-5 text-muted-foreground" />
+                    <label className="text-sm font-medium min-w-[100px]">AI Model:</label>
+                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                      <SelectTrigger className="w-[300px]">
+                        <SelectValue placeholder="Select AI model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableModels.map(model => (
+                          <SelectItem key={model.id} value={model.id}>
+                            {model.name} {model.isDefault && '(Default)'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
             </DialogHeader>
 
             {/* Agent Selector */}

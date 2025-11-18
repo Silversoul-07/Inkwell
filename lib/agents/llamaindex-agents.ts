@@ -14,12 +14,22 @@ async function createLlamaIndexAgent(
   conversationHistory: Array<{ role: string; content: string }>
 ) {
   // Get AI model configuration
-  const aiModel = await prisma.aIModel.findFirst({
-    where: { userId: context.userId, isDefault: true },
-  })
+  let aiModel
+
+  if (context.modelId) {
+    // Use specified model
+    aiModel = await prisma.aIModel.findFirst({
+      where: { id: context.modelId, userId: context.userId },
+    })
+  } else {
+    // Fall back to default model
+    aiModel = await prisma.aIModel.findFirst({
+      where: { userId: context.userId, isDefault: true },
+    })
+  }
 
   if (!aiModel) {
-    throw new Error('No AI model configured')
+    throw new Error('No AI model configured. Please select a model or set a default in Settings.')
   }
 
   // Configure LlamaIndex via environment variables

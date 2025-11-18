@@ -17,6 +17,7 @@ export interface AgentContext {
   userId: string
   projectId?: string
   conversationId: string
+  modelId?: string
 }
 
 // World-Building Tools
