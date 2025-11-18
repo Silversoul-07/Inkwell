@@ -48,6 +48,10 @@ interface EditorToolbarProps {
   setZenMode: (zen: boolean) => void
   pomodoroOpen: boolean
   setPomodoroOpen: (open: boolean) => void
+  agentDialogOpen: boolean
+  setAgentDialogOpen: (open: boolean) => void
+  settingsDialogOpen: boolean
+  setSettingsDialogOpen: (open: boolean) => void
 }
 
 const isClient = typeof window !== 'undefined'
@@ -64,6 +68,10 @@ export function EditorToolbar({
   setZenMode,
   pomodoroOpen,
   setPomodoroOpen,
+  agentDialogOpen,
+  setAgentDialogOpen,
+  settingsDialogOpen,
+  setSettingsDialogOpen,
 }: EditorToolbarProps) {
 
   const handleExport = async (format: 'txt' | 'md' | 'docx') => {
@@ -161,11 +169,9 @@ export function EditorToolbar({
                 Project Tools
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/agents" className="cursor-pointer">
-                  <Bot className="h-4 w-4 mr-2" />
-                  AI Agents
-                </Link>
+              <DropdownMenuItem onClick={() => setAgentDialogOpen(true)}>
+                <Bot className="h-4 w-4 mr-2" />
+                AI Agents
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/analytics/${project.id}`} className="cursor-pointer">
@@ -266,16 +272,15 @@ export function EditorToolbar({
         <ThemeSelector />
 
         {/* Settings */}
-        <Link href="/settings">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9"
-            title="Settings"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9"
+          onClick={() => setSettingsDialogOpen(true)}
+          title="Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   )

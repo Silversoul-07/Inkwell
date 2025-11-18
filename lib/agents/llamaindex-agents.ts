@@ -22,22 +22,34 @@ async function createLlamaIndexAgent(
     throw new Error('No AI model configured')
   }
 
-  // Configure LlamaIndex settings
-  Settings.llm = {
-    model: aiModel.model,
-    apiKey: aiModel.apiKey || undefined,
-    ...(aiModel.baseUrl && { baseURL: aiModel.baseUrl }),
-  } as any
+  // Configure LlamaIndex via environment variables
+  // LlamaIndex automatically uses OPENAI_API_KEY and OPENAI_API_BASE
+  const originalApiKey = process.env.OPENAI_API_KEY
+  const originalApiBase = process.env.OPENAI_API_BASE
+
+  process.env.OPENAI_API_KEY = aiModel.apiKey || ''
+  if (aiModel.baseUrl) {
+    process.env.OPENAI_API_BASE = aiModel.baseUrl
+  }
 
   // Create tools based on agent type
   const tools = createToolsForAgent(agentType, context)
 
   // Create agent with system prompt
+  // LlamaIndex will use configured environment variables for LLM
   const agent = new ReActAgent({
     tools,
     systemPrompt: AGENT_SYSTEM_PROMPTS[agentType],
     verbose: true,
   })
+
+  // Restore original environment variables
+  if (originalApiKey !== undefined) {
+    process.env.OPENAI_API_KEY = originalApiKey
+  }
+  if (originalApiBase !== undefined) {
+    process.env.OPENAI_API_BASE = originalApiBase
+  }
 
   return agent
 }
