@@ -107,9 +107,9 @@ export function SettingsPageClient({ settings }: SettingsPageClientProps) {
 
         <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
-        <div className="overflow-hidden rounded-lg border bg-background md:max-h-[700px] md:max-w-[1200px] lg:max-w-[1400px]">
+        <div className="rounded-lg border bg-background w-full max-w-[1400px]">
           <SidebarProvider className="items-start">
-            <Sidebar collapsible="none" className="hidden md:flex w-64 border-r">
+            <Sidebar collapsible="none" className="hidden md:flex w-64 border-r h-[700px]">
               <SidebarContent className="p-0">
                 <SidebarGroup className="p-4">
                   <SidebarGroupContent>
@@ -131,8 +131,8 @@ export function SettingsPageClient({ settings }: SettingsPageClientProps) {
                 </SidebarGroup>
               </SidebarContent>
             </Sidebar>
-            
-            <main className="flex flex-1 flex-col overflow-hidden min-h-[600px]">
+
+            <main className="flex flex-1 flex-col h-[700px] overflow-hidden">
               <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
                 <Breadcrumb>
                   <BreadcrumbList>
@@ -148,8 +148,8 @@ export function SettingsPageClient({ settings }: SettingsPageClientProps) {
                   </BreadcrumbList>
                 </Breadcrumb>
               </header>
-              
-              <div className="flex flex-1 flex-col overflow-y-auto p-6">
+
+              <div className="flex-1 overflow-y-auto p-6">
                 {activeTab === "editor" && <SettingsForm settings={settings} />}
                 {activeTab === "ai-models" && <AIModelsManager />}
                 {activeTab === "templates" && <PromptTemplateManager />}

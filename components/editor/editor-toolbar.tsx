@@ -29,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
-import { SettingsDialogWrapper } from '@/components/dialogs/settings-dialog-wrapper'
 
 interface Project {
   id: string
@@ -50,6 +49,8 @@ interface EditorToolbarProps {
   setPomodoroOpen: (open: boolean) => void
 }
 
+const isClient = typeof window !== 'undefined'
+
 export function EditorToolbar({
   project,
   sidebarOpen,
@@ -63,7 +64,6 @@ export function EditorToolbar({
   pomodoroOpen,
   setPomodoroOpen,
 }: EditorToolbarProps) {
-  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleExport = async (format: 'txt' | 'md' | 'docx') => {
     try {
@@ -259,19 +259,17 @@ export function EditorToolbar({
         <ThemeSelector />
 
         {/* Settings */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          title="Settings"
-          onClick={() => setSettingsOpen(true)}
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
+        <Link href="/settings">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            title="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        </Link>
       </div>
-
-      {/* Settings Dialog */}
-      <SettingsDialogWrapper open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }
