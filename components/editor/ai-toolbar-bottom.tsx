@@ -62,7 +62,7 @@ export function AIToolbarBottom({
   onModeChange,
 }: AIToolbarBottomProps) {
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30">
+    <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-30">
       <div className="glass rounded-2xl shadow-2xl border-2 p-2 flex items-center gap-1">
         {/* Undo/Redo */}
         {onUndo && (

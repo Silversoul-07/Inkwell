@@ -344,36 +344,6 @@ export function TiptapEditorEnhanced({
       )}
 
       <div className={`flex-1 flex flex-col ${zenMode ? 'p-8' : 'p-6'}`}>
-        {/* Editor toolbar / stats */}
-        <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <span>{wordCount.toLocaleString()} words</span>
-            {isSaving && (
-              <span className="flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Saving...
-              </span>
-            )}
-            {!isSaving && lastSaved && (
-              <span>Saved {lastSaved.toLocaleTimeString()}</span>
-            )}
-          </div>
-
-          {/* AI Generated highlight dismiss */}
-          {aiGeneratedRange && (
-            <div className="flex items-center gap-2 px-3 py-1 bg-accent rounded-md">
-              <span className="text-xs">AI Generated</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4"
-                onClick={dismissAIHighlight}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
-        </div>
 
         {/* Editor */}
         <div

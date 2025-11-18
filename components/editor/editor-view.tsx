@@ -108,7 +108,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
           />
         )}
 
-        <div className="flex-1 overflow-auto relative">
+        <div className="flex-1 min-w-0 overflow-auto relative">
           {selectedScene && (
             <TiptapEditorNovelAI
               key={selectedScene.id}

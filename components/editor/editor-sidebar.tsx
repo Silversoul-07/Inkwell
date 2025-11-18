@@ -144,7 +144,7 @@ export function EditorSidebar({
   }
 
   return (
-    <div className="w-64 border-r border-border bg-card overflow-auto">
+    <div className="w-64 min-w-64 max-w-80 md:w-64 sm:w-72 xs:w-80 border-r border-border bg-card overflow-auto flex-shrink-0">
       <div className="p-4 space-y-2">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold">Structure</h2>

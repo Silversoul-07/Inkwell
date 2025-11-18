@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -37,9 +36,6 @@ interface Project {
   notes: string | null
   coverImage: string | null
   status: string
-  defaultTemperature: number | null
-  defaultMaxTokens: number | null
-  contextWindowSize: number
   activeWritingMode: string | null
   metadata: string | null
 }
@@ -68,9 +64,6 @@ export function ProjectSettings({ projectId }: ProjectSettingsProps) {
     notes: '',
     coverImage: '',
     status: 'draft',
-    defaultTemperature: 0.7,
-    defaultMaxTokens: 500,
-    contextWindowSize: 8000,
   })
 
   useEffect(() => {
@@ -101,9 +94,6 @@ export function ProjectSettings({ projectId }: ProjectSettingsProps) {
           notes: data.notes || '',
           coverImage: data.coverImage || '',
           status: data.status || 'draft',
-          defaultTemperature: data.defaultTemperature || 0.7,
-          defaultMaxTokens: data.defaultMaxTokens || 500,
-          contextWindowSize: data.contextWindowSize || 8000,
         })
       }
     } catch (error) {
@@ -441,76 +431,7 @@ export function ProjectSettings({ projectId }: ProjectSettingsProps) {
         </CardContent>
       </Card>
 
-      {/* AI Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5 text-primary" />
-            <CardTitle>AI Settings</CardTitle>
-          </div>
-          <CardDescription>
-            Default AI behavior for this project
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="defaultTemperature">
-              Default Temperature: {formData.defaultTemperature.toFixed(2)}
-            </Label>
-            <Slider
-              id="defaultTemperature"
-              min={0}
-              max={1}
-              step={0.05}
-              value={[formData.defaultTemperature]}
-              onValueChange={([value]) =>
-                setFormData({ ...formData, defaultTemperature: value })
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              Lower = more focused and consistent, Higher = more creative and varied
-            </p>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="defaultMaxTokens">
-              Default Max Tokens: {formData.defaultMaxTokens}
-            </Label>
-            <Slider
-              id="defaultMaxTokens"
-              min={100}
-              max={2000}
-              step={50}
-              value={[formData.defaultMaxTokens]}
-              onValueChange={([value]) =>
-                setFormData({ ...formData, defaultMaxTokens: value })
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              Maximum length of AI responses (roughly 0.75 words per token)
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="contextWindowSize">
-              Context Window Size: {formData.contextWindowSize.toLocaleString()} tokens
-            </Label>
-            <Slider
-              id="contextWindowSize"
-              min={2000}
-              max={16000}
-              step={1000}
-              value={[formData.contextWindowSize]}
-              onValueChange={([value]) =>
-                setFormData({ ...formData, contextWindowSize: value })
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              How much context to send to the AI. Larger = more context but slower/costlier.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving} size="lg">

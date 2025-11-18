@@ -24,7 +24,7 @@ export function AISidebar({
   if (!isOpen) return null
 
   return (
-    <div className="w-[360px] border-l border-border bg-card flex-shrink-0 h-full flex flex-col">
+    <div className="w-[360px] min-w-[300px] max-w-[420px] md:w-[360px] sm:w-[320px] xs:w-[280px] border-l border-border bg-card flex-shrink-0 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/30">
         <h3 className="text-sm font-semibold">AI Assist</h3>
