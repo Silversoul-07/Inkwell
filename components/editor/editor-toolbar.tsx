@@ -17,6 +17,7 @@ import {
   Sparkles,
   Bug,
   Timer,
+  Bot,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeSelector } from '@/components/ui/theme-selector'
@@ -160,6 +161,12 @@ export function EditorToolbar({
                 Project Tools
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/agents" className="cursor-pointer">
+                  <Bot className="h-4 w-4 mr-2" />
+                  AI Agents
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/analytics/${project.id}`} className="cursor-pointer">
                   <BarChart3 className="h-4 w-4 mr-2" />

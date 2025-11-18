@@ -29,6 +29,8 @@ model User {
   pomodoroSessions PomodoroSession[]
   comments         Comment[]
   commentReplies   CommentReply[]
+  agentConversations AgentConversation[]
+  agentMemories    AgentMemory[]
 }
 
 model AIModel {
@@ -122,6 +124,8 @@ model Project {
   writingGoals      WritingGoal[]
   userInstructions  UserInstructions[]
   pomodoroSessions  PomodoroSession[]
+  agentConversations AgentConversation[]
+  agentMemories    AgentMemory[]
 }
 
 model Chapter {
@@ -376,4 +380,83 @@ model CommentReply {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([commentId])
+}
+
+// Agentic AI System
+model AgentConversation {
+  id         String   @id @default(uuid())
+  userId     String
+  projectId  String?
+
+  agentType  String   // "world-building", "character-development", "story-planning"
+  title      String?  // Optional conversation title
+  status     String   @default("active")  // "active", "archived", "completed"
+
+  // Agent Configuration
+  temperature  Float   @default(0.7)
+  systemPrompt String? // Custom system prompt for this conversation
+
+  // Metadata
+  metadata   String?  // JSON for agent-specific data
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages   AgentMessage[]
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([agentType])
+}
+
+model AgentMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+
+  role           String   // "user", "assistant", "system"
+  content        String   // The message content
+
+  // Tool/Action tracking
+  toolCalls      String?  // JSON array of tool calls made
+  toolResults    String?  // JSON array of tool results
+
+  createdAt      DateTime @default(now())
+
+  conversation   AgentConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+// Agent persistent memory - facts learned about the project
+model AgentMemory {
+  id          String   @id @default(uuid())
+  userId      String
+  projectId   String
+  agentType   String   // Which agent type this memory belongs to
+
+  category    String   // "world-fact", "character-insight", "plot-point", "timeline-event", "rule", "theme"
+  key         String   // Searchable key (e.g., "magic-system-rules", "character-arc-protagonist")
+  content     String   // The actual memory/fact
+
+  // References to related entities
+  characterId String?  // If related to a specific character
+  lorebookId  String?  // If this should sync with lorebook
+
+  // Memory management
+  importance  Int      @default(5)  // 1-10, higher = more important
+  verified    Boolean  @default(false)  // User confirmed this fact
+  lastUsed    DateTime?  // Track relevance
+  useCount    Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId, projectId, agentType])
+  @@index([category])
+  @@index([key])
 }
