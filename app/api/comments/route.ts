@@ -38,9 +38,8 @@ export async function POST(request: NextRequest) {
         sceneId,
         userId: session.user.id,
         content,
-        commentId: commentId || null,
-        startPos: startPos || null,
-        endPos: endPos || null,
+        startPos: startPos || 0,
+        endPos: endPos || 0,
       },
       include: {
         user: {
@@ -48,7 +47,6 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            image: true,
           },
         },
       },
@@ -99,7 +97,6 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            image: true,
           },
         },
         replies: {
@@ -109,7 +106,6 @@ export async function GET(request: NextRequest) {
                 id: true,
                 name: true,
                 email: true,
-                image: true,
               },
             },
           },

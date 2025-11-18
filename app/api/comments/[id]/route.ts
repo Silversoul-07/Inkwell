@@ -39,7 +39,7 @@ export async function PATCH(
       where: { id },
       data: {
         content: body.content,
-        isResolved: body.isResolved,
+        ...(body.status && { status: body.status }),
       },
       include: {
         user: {
@@ -47,7 +47,6 @@ export async function PATCH(
             id: true,
             name: true,
             email: true,
-            image: true,
           },
         },
       },
