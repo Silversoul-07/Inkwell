@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,7 @@ interface ModelDialogData {
 }
 
 export function AIModelsManager() {
+  const { toast } = useToast()
   const [models, setModels] = useState<AIModel[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showDialog, setShowDialog] = useState(false)
@@ -70,9 +72,20 @@ export function AIModelsManager() {
       if (response.ok) {
         const data = await response.json()
         setModels(data)
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load AI models',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Failed to load models:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load AI models',
+        variant: 'destructive',
+      })
     } finally {
       setIsLoading(false)
     }
@@ -125,12 +138,28 @@ export function AIModelsManager() {
         body: JSON.stringify(formData),
       })
 
-      if (!response.ok) throw new Error('Failed to save model')
-
-      await loadModels()
-      handleCloseDialog()
+      if (response.ok) {
+        await loadModels()
+        handleCloseDialog()
+        toast({
+          title: 'Success',
+          description: `AI model ${editingModel ? 'updated' : 'created'} successfully`,
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to save AI model',
+          variant: 'destructive',
+        })
+      }
     } catch (error) {
       console.error('Failed to save model:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to save AI model',
+        variant: 'destructive',
+      })
     } finally {
       setIsSaving(false)
     }
@@ -144,11 +173,27 @@ export function AIModelsManager() {
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to delete model')
-
-      await loadModels()
+      if (response.ok) {
+        await loadModels()
+        toast({
+          title: 'Success',
+          description: 'AI model deleted successfully',
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete AI model',
+          variant: 'destructive',
+        })
+      }
     } catch (error) {
       console.error('Failed to delete model:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to delete AI model',
+        variant: 'destructive',
+      })
     }
   }
 

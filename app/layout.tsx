@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AuthSessionProvider } from '@/components/providers/session-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
+import { Toaster } from '@/components/ui/toaster'
 
 export const metadata: Metadata = {
   title: 'Inkwell - AI-Assisted Story Writing',
@@ -19,6 +20,7 @@ export default function RootLayout({
         <AuthSessionProvider>
           <ThemeProvider>
             {children}
+            <Toaster />
           </ThemeProvider>
         </AuthSessionProvider>
       </body>

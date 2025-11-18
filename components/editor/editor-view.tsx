@@ -8,6 +8,8 @@ import { EditorToolbar } from './editor-toolbar'
 import { AISidebar } from './ai-sidebar'
 import { DebugSidebar } from './debug-sidebar'
 import { PomodoroTimer } from './pomodoro-timer'
+import { AgentDialog } from '@/components/dialogs/agent-dialog'
+import { SettingsDialog } from '@/components/dialogs/settings-dialog-full'
 
 interface Scene {
   id: string
@@ -55,6 +57,8 @@ export function EditorView({ project, settings }: EditorViewProps) {
   const [debugSidebarOpen, setDebugSidebarOpen] = useState(false)
   const [pomodoroOpen, setPomodoroOpen] = useState(false)
   const [zenMode, setZenMode] = useState(false)
+  const [agentDialogOpen, setAgentDialogOpen] = useState(false)
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
   const [sceneContext, setSceneContext] = useState('')
   const [selectedText, setSelectedText] = useState('')
 
@@ -95,6 +99,10 @@ export function EditorView({ project, settings }: EditorViewProps) {
           setZenMode={setZenMode}
           pomodoroOpen={pomodoroOpen}
           setPomodoroOpen={setPomodoroOpen}
+          agentDialogOpen={agentDialogOpen}
+          setAgentDialogOpen={setAgentDialogOpen}
+          settingsDialogOpen={settingsDialogOpen}
+          setSettingsDialogOpen={setSettingsDialogOpen}
         />
       )}
 
@@ -108,7 +116,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
           />
         )}
 
-        <div className="flex-1 overflow-auto relative">
+        <div className="flex-1 min-w-0 overflow-auto relative">
           {selectedScene && (
             <TiptapEditorNovelAI
               key={selectedScene.id}
@@ -148,6 +156,20 @@ export function EditorView({ project, settings }: EditorViewProps) {
 
       {/* Pomodoro Timer - Floating */}
       {pomodoroOpen && <PomodoroTimer projectId={project.id} />}
+
+      {/* Agent Dialog - Floating */}
+      <AgentDialog
+        open={agentDialogOpen}
+        onOpenChange={setAgentDialogOpen}
+        currentProjectId={project.id}
+        projects={[{ id: project.id, title: project.title }]}
+      />
+
+      {/* Settings Dialog - Floating */}
+      <SettingsDialog
+        open={settingsDialogOpen}
+        onOpenChange={setSettingsDialogOpen}
+      />
     </div>
   )
 }

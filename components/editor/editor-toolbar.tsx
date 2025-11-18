@@ -17,6 +17,7 @@ import {
   Sparkles,
   Bug,
   Timer,
+  Bot,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeSelector } from '@/components/ui/theme-selector'
@@ -29,7 +30,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
-import { SettingsDialogWrapper } from '@/components/dialogs/settings-dialog-wrapper'
 
 interface Project {
   id: string
@@ -48,7 +48,13 @@ interface EditorToolbarProps {
   setZenMode: (zen: boolean) => void
   pomodoroOpen: boolean
   setPomodoroOpen: (open: boolean) => void
+  agentDialogOpen: boolean
+  setAgentDialogOpen: (open: boolean) => void
+  settingsDialogOpen: boolean
+  setSettingsDialogOpen: (open: boolean) => void
 }
+
+const isClient = typeof window !== 'undefined'
 
 export function EditorToolbar({
   project,
@@ -62,8 +68,11 @@ export function EditorToolbar({
   setZenMode,
   pomodoroOpen,
   setPomodoroOpen,
+  agentDialogOpen,
+  setAgentDialogOpen,
+  settingsDialogOpen,
+  setSettingsDialogOpen,
 }: EditorToolbarProps) {
-  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleExport = async (format: 'txt' | 'md' | 'docx') => {
     try {
@@ -160,6 +169,10 @@ export function EditorToolbar({
                 Project Tools
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setAgentDialogOpen(true)}>
+                <Bot className="h-4 w-4 mr-2" />
+                AI Agents
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/analytics/${project.id}`} className="cursor-pointer">
                   <BarChart3 className="h-4 w-4 mr-2" />
@@ -263,15 +276,12 @@ export function EditorToolbar({
           variant="ghost"
           size="icon"
           className="h-9 w-9"
+          onClick={() => setSettingsDialogOpen(true)}
           title="Settings"
-          onClick={() => setSettingsOpen(true)}
         >
           <Settings className="h-4 w-4" />
         </Button>
       </div>
-
-      {/* Settings Dialog */}
-      <SettingsDialogWrapper open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }
