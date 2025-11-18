@@ -115,123 +115,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Tabs defaultValue="ai" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="ai">AI Settings</TabsTrigger>
-          <TabsTrigger value="editor">Editor Preferences</TabsTrigger>
-        </TabsList>
 
-        <TabsContent value="ai" className="space-y-6">
-          <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-            <h3 className="text-lg font-semibold">API Configuration</h3>
-            <p className="text-sm text-muted-foreground">
-              Configure your AI provider. Inkwell uses OpenAI-compatible API format and supports:
-            </p>
-            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mb-2">
-              <li><strong>OpenAI:</strong> https://api.openai.com/v1</li>
-              <li><strong>Groq:</strong> https://api.groq.com/openai/v1</li>
-              <li><strong>Together AI:</strong> https://api.together.xyz/v1</li>
-              <li><strong>OpenRouter:</strong> https://openrouter.ai/api/v1</li>
-              <li><strong>Local (Ollama/LM Studio):</strong> http://localhost:1234/v1</li>
-              <li>Any other OpenAI-compatible API</li>
-            </ul>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="aiProvider">Provider (optional label)</Label>
-                <Input
-                  id="aiProvider"
-                  value={aiProvider}
-                  onChange={(e) => setAiProvider(e.target.value)}
-                  placeholder="openai, groq, together, ollama, etc."
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  This is just a label for your reference
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="aiEndpoint">API Endpoint</Label>
-                <Input
-                  id="aiEndpoint"
-                  value={aiEndpoint}
-                  onChange={(e) => setAiEndpoint(e.target.value)}
-                  placeholder="https://api.openai.com/v1"
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Must be an OpenAI-compatible endpoint (ends with /v1)
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="aiApiKey">API Key</Label>
-                <Input
-                  id="aiApiKey"
-                  type="password"
-                  value={aiApiKey}
-                  onChange={(e) => setAiApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="aiModel">Model Name</Label>
-                <Input
-                  id="aiModel"
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  placeholder="gpt-4, gpt-3.5-turbo, llama-3.1-70b-versatile, etc."
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Model name depends on your provider (e.g., gpt-4 for OpenAI, llama3-70b for Groq)
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="aiTemperature">Temperature</Label>
-                  <Input
-                    id="aiTemperature"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="2"
-                    value={aiTemperature}
-                    onChange={(e) => setAiTemperature(parseFloat(e.target.value))}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="aiMaxTokens">Max Tokens</Label>
-                  <Input
-                    id="aiMaxTokens"
-                    type="number"
-                    value={aiMaxTokens}
-                    onChange={(e) => setAiMaxTokens(parseInt(e.target.value))}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleTestConnection}
-                disabled={testingConnection || loading}
-              >
-                {testingConnection && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Test Connection
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="editor" className="space-y-6">
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <h3 className="text-lg font-semibold">Editor Appearance</h3>
 
@@ -307,9 +191,6 @@ export function SettingsForm({ settings }: SettingsFormProps) {
               </div>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
-
       <div className="mt-6 flex justify-end">
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
