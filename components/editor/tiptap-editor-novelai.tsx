@@ -4,15 +4,12 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Loader2, X } from 'lucide-react'
-import { AIToolbarBottom } from './ai-toolbar-bottom'
 import { AlternativesDialog } from './alternatives-dialog'
-import { WritingModeSelector } from './writing-mode-selector'
-import { EditorBottomToolbar } from './editor-bottom-toolbar'
-import { CommentDialog } from './comment-dialog'
-import { CommentTooltip } from './comment-tooltip'
+import { EditorContextMenu } from './editor-context-menu'
 import { Button } from '@/components/ui/button'
 import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 import { Comment } from '@/lib/tiptap/comment-extension'
+import { EditorBottomToolbar } from './editor-bottom-toolbar'
 
 interface Scene {
   id: string
@@ -73,16 +70,6 @@ export function TiptapEditorNovelAI({
 
   // Writing mode state
   const [activeWritingMode, setActiveWritingMode] = useState<any>(null)
-
-  // Comment system state
-  const [showCommentDialog, setShowCommentDialog] = useState(false)
-  const [commentDialogMode, setCommentDialogMode] = useState<'create' | 'edit'>('create')
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
-  const [editingCommentContent, setEditingCommentContent] = useState('')
-  const [commentTooltip, setCommentTooltip] = useState<{
-    commentId: string
-    position: { x: number; y: number }
-  } | null>(null)
   const [characterCount, setCharacterCount] = useState(0)
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -477,129 +464,6 @@ export function TiptapEditorNovelAI({
     editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, text).run()
   }
 
-  // Comment system handlers
-  const handleCommentButtonClick = () => {
-    setCommentDialogMode('create')
-    setShowCommentDialog(true)
-  }
-
-  const handleAddComment = async (content: string) => {
-    if (!editor || !hasSelection) return
-
-    const { from, to } = editor.state.selection
-
-    try {
-      // Create comment in database
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sceneId: scene.id,
-          content,
-          startPos: from,
-          endPos: to,
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to create comment')
-
-      const comment = await response.json()
-
-      // Apply comment mark to selected text
-      editor.chain().focus().setComment(comment.id).run()
-    } catch (error) {
-      console.error('Failed to add comment:', error)
-    }
-  }
-
-  const handleEditComment = async (commentId: string, content: string) => {
-    try {
-      const response = await fetch(`/api/comments/${commentId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      })
-
-      if (!response.ok) throw new Error('Failed to update comment')
-
-      setCommentTooltip(null)
-      setShowCommentDialog(false)
-    } catch (error) {
-      console.error('Failed to edit comment:', error)
-    }
-  }
-
-  const handleDeleteComment = async (commentId: string) => {
-    if (!editor) return
-
-    try {
-      const response = await fetch(`/api/comments/${commentId}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) throw new Error('Failed to delete comment')
-
-      // Remove comment mark from editor
-      // We need to find all marks with this commentId and remove them
-      const { doc } = editor.state
-      const tr = editor.state.tr
-
-      doc.descendants((node, pos) => {
-        if (node.marks) {
-          node.marks.forEach((mark) => {
-            if (mark.type.name === 'comment' && mark.attrs.commentId === commentId) {
-              tr.removeMark(pos, pos + node.nodeSize, mark.type)
-            }
-          })
-        }
-      })
-
-      editor.view.dispatch(tr)
-      setCommentTooltip(null)
-    } catch (error) {
-      console.error('Failed to delete comment:', error)
-    }
-  }
-
-  const openEditCommentDialog = (commentId: string, content: string) => {
-    setEditingCommentId(commentId)
-    setEditingCommentContent(content)
-    setCommentDialogMode('edit')
-    setShowCommentDialog(true)
-    setCommentTooltip(null)
-  }
-
-  // Listen for hover events on commented text
-  useEffect(() => {
-    if (!editorRef.current) return
-
-    const handleMouseMove = (e: Event) => {
-      const mouseEvent = e as unknown as MouseEvent
-      const target = mouseEvent.target as HTMLElement
-
-      // Check if hovering over a comment mark
-      if (target.tagName === 'MARK' && target.hasAttribute('data-comment-id')) {
-        const commentId = target.getAttribute('data-comment-id')
-        if (!commentId) return
-
-        const rect = target.getBoundingClientRect()
-        setCommentTooltip({
-          commentId,
-          position: {
-            x: rect.left,
-            y: rect.bottom + 8,
-          },
-        })
-      }
-    }
-
-    const editorElement = editorRef.current.querySelector('.ProseMirror')
-    if (editorElement) {
-      editorElement.addEventListener('mousemove', handleMouseMove)
-      return () => editorElement.removeEventListener('mousemove', handleMouseMove)
-    }
-  }, [editor])
-
   const dismissAIHighlight = () => {
     setAiGeneratedRange(null)
   }
@@ -613,49 +477,35 @@ export function TiptapEditorNovelAI({
 
   return (
     <div ref={editorRef} className={`h-full flex flex-col relative ${zenMode ? '' : ''}`}>
-      <div className={`flex-1 flex flex-col ${zenMode ? 'p-8' : 'p-6'}`}>
-        {/* Editor */}
-        <div
-          className="flex-1 overflow-auto pb-24"
-          style={{
-            fontSize: `${fontSize}px`,
-            lineHeight: lineHeight.toString(),
-          }}
-        >
+      <EditorContextMenu
+        hasSelection={hasSelection}
+        isGenerating={isGenerating}
+        onContinue={handleContinue}
+        onAlternative={handleGenerateAlternatives}
+        onFixGrammar={handleFixGrammar}
+        onRephrase={handleRephrase}
+        onShorten={handleShorten}
+      >
+        <div className={`flex-1 flex flex-col ${zenMode ? 'p-8' : 'p-6'}`}>
+          {/* Editor */}
           <div
-            className={`mx-auto font-writer-serif w-full px-8 md:px-12 lg:px-16`}
-            style={{ 
-              maxWidth: zenMode ? `${maxWidth}rem` : `${maxWidth * 1.5}rem`,
+            className="flex-1 overflow-auto"
+            style={{
+              fontSize: `${fontSize}px`,
+              lineHeight: lineHeight.toString(),
             }}
           >
-            <EditorContent editor={editor} />
+            <div
+              className={`mx-auto font-writer-serif w-full px-8 md:px-12 lg:px-16`}
+              style={{
+                maxWidth: zenMode ? `${maxWidth}rem` : `${maxWidth * 1.5}rem`,
+              }}
+            >
+              <EditorContent editor={editor} />
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Bottom AI Toolbar - NovelAI Style */}
-      {!zenMode && (
-        <AIToolbarBottom
-          onContinue={handleContinue}
-          onRephrase={handleRephrase}
-          onExpand={handleExpand}
-          onShorten={handleShorten}
-          onFixGrammar={handleFixGrammar}
-          onGenerateAlternatives={handleGenerateAlternatives}
-          onCommentClick={handleCommentButtonClick}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          hasSelection={hasSelection}
-          isGenerating={isGenerating}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          useCustomTemplates={useCustomTemplates}
-          templatesLoaded={Object.keys(selectedTemplates).length}
-          projectId={projectId}
-          activeModeId={activeWritingMode?.id}
-          onModeChange={setActiveWritingMode}
-        />
-      )}
+      </EditorContextMenu>
 
       {/* Alternatives Dialog */}
       <AlternativesDialog
@@ -664,43 +514,13 @@ export function TiptapEditorNovelAI({
         alternatives={alternatives}
         onSelect={handleSelectAlternative}
       />
-
-      {/* Bottom Editor Toolbar */}
-      {!zenMode && (
-        <EditorBottomToolbar
+            <EditorBottomToolbar
           wordCount={wordCount}
           characterCount={characterCount}
           lastSaved={lastSaved}
           chapterTitle={chapterTitle}
           sceneTitle={sceneTitle}
         />
-      )}
-
-      {/* Comment Dialog */}
-      <CommentDialog
-        open={showCommentDialog}
-        onOpenChange={setShowCommentDialog}
-        selectedText={selectedText}
-        onSubmit={commentDialogMode === 'create' ? handleAddComment : (content) => {
-          if (editingCommentId) {
-            return handleEditComment(editingCommentId, content)
-          }
-          return Promise.resolve()
-        }}
-        initialContent={commentDialogMode === 'edit' ? editingCommentContent : ''}
-        mode={commentDialogMode}
-      />
-
-      {/* Comment Tooltip */}
-      {commentTooltip && (
-        <CommentTooltip
-          commentId={commentTooltip.commentId}
-          position={commentTooltip.position}
-          onEdit={openEditCommentDialog}
-          onDelete={handleDeleteComment}
-          onClose={() => setCommentTooltip(null)}
-        />
-      )}
     </div>
   )
 }
