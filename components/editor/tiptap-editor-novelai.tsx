@@ -9,6 +9,7 @@ import { EditorContextMenu } from './editor-context-menu'
 import { Button } from '@/components/ui/button'
 import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 import { Comment } from '@/lib/tiptap/comment-extension'
+import { EditorBottomToolbar } from './editor-bottom-toolbar'
 
 interface Scene {
   id: string
@@ -513,6 +514,13 @@ export function TiptapEditorNovelAI({
         alternatives={alternatives}
         onSelect={handleSelectAlternative}
       />
+            <EditorBottomToolbar
+          wordCount={wordCount}
+          characterCount={characterCount}
+          lastSaved={lastSaved}
+          chapterTitle={chapterTitle}
+          sceneTitle={sceneTitle}
+        />
     </div>
   )
 }

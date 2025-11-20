@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { EditorSidebarNew } from './editor-sidebar-new'
+import { EditorSidebarNew } from './editor-sidebar'
 import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
 import { EditorToolbar } from './editor-toolbar'
 import { AISidebar } from './ai-sidebar'
