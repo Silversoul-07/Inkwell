@@ -14,7 +14,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { title } = await request.json()
+    const body = await request.json()
+    const { title, content, wordCount } = body
 
     // Verify ownership
     const chapter = await prisma.chapter.findUnique({
@@ -28,10 +29,27 @@ export async function PATCH(
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
+    // Build update data object
+    const updateData: {
+      title?: string
+      content?: string
+      wordCount?: number
+    } = {}
+
+    if (title !== undefined) updateData.title = title
+    if (content !== undefined) updateData.content = content
+    if (wordCount !== undefined) updateData.wordCount = wordCount
+
     // Update chapter
     const updated = await prisma.chapter.update({
       where: { id },
-      data: { title },
+      data: updateData,
+    })
+
+    // Update project's updatedAt
+    await prisma.project.update({
+      where: { id: chapter.projectId },
+      data: { updatedAt: new Date() },
     })
 
     return NextResponse.json(updated)
