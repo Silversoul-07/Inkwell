@@ -34,20 +34,12 @@ export async function POST(request: NextRequest) {
     // Calculate next order
     const nextOrder = (project.chapters[0]?.order || 0) + 1
 
-    // Create chapter with a default scene
+    // Create chapter without any scenes (scenes are now optional)
     const chapter = await prisma.chapter.create({
       data: {
         title: title || `Chapter ${nextOrder}`,
         order: nextOrder,
         projectId,
-        scenes: {
-          create: {
-            title: 'Scene 1',
-            content: '',
-            wordCount: 0,
-            order: 1,
-          },
-        },
       },
       include: {
         scenes: true,

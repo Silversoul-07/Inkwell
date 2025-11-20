@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Search,
   Plus,
@@ -18,6 +19,8 @@ import {
   Sparkles,
   FileEdit,
   Filter,
+  Edit,
+  ExternalLink,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +31,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import ReactMarkdown from 'react-markdown'
 
 interface Scene {
   id: string
@@ -50,6 +63,27 @@ interface Project {
   chapters: Chapter[]
 }
 
+interface Character {
+  id: string
+  name: string
+  role: string | null
+  description: string | null
+}
+
+interface LorebookEntry {
+  id: string
+  key: string
+  value: string
+  category: string | null
+  useCount: number
+}
+
+interface Note {
+  id: string
+  content: string
+  sceneId: string
+}
+
 interface EditorSidebarNewProps {
   project: Project
   selectedSceneId: string
@@ -65,6 +99,7 @@ export function EditorSidebarNew({
   onSelectScene,
   onRefresh,
 }: EditorSidebarNewProps) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedSections, setExpandedSections] = useState<Set<SectionType>>(
     new Set(['chapters', 'characters', 'lorebook', 'notes'])
@@ -73,12 +108,59 @@ export function EditorSidebarNew({
     new Set(project.chapters.map((c) => c.id))
   )
   const [expandedLorebookCategories, setExpandedLorebookCategories] = useState<Set<string>>(
-    new Set(['locations', 'magic', 'story-planning'])
+    new Set(['Locations', 'Magic', 'Characters', 'Other'])
   )
   const [pinnedCharacters, setPinnedCharacters] = useState<Set<string>>(new Set())
   const [isCreating, setIsCreating] = useState(false)
   const [showFilterMenu, setShowFilterMenu] = useState(false)
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
+
+  // Rename dialog state
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+  const [chapterToRename, setChapterToRename] = useState<Chapter | null>(null)
+  const [newChapterTitle, setNewChapterTitle] = useState('')
+
+  // Real data from APIs
+  const [characters, setCharacters] = useState<Character[]>([])
+  const [lorebookEntries, setLorebookEntries] = useState<LorebookEntry[]>([])
+  const [notes, setNotes] = useState<Note[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+
+  // Fetch real data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch characters
+        const charsRes = await fetch(`/api/characters?projectId=${project.id}`)
+        if (charsRes.ok) {
+          const charsData = await charsRes.json()
+          setCharacters(charsData)
+        }
+
+        // Fetch lorebook
+        const loreRes = await fetch(`/api/lorebook?projectId=${project.id}`)
+        if (loreRes.ok) {
+          const loreData = await loreRes.json()
+          setLorebookEntries(loreData)
+        }
+
+        // Fetch notes (comments for the selected scene)
+        if (selectedSceneId) {
+          const notesRes = await fetch(`/api/comments?sceneId=${selectedSceneId}`)
+          if (notesRes.ok) {
+            const notesData = await notesRes.json()
+            setNotes(notesData)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching sidebar data:', error)
+      } finally {
+        setLoadingData(false)
+      }
+    }
+
+    fetchData()
+  }, [project.id, selectedSceneId])
 
   const toggleSection = (section: SectionType) => {
     const newExpanded = new Set(expandedSections)
@@ -184,6 +266,30 @@ export function EditorSidebarNew({
     }
   }
 
+  const handleRenameChapter = async () => {
+    if (!chapterToRename || !newChapterTitle.trim()) return
+
+    try {
+      const response = await fetch(`/api/chapters/${chapterToRename.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newChapterTitle }),
+      })
+
+      if (response.ok) {
+        setRenameDialogOpen(false)
+        setChapterToRename(null)
+        setNewChapterTitle('')
+        onRefresh()
+      } else {
+        alert('Failed to rename chapter')
+      }
+    } catch (error) {
+      console.error('Error renaming chapter:', error)
+      alert('Error renaming chapter')
+    }
+  }
+
   const handleDeleteChapter = async (chapterId: string) => {
     if (
       !confirm(
@@ -228,47 +334,37 @@ export function EditorSidebarNew({
     }
   }
 
-  // Placeholder data for characters, locations, notes
-  const characters = [
-    { id: '1', name: 'Marcus', mentions: 23, pinned: true },
-    { id: '2', name: 'Elena', mentions: 8, pinned: true },
-    { id: '3', name: 'The Archivist', mentions: 0, pinned: false },
-  ]
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('Are you sure you want to delete this note?')) return
 
-  const lorebookEntries = {
-    locations: [
-      { id: '1', name: 'The Library', mentions: 15 },
-      { id: '2', name: 'Shadow Market', mentions: 7 },
-      { id: '3', name: 'Crystal Caverns', mentions: 3 },
-      { id: '4', name: 'Azure Tower', mentions: 2 },
-      { id: '5', name: 'Merchant Quarter', mentions: 1 },
-      { id: '6', name: 'Royal Palace', mentions: 5 },
-      { id: '7', name: 'Abandoned Temple', mentions: 4 },
-      { id: '8', name: 'Harbor District', mentions: 6 },
-    ],
-    magic: [
-      { id: '1', name: 'Arcane Arts', mentions: 12 },
-      { id: '2', name: 'Shadow Weaving', mentions: 8 },
-      { id: '3', name: 'Time Manipulation', mentions: 5 },
-    ],
-    storyPlanning: [
-      { id: '1', name: 'Act I: Discovery', mentions: 0 },
-      { id: '2', name: 'Plot Twist Ideas', mentions: 0 },
-      { id: '3', name: 'Character Arcs', mentions: 0 },
-      { id: '4', name: 'World Building Notes', mentions: 0 },
-      { id: '5', name: 'Research: Medieval Warfare', mentions: 0 },
-    ],
+    try {
+      const response = await fetch(`/api/comments/${noteId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setNotes(notes.filter((n) => n.id !== noteId))
+      } else {
+        alert('Failed to delete note')
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error)
+      alert('Error deleting note')
+    }
   }
 
-  const totalLorebookCount = 
-    lorebookEntries.locations.length + 
-    lorebookEntries.magic.length + 
-    lorebookEntries.storyPlanning.length
-
-  const notes = [
-    { id: '1', title: 'Plot Ideas' },
-    { id: '2', title: 'Research Notes' },
-  ]
+  // Group lorebook entries by category
+  const lorebookByCategory = useMemo(() => {
+    const grouped: Record<string, LorebookEntry[]> = {}
+    lorebookEntries.forEach((entry) => {
+      const category = entry.category || 'Other'
+      if (!grouped[category]) {
+        grouped[category] = []
+      }
+      grouped[category].push(entry)
+    })
+    return grouped
+  }, [lorebookEntries])
 
   return (
     <div className="w-[280px] border-r border-border bg-card flex flex-col overflow-hidden">
@@ -296,7 +392,7 @@ export function EditorSidebarNew({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => {
                     const newFilters = new Set(activeFilters)
                     if (newFilters.has('chapters')) {
@@ -311,7 +407,7 @@ export function EditorSidebarNew({
                   Chapters
                   {activeFilters.has('chapters') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => {
                     const newFilters = new Set(activeFilters)
                     if (newFilters.has('characters')) {
@@ -326,7 +422,7 @@ export function EditorSidebarNew({
                   Characters
                   {activeFilters.has('characters') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => {
                     const newFilters = new Set(activeFilters)
                     if (newFilters.has('lorebook')) {
@@ -341,7 +437,7 @@ export function EditorSidebarNew({
                   Lorebook
                   {activeFilters.has('lorebook') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => {
                     const newFilters = new Set(activeFilters)
                     if (newFilters.has('notes')) {
@@ -359,7 +455,7 @@ export function EditorSidebarNew({
                 {activeFilters.size > 0 && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => setActiveFilters(new Set())}
                       className="text-muted-foreground"
                     >
@@ -383,11 +479,11 @@ export function EditorSidebarNew({
                 <FileText className="h-4 w-4 mr-2" />
                 New Chapter
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => router.push(`/characters/${project.id}`)}>
                 <Users className="h-4 w-4 mr-2" />
                 New Character
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => router.push(`/lorebook/${project.id}`)}>
                 <MapPin className="h-4 w-4 mr-2" />
                 New Location
               </DropdownMenuItem>
@@ -423,13 +519,25 @@ export function EditorSidebarNew({
                 <div key={chapter.id} className="space-y-0.5">
                   <div className="w-full flex items-center gap-1 group">
                     <button
-                      onClick={() => toggleChapter(chapter.id)}
+                      onClick={() => {
+                        // If chapter has no scenes, select the chapter itself
+                        if (chapter.scenes.length === 0) {
+                          // Just expand/collapse
+                          toggleChapter(chapter.id)
+                        } else {
+                          toggleChapter(chapter.id)
+                        }
+                      }}
                       className="flex-1 flex items-center gap-2 px-2 py-1 text-sm hover:bg-accent/50 rounded-md min-w-0"
                     >
-                      {expandedChapters.has(chapter.id) ? (
-                        <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+                      {chapter.scenes.length > 0 ? (
+                        expandedChapters.has(chapter.id) ? (
+                          <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+                        )
                       ) : (
-                        <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+                        <div className="h-3.5 w-3.5 flex-shrink-0" />
                       )}
                       <span className="flex-1 text-left font-medium truncate">
                         {chapter.title}
@@ -449,7 +557,18 @@ export function EditorSidebarNew({
                         <DropdownMenuItem
                           onClick={() => handleCreateScene(chapter.id)}
                         >
+                          <Plus className="h-3 w-3 mr-2" />
                           Add Scene
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setChapterToRename(chapter)
+                            setNewChapterTitle(chapter.title)
+                            setRenameDialogOpen(true)
+                          }}
+                        >
+                          <Edit className="h-3 w-3 mr-2" />
+                          Rename
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -463,7 +582,7 @@ export function EditorSidebarNew({
                     </DropdownMenu>
                   </div>
 
-                  {expandedChapters.has(chapter.id) && (
+                  {expandedChapters.has(chapter.id) && chapter.scenes.length > 0 && (
                     <div className="ml-5 space-y-0.5">
                       {chapter.scenes.map((scene, index) => (
                         <div key={scene.id} className="group flex items-center gap-1">
@@ -502,6 +621,11 @@ export function EditorSidebarNew({
                       ))}
                     </div>
                   )}
+                  {expandedChapters.has(chapter.id) && chapter.scenes.length === 0 && (
+                    <div className="ml-5 text-xs text-muted-foreground px-2 py-1">
+                      No scenes. Right-click chapter to add one.
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -509,239 +633,250 @@ export function EditorSidebarNew({
         </div>
 
         {/* Characters Section */}
-        <div className="space-y-1">
-          <button
-            onClick={() => toggleSection('characters')}
-            className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-          >
-            {expandedSections.has('characters') ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            <Users className="h-4 w-4" />
-            <span className="flex-1 text-left">Characters ({characters.length})</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={(e) => {
-                e.stopPropagation()
-                // Open full-screen view
-              }}
+        {!activeFilters.has('characters') && (
+          <div className="space-y-1">
+            <button
+              onClick={() => toggleSection('characters')}
+              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
             >
-              <Maximize2 className="h-3.5 w-3.5" />
-            </Button>
-          </button>
+              {expandedSections.has('characters') ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <Users className="h-4 w-4" />
+              <span className="flex-1 text-left">Characters ({characters.length})</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(`/characters/${project.id}`)
+                }}
+                title="Open Characters page"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            </button>
 
-          {expandedSections.has('characters') && (
-            <div className="ml-2 space-y-0.5">
-              {characters.slice(0, 7).map((character) => (
-                <div
-                  key={character.id}
-                  className="group flex items-center gap-1 px-2 py-1 hover:bg-accent/50 rounded-md"
-                >
+            {expandedSections.has('characters') && (
+              <div className="ml-2 space-y-0.5">
+                {characters.length === 0 ? (
+                  <div className="text-xs text-muted-foreground px-2 py-1">
+                    No characters yet
+                  </div>
+                ) : (
+                  characters.slice(0, 7).map((character) => (
+                    <div
+                      key={character.id}
+                      className="group flex items-center gap-1 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
+                      onClick={() => router.push(`/characters/${project.id}`)}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          togglePinCharacter(character.id)
+                        }}
+                        className="flex-shrink-0"
+                      >
+                        <Star
+                          className={`h-3.5 w-3.5 ${
+                            pinnedCharacters.has(character.id)
+                              ? 'fill-yellow-500 text-yellow-500'
+                              : 'text-muted-foreground'
+                          }`}
+                        />
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm truncate">{character.name}</div>
+                        {character.role && (
+                          <div className="text-xs text-muted-foreground truncate">
+                            {character.role}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+                {characters.length > 7 && (
                   <button
-                    onClick={() => togglePinCharacter(character.id)}
-                    className="flex-shrink-0"
+                    className="w-full text-left px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => router.push(`/characters/${project.id}`)}
                   >
-                    <Star
-                      className={`h-3.5 w-3.5 ${
-                        character.pinned || pinnedCharacters.has(character.id)
-                          ? 'fill-yellow-500 text-yellow-500'
-                          : 'text-muted-foreground'
-                      }`}
-                    />
+                    ... and {characters.length - 7} more
                   </button>
-                  <span className="flex-1 text-sm truncate">{character.name}</span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Lorebook Section */}
+        {!activeFilters.has('lorebook') && (
+          <div className="space-y-1">
+            <button
+              onClick={() => toggleSection('lorebook')}
+              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
+            >
+              {expandedSections.has('lorebook') ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <Book className="h-4 w-4" />
+              <span className="flex-1 text-left">Lorebook ({lorebookEntries.length})</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(`/lorebook/${project.id}`)
+                }}
+                title="Open Lorebook page"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            </button>
+
+            {expandedSections.has('lorebook') && (
+              <div className="ml-2 space-y-2">
+                {lorebookEntries.length === 0 ? (
+                  <div className="text-xs text-muted-foreground px-2 py-1">
+                    No lorebook entries yet
+                  </div>
+                ) : (
+                  Object.entries(lorebookByCategory).map(([category, entries]) => (
+                    <div key={category} className="space-y-0.5">
+                      <button
+                        onClick={() => toggleLorebookCategory(category)}
+                        className="w-full flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md text-sm"
+                      >
+                        {expandedLorebookCategories.has(category) ? (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        )}
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span className="flex-1 text-left">{category} ({entries.length})</span>
+                      </button>
+                      {expandedLorebookCategories.has(category) && (
+                        <div className="ml-5 space-y-0.5">
+                          {entries.slice(0, 5).map((entry) => (
+                            <div
+                              key={entry.id}
+                              className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
+                              onClick={() => router.push(`/lorebook/${project.id}`)}
+                            >
+                              <span className="flex-1 text-xs truncate">{entry.key}</span>
+                              <span className="text-xs text-muted-foreground flex-shrink-0">
+                                {entry.useCount}
+                              </span>
+                            </div>
+                          ))}
+                          {entries.length > 5 && (
+                            <button
+                              className="w-full text-left px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                              onClick={() => router.push(`/lorebook/${project.id}`)}
+                            >
+                              ... and {entries.length - 5} more
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Notes Section */}
+        {!activeFilters.has('notes') && (
+          <div className="space-y-1">
+            <button
+              onClick={() => toggleSection('notes')}
+              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
+            >
+              {expandedSections.has('notes') ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <BookOpen className="h-4 w-4" />
+              <span className="flex-1 text-left">Notes ({notes.length})</span>
+            </button>
+
+            {expandedSections.has('notes') && (
+              <div className="ml-2 space-y-0.5">
+                {notes.length === 0 ? (
+                  <div className="text-xs text-muted-foreground px-2 py-1">
+                    No notes for this scene
+                  </div>
+                ) : (
+                  notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="group flex items-start gap-2 px-2 py-1 hover:bg-accent/50 rounded-md"
+                    >
+                      <div className="flex-1 text-xs prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{note.content}</ReactMarkdown>
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        onClick={() => handleDeleteNote(note.id)}
+                        title="Delete note"
                       >
-                        <MoreVertical className="h-3 w-3" />
+                        <Trash2 className="h-3 w-3 text-destructive" />
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    {character.mentions}
-                  </span>
-                </div>
-              ))}
-              {characters.length > 7 && (
-                <button className="w-full text-left px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
-                  ... and {characters.length - 7} more
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Lorebook Section */}
-        <div className="space-y-1">
-          <button
-            onClick={() => toggleSection('lorebook')}
-            className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-          >
-            {expandedSections.has('lorebook') ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
+                    </div>
+                  ))
+                )}
+              </div>
             )}
-            <Book className="h-4 w-4" />
-            <span className="flex-1 text-left">Lorebook ({totalLorebookCount})</span>
+          </div>
+        )}
+      </div>
+
+      {/* Rename Chapter Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Chapter</DialogTitle>
+            <DialogDescription>
+              Enter a new title for this chapter
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="chapter-title">Chapter Title</Label>
+            <Input
+              id="chapter-title"
+              value={newChapterTitle}
+              onChange={(e) => setNewChapterTitle(e.target.value)}
+              placeholder="Chapter title"
+            />
+          </div>
+          <DialogFooter>
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={(e) => {
-                e.stopPropagation()
-                // Open full-screen view
+              variant="outline"
+              onClick={() => {
+                setRenameDialogOpen(false)
+                setChapterToRename(null)
+                setNewChapterTitle('')
               }}
             >
-              <Maximize2 className="h-3.5 w-3.5" />
+              Cancel
             </Button>
-          </button>
-
-          {expandedSections.has('lorebook') && (
-            <div className="ml-2 space-y-2">
-              {/* Locations Category */}
-              <div className="space-y-0.5">
-                <button
-                  onClick={() => toggleLorebookCategory('locations')}
-                  className="w-full flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md text-sm"
-                >
-                  {expandedLorebookCategories.has('locations') ? (
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  )}
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span className="flex-1 text-left">Locations ({lorebookEntries.locations.length})</span>
-                </button>
-                {expandedLorebookCategories.has('locations') && (
-                  <div className="ml-5 space-y-0.5">
-                    {lorebookEntries.locations.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md"
-                      >
-                        <span className="flex-1 text-xs truncate">{entry.name}</span>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                          {entry.mentions}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Magic Category */}
-              <div className="space-y-0.5">
-                <button
-                  onClick={() => toggleLorebookCategory('magic')}
-                  className="w-full flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md text-sm"
-                >
-                  {expandedLorebookCategories.has('magic') ? (
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  )}
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span className="flex-1 text-left">Magic ({lorebookEntries.magic.length})</span>
-                </button>
-                {expandedLorebookCategories.has('magic') && (
-                  <div className="ml-5 space-y-0.5">
-                    {lorebookEntries.magic.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md"
-                      >
-                        <span className="flex-1 text-xs truncate">{entry.name}</span>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                          {entry.mentions}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Story Planning Category */}
-              <div className="space-y-0.5">
-                <button
-                  onClick={() => toggleLorebookCategory('story-planning')}
-                  className="w-full flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md text-sm"
-                >
-                  {expandedLorebookCategories.has('story-planning') ? (
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  )}
-                  <FileEdit className="h-3.5 w-3.5" />
-                  <span className="flex-1 text-left">Story Planning ({lorebookEntries.storyPlanning.length})</span>
-                </button>
-                {expandedLorebookCategories.has('story-planning') && (
-                  <div className="ml-5 space-y-0.5">
-                    {lorebookEntries.storyPlanning.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md"
-                      >
-                        <span className="flex-1 text-xs truncate">{entry.name}</span>
-                        {entry.mentions > 0 && (
-                          <span className="text-xs text-muted-foreground flex-shrink-0">
-                            {entry.mentions}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Notes Section */}
-        <div className="space-y-1">
-          <button
-            onClick={() => toggleSection('notes')}
-            className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-          >
-            {expandedSections.has('notes') ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            <BookOpen className="h-4 w-4" />
-            <span className="flex-1 text-left">Notes ({notes.length})</span>
-          </button>
-
-          {expandedSections.has('notes') && (
-            <div className="ml-2 space-y-0.5">
-              {notes.map((note) => (
-                <div
-                  key={note.id}
-                  className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md"
-                >
-                  <span className="flex-1 text-sm truncate">{note.title}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+            <Button onClick={handleRenameChapter} disabled={!newChapterTitle.trim()}>
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -266,14 +266,14 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
     )
   }
 
-  const LorebookForm = () => (
+  const renderLorebookForm = () => (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="key">Primary Key *</Label>
         <Input
           id="key"
           value={formData.key}
-          onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+          onChange={(e) => setFormData((prev) => ({ ...prev, key: e.target.value }))}
           placeholder="Main trigger word or phrase"
         />
         <p className="text-xs text-muted-foreground">
@@ -286,7 +286,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <Input
           id="keys"
           value={formData.keys}
-          onChange={(e) => setFormData({ ...formData, keys: e.target.value })}
+          onChange={(e) => setFormData((prev) => ({ ...prev, keys: e.target.value }))}
           placeholder="keyword1, keyword2, keyword3"
         />
         <p className="text-xs text-muted-foreground">
@@ -299,7 +299,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <Textarea
           id="value"
           value={formData.value}
-          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+          onChange={(e) => setFormData((prev) => ({ ...prev, value: e.target.value }))}
           placeholder="The information about this entry..."
           rows={6}
         />
@@ -310,7 +310,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           <Label htmlFor="category">Category</Label>
           <Select
             value={formData.category}
-            onValueChange={(value) => setFormData({ ...formData, category: value })}
+            onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
           >
             <SelectTrigger id="category">
               <SelectValue placeholder="Select category" />
@@ -329,7 +329,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           <Label htmlFor="triggerMode">Trigger Mode</Label>
           <Select
             value={formData.triggerMode}
-            onValueChange={(value) => setFormData({ ...formData, triggerMode: value })}
+            onValueChange={(value) => setFormData((prev) => ({ ...prev, triggerMode: value }))}
           >
             <SelectTrigger id="triggerMode">
               <SelectValue />
@@ -353,7 +353,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           max={10}
           step={1}
           value={[formData.priority]}
-          onValueChange={([value]) => setFormData({ ...formData, priority: value })}
+          onValueChange={([value]) => setFormData((prev) => ({ ...prev, priority: value }))}
         />
         <p className="text-xs text-muted-foreground">
           Higher priority entries are included first when context is limited
@@ -365,7 +365,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <Input
           id="regexPattern"
           value={formData.regexPattern}
-          onChange={(e) => setFormData({ ...formData, regexPattern: e.target.value })}
+          onChange={(e) => setFormData((prev) => ({ ...prev, regexPattern: e.target.value }))}
           placeholder="Optional regex pattern for matching"
           className="font-mono text-sm"
         />
@@ -385,7 +385,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           id="searchable"
           checked={formData.searchable}
           onCheckedChange={(checked) =>
-            setFormData({ ...formData, searchable: checked })
+            setFormData((prev) => ({ ...prev, searchable: checked }))
           }
         />
       </div>
@@ -418,7 +418,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
                 Add world-building information that auto-triggers based on context
               </DialogDescription>
             </DialogHeader>
-            <LorebookForm />
+            {renderLorebookForm()}
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                 Cancel
@@ -562,7 +562,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
               Update lorebook entry details
             </DialogDescription>
           </DialogHeader>
-          <LorebookForm />
+          {renderLorebookForm()}
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="outline"
