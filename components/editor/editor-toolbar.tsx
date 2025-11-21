@@ -167,34 +167,8 @@ export function EditorToolbar({
           </div>
         </div>
 
-        {/* Right Section - Mode Toggle & Settings */}
+        {/* Right Section - Settings & Tools */}
         <div className="flex items-center gap-1.5">
-          {/* Mode Toggle - Writing / AI Storm */}
-          <div className="flex items-center gap-1 bg-muted/50 rounded-md p-1">
-            <Button
-              variant={editorMode === "writing" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 gap-1.5 px-3"
-              onClick={() => setEditorMode("writing")}
-              title="Writing Mode"
-            >
-              <PenLine className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Writing</span>
-            </Button>
-            <Button
-              variant={editorMode === "ai-storm" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 gap-1.5 px-3"
-              onClick={() => setEditorMode("ai-storm")}
-              title="AI Storm Mode"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">AI Storm</span>
-            </Button>
-          </div>
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
           {/* Context Panel Toggle - different function based on mode */}
           <Button
             variant={contextPanelOpen ? "secondary" : "ghost"}
