@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   Home,
@@ -14,6 +15,8 @@ import {
   Sparkles,
   Bug,
   Timer,
+  Download,
+  Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeSelector } from '@/components/ui/theme-selector'
@@ -26,7 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
-import { ExportImportDialog } from './export-import-dialog'
+import { ExportDialog } from './export-dialog'
+import { ImportDialog } from './import-dialog'
 
 interface Project {
   id: string
@@ -64,140 +68,164 @@ export function EditorToolbar({
   settingsDialogOpen,
   setSettingsDialogOpen,
 }: EditorToolbarProps) {
+  const [exportOpen, setExportOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+
   return (
-    <div className="border-b border-border bg-gradient-to-b from-card to-card/80 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between shadow-sm">
-      {/* Left Section - Navigation & Project */}
-      <div className="flex items-center gap-2">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon" className="h-9 w-9" title="Back to Dashboard">
-            <Home className="h-4 w-4" />
-          </Button>
-        </Link>
-
-        <Button
-          variant={sidebarOpen ? "secondary" : "ghost"}
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          title="Toggle Sidebar"
-        >
-          <PanelLeft className="h-4 w-4" />
-        </Button>
-
-        <Separator orientation="vertical" className="h-6 mx-1" />
-
+    <>
+      <div className="border-b border-border bg-gradient-to-b from-card to-card/80 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between shadow-sm">
+        {/* Left Section - Navigation & Project */}
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold text-foreground truncate max-w-[200px]">
-            {project.title}
-          </h1>
+          <Link href="/dashboard">
+            <Button variant="ghost" size="icon" className="h-9 w-9" title="Back to Dashboard">
+              <Home className="h-4 w-4" />
+            </Button>
+          </Link>
 
-          {/* Project Tools Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 gap-1">
-                <FolderOpen className="h-3.5 w-3.5" />
-                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-                Project Tools
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/analytics/${project.id}`} className="cursor-pointer">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analytics
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/characters/${project.id}`} className="cursor-pointer">
-                  <Users className="h-4 w-4 mr-2" />
-                  Characters
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/lorebook/${project.id}`} className="cursor-pointer">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Lorebook
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant={sidebarOpen ? "secondary" : "ghost"}
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            title="Toggle Sidebar"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </Button>
 
-          <ExportImportDialog projectId={project.id} />
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-semibold text-foreground truncate max-w-[200px]">
+              {project.title}
+            </h1>
+
+            {/* Project Tools Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 gap-1">
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                  Project Tools
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href={`/analytics/${project.id}`} className="cursor-pointer">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Analytics
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/characters/${project.id}`} className="cursor-pointer">
+                    <Users className="h-4 w-4 mr-2" />
+                    Characters
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/lorebook/${project.id}`} className="cursor-pointer">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Lorebook
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setExportOpen(true)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Right Section - AI Controls & Settings */}
+        <div className="flex items-center gap-1.5">
+          {/* AI Assist */}
+          <Button
+            variant={aiSidebarOpen ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={() => {
+              setAiSidebarOpen(!aiSidebarOpen)
+              if (!aiSidebarOpen) setDebugSidebarOpen(false)
+            }}
+            title="AI Assist"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">AI Assist</span>
+          </Button>
+
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
+          {/* Debug */}
+          <Button
+            variant={debugSidebarOpen ? "secondary" : "ghost"}
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => {
+              setDebugSidebarOpen(!debugSidebarOpen)
+              if (!debugSidebarOpen) setAiSidebarOpen(false)
+            }}
+            title="Debug"
+          >
+            <Bug className="h-4 w-4" />
+          </Button>
+
+          {/* Pomodoro */}
+          <Button
+            variant={pomodoroOpen ? "secondary" : "ghost"}
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setPomodoroOpen(!pomodoroOpen)}
+            title="Pomodoro Timer"
+          >
+            <Timer className="h-4 w-4" />
+          </Button>
+
+          {/* Zen Mode */}
+          <Button
+            variant={zenMode ? "secondary" : "ghost"}
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setZenMode(!zenMode)}
+            title="Zen Mode"
+          >
+            <Minimize2 className="h-4 w-4" />
+          </Button>
+
+          {/* Theme */}
+          <ThemeSelector />
+
+          {/* Settings */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setSettingsDialogOpen(true)}
+            title="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Right Section - AI Controls & Settings */}
-      <div className="flex items-center gap-1.5">
-        {/* AI Assist */}
-        <Button
-          variant={aiSidebarOpen ? "secondary" : "ghost"}
-          size="sm"
-          className="h-8 gap-1.5"
-          onClick={() => {
-            setAiSidebarOpen(!aiSidebarOpen)
-            if (!aiSidebarOpen) setDebugSidebarOpen(false) // Close debug when opening AI
-          }}
-          title="AI Assist"
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">AI Assist</span>
-        </Button>
-
-        <Separator orientation="vertical" className="h-6 mx-1" />
-
-        {/* Debug */}
-        <Button
-          variant={debugSidebarOpen ? "secondary" : "ghost"}
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => {
-            setDebugSidebarOpen(!debugSidebarOpen)
-            if (!debugSidebarOpen) setAiSidebarOpen(false) // Close AI when opening debug
-          }}
-          title="Debug"
-        >
-          <Bug className="h-4 w-4" />
-        </Button>
-
-        {/* Pomodoro */}
-        <Button
-          variant={pomodoroOpen ? "secondary" : "ghost"}
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => setPomodoroOpen(!pomodoroOpen)}
-          title="Pomodoro Timer"
-        >
-          <Timer className="h-4 w-4" />
-        </Button>
-
-        {/* Zen Mode */}
-        <Button
-          variant={zenMode ? "secondary" : "ghost"}
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => setZenMode(!zenMode)}
-          title="Zen Mode"
-        >
-          <Minimize2 className="h-4 w-4" />
-        </Button>
-
-        {/* Theme */}
-        <ThemeSelector />
-
-        {/* Settings */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => setSettingsDialogOpen(true)}
-          title="Settings"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+      {/* Dialogs */}
+      <ExportDialog
+        projectId={project.id}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+      />
+      <ImportDialog
+        projectId={project.id}
+        open={importOpen}
+        onOpenChange={setImportOpen}
+      />
+    </>
   )
 }

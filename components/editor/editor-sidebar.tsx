@@ -648,17 +648,19 @@ export function EditorSidebarNew({
         {/* Characters Section */}
         {!hiddenSections.has('characters') && (
           <div className="space-y-1">
-            <button
-              onClick={() => toggleSection('characters')}
-              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-            >
-              {expandedSections.has('characters') ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-              <Users className="h-4 w-4" />
-              <span className="flex-1 text-left">Characters ({characters.length})</span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => toggleSection('characters')}
+                className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
+              >
+                {expandedSections.has('characters') ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <Users className="h-4 w-4" />
+                <span className="flex-1 text-left">Characters ({characters.length})</span>
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -671,7 +673,7 @@ export function EditorSidebarNew({
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
-            </button>
+            </div>
 
             {expandedSections.has('characters') && (
               <div className="ml-2 space-y-0.5">
@@ -732,17 +734,19 @@ export function EditorSidebarNew({
         {/* Lorebook Section */}
         {!hiddenSections.has('lorebook') && (
           <div className="space-y-1">
-            <button
-              onClick={() => toggleSection('lorebook')}
-              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-            >
-              {expandedSections.has('lorebook') ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-              <Book className="h-4 w-4" />
-              <span className="flex-1 text-left">Lorebook ({lorebookEntries.length})</span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => toggleSection('lorebook')}
+                className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
+              >
+                {expandedSections.has('lorebook') ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <Book className="h-4 w-4" />
+                <span className="flex-1 text-left">Lorebook ({lorebookEntries.length})</span>
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -755,7 +759,7 @@ export function EditorSidebarNew({
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
-            </button>
+            </div>
 
             {expandedSections.has('lorebook') && (
               <div className="ml-2 space-y-2">
