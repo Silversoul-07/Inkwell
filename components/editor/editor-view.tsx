@@ -212,29 +212,6 @@ export function EditorView({ project, settings }: EditorViewProps) {
               onViewCharacter={handleViewCharacter}
               onViewLorebook={handleViewLorebook}
             />
-              )}
-              {viewType !== "scene" && viewContent && (
-                <ContentViewer
-                  key={viewContent.id}
-                  type={viewType}
-                  content={viewContent}
-                  projectId={project.id}
-                  onBack={handleBackToScene}
-                />
-              )}
-            </>
-          )}
-
-          {editorMode === "ai-storm" && selectedScene && (
-            <div className="h-full w-full max-w-5xl mx-auto">
-              <AICanvas
-                sceneContext={sceneContext || selectedScene.content}
-                selectedText={selectedText}
-                projectId={project.id}
-                onReplaceSelection={() => {}}
-                onInsertText={() => {}}
-              />
-            </div>
           )}
 
         {/* AI Context Indicator - AI Storm Mode */}
