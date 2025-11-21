@@ -1,95 +1,130 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, User, Book, ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import ReactMarkdown from 'react-markdown'
+import { User, Book } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from "react-markdown";
 
 interface Character {
-  id: string
-  name: string
-  role: string | null
-  description: string | null
-  traits: string | null
-  background: string | null
-  relationships: string | null
-  goals: string | null
+  id: string;
+  name: string;
+  age: string | null;
+  role: string | null;
+  description: string | null;
+  traits: string | null;
+  background: string | null;
+  relationships: string | null;
+  goals: string | null;
 }
 
 interface LorebookEntry {
-  id: string
-  key: string
-  value: string
-  category: string | null
-  useCount: number
+  id: string;
+  key: string;
+  value: string;
+  category: string | null;
+  useCount: number;
 }
 
-type ViewType = 'character' | 'lorebook'
+type ViewType = "character" | "lorebook";
 
 interface ContentViewerProps {
-  type: ViewType
-  content: Character | LorebookEntry
-  projectId: string
-  onBack: () => void
+  type: ViewType;
+  content: Character | LorebookEntry;
+  projectId: string;
+  onBack: () => void;
 }
 
-export function ContentViewer({ type, content, projectId, onBack }: ContentViewerProps) {
-  const router = useRouter()
-
-  const formatCharacterMarkdown = (char: Character) => {
-    let md = ''
-    if (char.role) md += `**Role:** ${char.role}\n\n`
-    if (char.description) md += `## Description\n${char.description}\n\n`
-    if (char.traits) md += `## Personality Traits\n${char.traits}\n\n`
-    if (char.background) md += `## Background\n${char.background}\n\n`
-    if (char.relationships) md += `## Relationships\n${char.relationships}\n\n`
-    if (char.goals) md += `## Goals & Motivations\n${char.goals}\n\n`
-    return md || '*No details available*'
-  }
-
-  const formatLorebookMarkdown = (entry: LorebookEntry) => {
-    let md = ''
-    if (entry.category) md += `**Category:** ${entry.category}\n\n`
-    md += `${entry.value}\n\n`
-    md += `---\n\n*Used ${entry.useCount} times*`
-    return md
-  }
-
-  const getTitle = () => {
-    if (type === 'character') return (content as Character).name
-    return (content as LorebookEntry).key
-  }
-
-  const getIcon = () => {
-    if (type === 'character') return <User className="h-5 w-5" />
-    return <Book className="h-5 w-5" />
-  }
-
-  const getContent = () => {
-    if (type === 'character') return formatCharacterMarkdown(content as Character)
-    return formatLorebookMarkdown(content as LorebookEntry)
-  }
-
-  const handleEditInFullPage = () => {
-    if (type === 'character') {
-      router.push(`/characters/${projectId}`)
-    } else if (type === 'lorebook') {
-      router.push(`/lorebook/${projectId}`)
-    }
-  }
+export function ContentViewer({
+  type,
+  content,
+  projectId,
+  onBack,
+}: ContentViewerProps) {
+  const charData = type === "character" ? (content as Character) : null;
+  const loreData = type === "lorebook" ? (content as LorebookEntry) : null;
 
   return (
     <div className="h-full flex flex-col">
-
-      {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="max-w-3xl mx-auto p-8">
-          <div className="prose prose-lg dark:prose-invert max-w-none">
-            <ReactMarkdown>{getContent()}</ReactMarkdown>
-          </div>
-        </div>
+        <article className="max-w-3xl mx-auto p-8">
+          {/* Wiki Page Title */}
+          <header className="mb-6 pb-4 border-b-2 border-border">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              {type === "character" ? (
+                <User className="h-4 w-4" />
+              ) : (
+                <Book className="h-4 w-4" />
+              )}
+              <span className="text-xs uppercase tracking-wide">
+                {type === "character" ? "Character" : "Lorebook Entry"}
+              </span>
+            </div>
+            <h1 className="text-3xl font-serif font-bold">
+              {charData?.name || loreData?.key}
+            </h1>
+            <div className="flex items-center gap-2 mt-2">
+              {charData?.role && (
+                <Badge variant="outline">{charData.role}</Badge>
+              )}
+              {loreData?.category && (
+                <Badge variant="outline">{loreData.category}</Badge>
+              )}
+              {loreData && (
+                <span className="text-xs text-muted-foreground">
+                  Referenced {loreData.useCount} times
+                </span>
+              )}
+            </div>
+          </header>
+
+          {/* Character Content */}
+          {charData && (
+            <div className="space-y-6 prose prose-sm dark:prose-invert max-w-none">
+              {charData.description && (
+                <section>
+                  <h2 className="text-lg font-semibold mb-2">Description</h2>
+                  <ReactMarkdown>{charData.description}</ReactMarkdown>
+                </section>
+              )}
+              {charData.traits && (
+                <section>
+                  <h2 className="text-lg font-semibold mb-2">
+                    Personality Traits
+                  </h2>
+                  <ReactMarkdown>{charData.traits}</ReactMarkdown>
+                </section>
+              )}
+              {charData.background && (
+                <section>
+                  <h2 className="text-lg font-semibold mb-2">Background</h2>
+                  <ReactMarkdown>{charData.background}</ReactMarkdown>
+                </section>
+              )}
+              {charData.relationships && (
+                <section>
+                  <h2 className="text-lg font-semibold mb-2">Relationships</h2>
+                  <ReactMarkdown>{charData.relationships}</ReactMarkdown>
+                </section>
+              )}
+              {charData.goals && (
+                <section>
+                  <h2 className="text-lg font-semibold mb-2">
+                    Goals & Motivations
+                  </h2>
+                  <ReactMarkdown>{charData.goals}</ReactMarkdown>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Lorebook Content */}
+          {loreData && (
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <ReactMarkdown>{loreData.value}</ReactMarkdown>
+            </div>
+          )}
+        </article>
       </ScrollArea>
     </div>
-  )
+  );
 }
