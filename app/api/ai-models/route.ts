@@ -46,10 +46,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(modelsWithEnabled)
   } catch (error) {
     console.error('AI models fetch error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -86,9 +83,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(aiModel)
   } catch (error) {
     console.error('AI model creation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

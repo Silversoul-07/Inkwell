@@ -90,7 +90,7 @@ export default function SignupPage() {
               type="text"
               placeholder="Your name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               required
               disabled={loading}
               className="h-11 transition-all focus:ring-2 focus:ring-primary"
@@ -106,7 +106,7 @@ export default function SignupPage() {
               type="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
               className="h-11 transition-all focus:ring-2 focus:ring-primary"
@@ -122,7 +122,7 @@ export default function SignupPage() {
               type="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
               className="h-11 transition-all focus:ring-2 focus:ring-primary"
@@ -138,7 +138,7 @@ export default function SignupPage() {
               type="password"
               placeholder="••••••••"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
               required
               disabled={loading}
               className="h-11 transition-all focus:ring-2 focus:ring-primary"
@@ -162,7 +162,10 @@ export default function SignupPage() {
 
         <div className="text-center text-sm">
           <span className="text-muted-foreground">Already have an account? </span>
-          <Link href="/login" className="text-primary hover:text-accent transition-colors font-medium">
+          <Link
+            href="/login"
+            className="text-primary hover:text-accent transition-colors font-medium"
+          >
             Sign in
           </Link>
         </div>

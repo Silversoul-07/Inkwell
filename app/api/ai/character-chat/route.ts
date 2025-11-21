@@ -78,18 +78,14 @@ Respond to the user's messages in character, maintaining the personality, speech
           for await (const chunk of stream) {
             const content = chunk.choices[0]?.delta?.content || ''
             if (content) {
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ chunk: content })}\n\n`)
-              )
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk: content })}\n\n`))
             }
           }
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         } catch (error) {
           console.error('Streaming error:', error)
           controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ error: 'Streaming failed' })}\n\n`
-            )
+            encoder.encode(`data: ${JSON.stringify({ error: 'Streaming failed' })}\n\n`)
           )
         } finally {
           controller.close()
@@ -101,7 +97,7 @@ Respond to the user's messages in character, maintaining the personality, speech
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     })
   } catch (error: any) {
