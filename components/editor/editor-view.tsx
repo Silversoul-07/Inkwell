@@ -168,6 +168,8 @@ export function EditorView({ project, settings }: EditorViewProps) {
             onViewCharacter={handleViewCharacter}
             onViewLorebook={handleViewLorebook}
             onViewNote={handleViewNote}
+            selectedViewType={viewType}
+            selectedViewId={viewContent?.id}
           />
         )}
 

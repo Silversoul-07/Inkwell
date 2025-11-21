@@ -93,6 +93,8 @@ interface EditorSidebarNewProps {
   onViewCharacter?: (character: Character) => void
   onViewLorebook?: (entry: LorebookEntry) => void
   onViewNote?: (note: Note) => void
+  selectedViewType?: 'scene' | 'character' | 'lorebook' | 'note'
+  selectedViewId?: string
 }
 
 type SectionType = 'chapters' | 'characters' | 'lorebook' | 'notes'
@@ -105,6 +107,8 @@ export function EditorSidebarNew({
   onViewCharacter,
   onViewLorebook,
   onViewNote,
+  selectedViewType,
+  selectedViewId,
 }: EditorSidebarNewProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
@@ -679,7 +683,11 @@ export function EditorSidebarNew({
                   characters.slice(0, 7).map((character) => (
                     <div
                       key={character.id}
-                      className="group flex items-center gap-1 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
+                      className={`group flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer ${
+                        selectedViewType === 'character' && selectedViewId === character.id
+                          ? 'bg-accent text-accent-foreground'
+                          : 'hover:bg-accent/50'
+                      }`}
                       onClick={() => onViewCharacter?.(character)}
                     >
                       <button
@@ -775,7 +783,11 @@ export function EditorSidebarNew({
                           {entries.slice(0, 5).map((entry) => (
                             <div
                               key={entry.id}
-                              className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
+                              className={`group flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer ${
+                                selectedViewType === 'lorebook' && selectedViewId === entry.id
+                                  ? 'bg-accent text-accent-foreground'
+                                  : 'hover:bg-accent/50'
+                              }`}
                               onClick={() => onViewLorebook?.(entry)}
                             >
                               <span className="flex-1 text-xs truncate">{entry.key}</span>
@@ -840,7 +852,11 @@ export function EditorSidebarNew({
                   notes.map((note) => (
                     <div
                       key={note.id}
-                      className="group flex items-start gap-2 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
+                      className={`group flex items-start gap-2 px-2 py-1 rounded-md cursor-pointer ${
+                        selectedViewType === 'note' && selectedViewId === note.id
+                          ? 'bg-accent text-accent-foreground'
+                          : 'hover:bg-accent/50'
+                      }`}
                       onClick={() => onViewNote?.(note)}
                     >
                       <div className="flex-1 text-xs line-clamp-2">
