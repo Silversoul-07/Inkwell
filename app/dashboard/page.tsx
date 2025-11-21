@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config'
 import { prisma } from '@/lib/prisma'
 import { ProjectList } from '@/components/dashboard/project-list'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
+import { initUserDefaults } from '@/lib/init-user-defaults'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -11,6 +12,9 @@ export default async function DashboardPage() {
   if (!session) {
     redirect('/login')
   }
+
+  // Initialize defaults on first login (checks if already done)
+  await initUserDefaults(session.user.id)
 
   const projects = await prisma.project.findMany({
     where: {

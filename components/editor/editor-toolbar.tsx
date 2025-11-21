@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import {
   Home,
@@ -12,8 +11,6 @@ import {
   BookOpen,
   FolderOpen,
   ChevronDown,
-  Download,
-  Upload,
   Sparkles,
   Bug,
   Timer,
@@ -29,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
+import { ExportImportDialog } from './export-import-dialog'
 
 interface Project {
   id: string
@@ -51,8 +49,6 @@ interface EditorToolbarProps {
   setSettingsDialogOpen: (open: boolean) => void
 }
 
-const isClient = typeof window !== 'undefined'
-
 export function EditorToolbar({
   project,
   sidebarOpen,
@@ -68,62 +64,6 @@ export function EditorToolbar({
   settingsDialogOpen,
   setSettingsDialogOpen,
 }: EditorToolbarProps) {
-
-  const handleExport = async (format: 'txt' | 'md' | 'docx') => {
-    try {
-      const response = await fetch(`/api/export?projectId=${project.id}&format=${format}`)
-      if (!response.ok) throw new Error('Export failed')
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      const contentDisposition = response.headers.get('Content-Disposition')
-      const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
-      const filename = filenameMatch ? filenameMatch[1] : `export.${format}`
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
-      console.error('Export error:', error)
-      alert('Failed to export file')
-    }
-  }
-
-  const handleImport = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.txt,.md,.docx'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('projectId', project.id)
-
-      try {
-        const response = await fetch('/api/import', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (response.ok) {
-          alert('Import successful! Refreshing...')
-          window.location.reload()
-        } else {
-          alert('Import failed')
-        }
-      } catch (error) {
-        console.error('Import error:', error)
-        alert('Failed to import file')
-      }
-    }
-    input.click()
-  }
-
   return (
     <div className="border-b border-border bg-gradient-to-b from-card to-card/80 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between shadow-sm">
       {/* Left Section - Navigation & Project */}
@@ -182,25 +122,10 @@ export function EditorToolbar({
                   Lorebook
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleImport}>
-                <Upload className="h-4 w-4 mr-2" />
-                Import File
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('md')}>
-                <Download className="h-4 w-4 mr-2" />
-                Export as Markdown
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('txt')}>
-                <Download className="h-4 w-4 mr-2" />
-                Export as Text
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('docx')}>
-                <Download className="h-4 w-4 mr-2" />
-                Export as DOCX
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <ExportImportDialog projectId={project.id} />
         </div>
       </div>
 
