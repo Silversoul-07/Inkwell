@@ -101,6 +101,14 @@ export function AICanvas({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Save-related state
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [saveStatus, setSaveStatus] = useState<
+    Record<number, "saving" | "saved" | "error">
+  >({});
+  // Track which messages have been saved to prevent duplicates
+  const [savedMessages, setSavedMessages] = useState<Set<number>>(new Set());
+
   // Load available AI models from settings
   useEffect(() => {
     const loadModels = async () => {
@@ -127,11 +135,18 @@ export function AICanvas({
     if (!projectId || isInitialized) return;
 
     const storageKey = `inkwell_ai_chat_${projectId}`;
+    const savedMessagesKey = `inkwell_ai_saved_${projectId}`;
     try {
-      const savedMessages = localStorage.getItem(storageKey);
-      if (savedMessages) {
-        const parsed = JSON.parse(savedMessages);
+      const savedMessagesData = localStorage.getItem(storageKey);
+      if (savedMessagesData) {
+        const parsed = JSON.parse(savedMessagesData);
         setMessages(parsed);
+      }
+
+      // Load saved message indices
+      const savedIndices = localStorage.getItem(savedMessagesKey);
+      if (savedIndices) {
+        setSavedMessages(new Set(JSON.parse(savedIndices)));
       }
     } catch (error) {
       console.error("Failed to load chat history:", error);
@@ -144,12 +159,17 @@ export function AICanvas({
     if (!projectId || !isInitialized) return;
 
     const storageKey = `inkwell_ai_chat_${projectId}`;
+    const savedMessagesKey = `inkwell_ai_saved_${projectId}`;
     try {
       localStorage.setItem(storageKey, JSON.stringify(messages));
+      localStorage.setItem(
+        savedMessagesKey,
+        JSON.stringify([...savedMessages]),
+      );
     } catch (error) {
       console.error("Failed to save chat history:", error);
     }
-  }, [messages, projectId, isInitialized]);
+  }, [messages, projectId, isInitialized, savedMessages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -171,9 +191,15 @@ export function AICanvas({
     if (!promptToSend.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: promptToSend };
-    setMessages((prev) => [...prev, userMessage]);
     if (!customPrompt) setInput("");
     setIsLoading(true);
+
+    // Add user message and empty assistant message together
+    setMessages((prev) => [
+      ...prev,
+      userMessage,
+      { role: "assistant", content: "", status: "generating" as const },
+    ]);
 
     try {
       const response = await fetch("/api/ai/generate", {
@@ -191,10 +217,10 @@ export function AICanvas({
       const decoder = new TextDecoder();
       let assistantMessage = "";
 
-      if (!reader) return;
-
-      // Add an empty assistant message that we'll update
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      if (!reader) {
+        setIsLoading(false);
+        return;
+      }
 
       while (true) {
         const { done, value } = await reader.read();
@@ -215,7 +241,11 @@ export function AICanvas({
                 // Update the last message
                 setMessages((prev) => [
                   ...prev.slice(0, -1),
-                  { role: "assistant", content: assistantMessage },
+                  {
+                    role: "assistant",
+                    content: assistantMessage,
+                    status: "success" as const,
+                  },
                 ]);
               }
             } catch (e) {
@@ -226,11 +256,13 @@ export function AICanvas({
       }
     } catch (error) {
       console.error("Chat error:", error);
+      // Update the last message with error
       setMessages((prev) => [
-        ...prev,
+        ...prev.slice(0, -1),
         {
           role: "assistant",
           content: "Sorry, I encountered an error. Please try again.",
+          status: "error" as const,
         },
       ]);
     } finally {
@@ -251,10 +283,9 @@ export function AICanvas({
 
     // If we have an active agent, route to agent
     if (activeAgent && conversationId) {
-      const userMessage: Message = { role: "user", content: input };
-      setMessages((prev) => [...prev, userMessage]);
+      const messageToSend = input;
       setInput("");
-      await sendAgentMessage(input, activeAgent);
+      await sendAgentMessage(messageToSend, activeAgent);
       return;
     }
 
@@ -290,18 +321,17 @@ export function AICanvas({
     }
   };
 
-  // Save agent content to database (character or lorebook)
-  const [savingIndex, setSavingIndex] = useState<number | null>(null);
-  const [saveStatus, setSaveStatus] = useState<
-    Record<number, "saving" | "saved" | "error">
-  >({});
-
   const handleSaveToDatabase = async (
     content: string,
     agentType: string,
     index: number,
   ) => {
     if (!projectId) return;
+
+    // Prevent duplicate saves
+    if (savedMessages.has(index)) {
+      return;
+    }
 
     setSavingIndex(index);
     setSaveStatus((prev) => ({ ...prev, [index]: "saving" }));
@@ -324,27 +354,49 @@ export function AICanvas({
       if (agentType === "character-development") {
         // Save as character
         const characterData = Array.isArray(data) ? data[0] : data;
+
+        // Helper to stringify complex data or return string/undefined
+        const stringifyField = (field: any) => {
+          if (!field) return undefined;
+          if (typeof field === "string") return field;
+          return JSON.stringify(field);
+        };
+
         const response = await fetch("/api/characters", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             projectId,
             name: characterData?.name || "New Character",
-            role: characterData?.role || null,
-            description: characterData?.description || content,
-            traits: characterData?.traits || null,
-            background: characterData?.background || null,
-            relationships: characterData?.relationships || null,
-            goals: characterData?.goals || null,
+            role: stringifyField(characterData?.role),
+            description: stringifyField(characterData?.description) || content,
+            traits: stringifyField(characterData?.traits),
+            background: stringifyField(characterData?.background),
+            relationships: stringifyField(characterData?.relationships),
+            goals: stringifyField(characterData?.goals),
           }),
         });
-        if (!response.ok) throw new Error("Failed to save character");
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to save character");
+        }
       } else if (agentType === "world-building") {
         // Save as lorebook entry
         const entries = Array.isArray(data)
           ? data
           : [data || { key: "New Entry", value: content }];
         for (const entry of entries) {
+          // Stringify keys array if it exists
+          let keysString = undefined;
+          if (entry.keys) {
+            if (Array.isArray(entry.keys)) {
+              keysString = JSON.stringify(entry.keys);
+            } else if (typeof entry.keys === "string") {
+              keysString = entry.keys;
+            }
+          }
+
           const response = await fetch("/api/lorebook", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -353,17 +405,44 @@ export function AICanvas({
               key: entry.key || "New Entry",
               value: entry.value || content,
               category: entry.category || "General",
-              keys: entry.keys || [],
+              keys: keysString,
             }),
           });
-          if (!response.ok) throw new Error("Failed to save lorebook entry");
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || "Failed to save lorebook entry");
+          }
         }
       }
 
       setSaveStatus((prev) => ({ ...prev, [index]: "saved" }));
-    } catch (error) {
+      setSavedMessages((prev) => new Set([...prev, index]));
+
+      // Show success message
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "system",
+          content:
+            agentType === "character-development"
+              ? "✓ Character saved successfully!"
+              : "✓ Lorebook entry saved successfully!",
+          status: "success" as const,
+        },
+      ]);
+    } catch (error: any) {
       console.error("Save error:", error);
       setSaveStatus((prev) => ({ ...prev, [index]: "error" }));
+      // Show error to user via toast or message
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "system",
+          content: `Failed to save: ${error.message || "Unknown error"}`,
+          status: "error" as const,
+        },
+      ]);
     } finally {
       setSavingIndex(null);
     }
@@ -447,15 +526,18 @@ export function AICanvas({
 
     setIsLoading(true);
 
-    // Add generating message
-    const generatingIndex = messages.length;
+    // Add user message and generating assistant message together
     setMessages((prev) => [
       ...prev,
+      {
+        role: "user",
+        content: message,
+      },
       {
         role: "assistant",
         content: "",
         agentType,
-        status: "generating",
+        status: "generating" as const,
       },
     ]);
 
@@ -481,29 +563,30 @@ export function AICanvas({
       const content = result.message?.content || result.content;
       const toolCalls = result.message?.toolCalls || result.toolCalls;
 
-      // Update the generating message with actual content
-      setMessages((prev) =>
-        prev.map((msg, idx) =>
-          idx === generatingIndex
-            ? { ...msg, content, toolCalls, status: "success" }
-            : msg,
-        ),
-      );
+      // Update the last message (assistant message) with actual content
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: "assistant",
+          content,
+          toolCalls,
+          agentType,
+          status: "success" as const,
+        },
+      ]);
     } catch (error: any) {
       console.error("Agent error:", error);
-      // Update the generating message to show error
-      setMessages((prev) =>
-        prev.map((msg, idx) =>
-          idx === generatingIndex
-            ? {
-                ...msg,
-                content: "Failed to generate response.",
-                status: "error",
-                errorMessage: error.message || "Unknown error",
-              }
-            : msg,
-        ),
-      );
+      // Update the last message to show error
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: "assistant",
+          content: "Failed to generate response.",
+          agentType,
+          status: "error" as const,
+          errorMessage: error.message || "Unknown error",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -641,21 +724,7 @@ export function AICanvas({
         return true;
 
       case "/clear":
-        setMessages([]);
-        setActiveAgent(null);
-        setConversationId(null);
-        // Clear localStorage as well
-        if (projectId) {
-          const storageKey = `inkwell_ai_chat_${projectId}`;
-          try {
-            localStorage.removeItem(storageKey);
-          } catch (error) {
-            console.error(
-              "Failed to clear chat history from localStorage:",
-              error,
-            );
-          }
-        }
+        handleClearConversation();
         return true;
 
       default:
@@ -663,8 +732,51 @@ export function AICanvas({
     }
   };
 
+  const handleClearConversation = () => {
+    setMessages([]);
+    setActiveAgent(null);
+    setConversationId(null);
+    setSavedMessages(new Set());
+    setSaveStatus({});
+    // Clear localStorage as well
+    if (projectId) {
+      const storageKey = `inkwell_ai_chat_${projectId}`;
+      const savedMessagesKey = `inkwell_ai_saved_${projectId}`;
+      try {
+        localStorage.removeItem(storageKey);
+        localStorage.removeItem(savedMessagesKey);
+      } catch (error) {
+        console.error("Failed to clear chat history from localStorage:", error);
+      }
+    }
+  };
+
   return (
     <div className="w-full h-full flex flex-col bg-background">
+      {/* Header with clear button */}
+      {messages.length > 0 && (
+        <div className="border-b border-border px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">AI Storm</span>
+            {activeAgent && (
+              <Badge variant="secondary" className="text-xs capitalize">
+                {activeAgent.replace("-", " ")}
+              </Badge>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearConversation}
+            className="h-8 text-xs"
+          >
+            <Trash2 className="h-3 w-3 mr-1" />
+            Clear Chat
+          </Button>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
@@ -779,9 +891,7 @@ export function AICanvas({
                         message.agentType === "world-building") && (
                         <Button
                           variant={
-                            saveStatus[index] === "saved"
-                              ? "outline"
-                              : "default"
+                            savedMessages.has(index) ? "outline" : "default"
                           }
                           size="sm"
                           onClick={() =>
@@ -792,8 +902,7 @@ export function AICanvas({
                             )
                           }
                           disabled={
-                            savingIndex === index ||
-                            saveStatus[index] === "saved"
+                            savingIndex === index || savedMessages.has(index)
                           }
                         >
                           {savingIndex === index ? (
@@ -801,7 +910,7 @@ export function AICanvas({
                               <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                               Saving...
                             </>
-                          ) : saveStatus[index] === "saved" ? (
+                          ) : savedMessages.has(index) ? (
                             <>
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Saved

@@ -106,6 +106,57 @@ export function EditorToolbar({
           >
             <PanelLeft className="h-4 w-4" />
           </Button>
+          {/* Project Tools Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 gap-1">
+                <FolderOpen className="h-3.5 w-3.5" />
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                Project Tools
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/analytics/${project.id}`}
+                  className="cursor-pointer"
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/characters/${project.id}`}
+                  className="cursor-pointer"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Characters
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/lorebook/${project.id}`}
+                  className="cursor-pointer"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Lorebook
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setExportOpen(true)}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Separator orientation="vertical" className="h-6 mx-1" />
 
@@ -113,102 +164,6 @@ export function EditorToolbar({
             <h1 className="text-base font-semibold text-foreground truncate max-w-[200px]">
               {project.title}
             </h1>
-
-            {/* Mode Selector Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 gap-1">
-                  {editorMode === "writing" ? (
-                    <>
-                      <PenLine className="h-3.5 w-3.5" />
-                      <span className="text-xs font-medium">Writing</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-3.5 w-3.5" />
-                      <span className="text-xs font-medium">AI Storm</span>
-                    </>
-                  )}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-                  Editor Mode
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setEditorMode("writing")}>
-                  <PenLine className="h-4 w-4 mr-2" />
-                  <div className="flex flex-col">
-                    <span className="font-medium">Writing Mode</span>
-                    <span className="text-xs text-muted-foreground">
-                      Focus on writing
-                    </span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEditorMode("ai-storm")}>
-                  <Zap className="h-4 w-4 mr-2" />
-                  <div className="flex flex-col">
-                    <span className="font-medium">AI Storm Mode</span>
-                    <span className="text-xs text-muted-foreground">
-                      AI-powered assistance
-                    </span>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Project Tools Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 gap-1">
-                  <FolderOpen className="h-3.5 w-3.5" />
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-                  Project Tools
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={`/analytics/${project.id}`}
-                    className="cursor-pointer"
-                  >
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Analytics
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={`/characters/${project.id}`}
-                    className="cursor-pointer"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Characters
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={`/lorebook/${project.id}`}
-                    className="cursor-pointer"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Lorebook
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setExportOpen(true)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setImportOpen(true)}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Import
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
