@@ -10,7 +10,6 @@ import {
   FileText,
   Users,
   MapPin,
-  BookOpen,
   Star,
   MoreVertical,
   Trash2,
@@ -21,7 +20,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,12 +77,6 @@ interface LorebookEntry {
   useCount: number
 }
 
-interface Note {
-  id: string
-  content: string
-  sceneId: string
-}
-
 interface EditorSidebarNewProps {
   project: Project
   selectedSceneId: string
@@ -92,12 +84,11 @@ interface EditorSidebarNewProps {
   onRefresh: () => void
   onViewCharacter?: (character: Character) => void
   onViewLorebook?: (entry: LorebookEntry) => void
-  onViewNote?: (note: Note) => void
-  selectedViewType?: 'scene' | 'character' | 'lorebook' | 'note'
+  selectedViewType?: 'scene' | 'character' | 'lorebook'
   selectedViewId?: string
 }
 
-type SectionType = 'chapters' | 'characters' | 'lorebook' | 'notes'
+type SectionType = 'chapters' | 'characters' | 'lorebook'
 
 export function EditorSidebarNew({
   project,
@@ -106,14 +97,13 @@ export function EditorSidebarNew({
   onRefresh,
   onViewCharacter,
   onViewLorebook,
-  onViewNote,
   selectedViewType,
   selectedViewId,
 }: EditorSidebarNewProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedSections, setExpandedSections] = useState<Set<SectionType>>(
-    new Set(['chapters', 'characters', 'lorebook', 'notes'])
+    new Set(['chapters', 'characters', 'lorebook'])
   )
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(
     new Set(project.chapters.map((c) => c.id))
@@ -131,15 +121,9 @@ export function EditorSidebarNew({
   const [chapterToRename, setChapterToRename] = useState<Chapter | null>(null)
   const [newChapterTitle, setNewChapterTitle] = useState('')
 
-  // Add Note dialog state
-  const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false)
-  const [newNoteContent, setNewNoteContent] = useState('')
-  const [savingNote, setSavingNote] = useState(false)
-
   // Real data from APIs
   const [characters, setCharacters] = useState<Character[]>([])
   const [lorebookEntries, setLorebookEntries] = useState<LorebookEntry[]>([])
-  const [notes, setNotes] = useState<Note[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
   // Fetch real data
@@ -158,15 +142,6 @@ export function EditorSidebarNew({
         if (loreRes.ok) {
           const loreData = await loreRes.json()
           setLorebookEntries(loreData)
-        }
-
-        // Fetch notes (comments for the selected scene)
-        if (selectedSceneId) {
-          const notesRes = await fetch(`/api/comments?sceneId=${selectedSceneId}`)
-          if (notesRes.ok) {
-            const notesData = await notesRes.json()
-            setNotes(notesData)
-          }
         }
       } catch (error) {
         console.error('Error fetching sidebar data:', error)
@@ -360,57 +335,6 @@ export function EditorSidebarNew({
     }
   }
 
-  const handleCreateNote = async () => {
-    if (!newNoteContent.trim() || !selectedSceneId) return
-
-    setSavingNote(true)
-    try {
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sceneId: selectedSceneId,
-          content: newNoteContent,
-          type: 'note',
-        }),
-      })
-
-      if (response.ok) {
-        const newNote = await response.json()
-        setNotes([...notes, newNote])
-        setNewNoteContent('')
-        setAddNoteDialogOpen(false)
-      } else {
-        alert('Failed to create note')
-      }
-    } catch (error) {
-      console.error('Error creating note:', error)
-      alert('Error creating note')
-    } finally {
-      setSavingNote(false)
-    }
-  }
-
-  const handleDeleteNote = async (noteId: string, e?: React.MouseEvent) => {
-    e?.stopPropagation()
-    if (!confirm('Are you sure you want to delete this note?')) return
-
-    try {
-      const response = await fetch(`/api/comments/${noteId}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        setNotes(notes.filter((n) => n.id !== noteId))
-      } else {
-        alert('Failed to delete note')
-      }
-    } catch (error) {
-      console.error('Error deleting note:', error)
-      alert('Error deleting note')
-    }
-  }
-
   // Group lorebook entries by category
   const lorebookByCategory = useMemo(() => {
     const grouped: Record<string, LorebookEntry[]> = {}
@@ -465,11 +389,6 @@ export function EditorSidebarNew({
                   Lorebook
                   {!hiddenSections.has('lorebook') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toggleHiddenSection('notes')}>
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Notes
-                  {!hiddenSections.has('notes') && <span className="ml-auto">✓</span>}
-                </DropdownMenuItem>
                 {hiddenSections.size > 0 && (
                   <>
                     <DropdownMenuSeparator />
@@ -504,13 +423,6 @@ export function EditorSidebarNew({
               <DropdownMenuItem onClick={() => router.push(`/lorebook/${project.id}`)}>
                 <MapPin className="h-4 w-4 mr-2" />
                 New Location
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setAddNoteDialogOpen(true)}
-                disabled={!selectedSceneId}
-              >
-                <BookOpen className="h-4 w-4 mr-2" />
-                New Note
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -817,72 +729,6 @@ export function EditorSidebarNew({
             )}
           </div>
         )}
-
-        {/* Notes Section */}
-        {!hiddenSections.has('notes') && (
-          <div className="space-y-1">
-            <div className="flex items-center">
-              <button
-                onClick={() => toggleSection('notes')}
-                className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-              >
-                {expandedSections.has('notes') ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-                <BookOpen className="h-4 w-4" />
-                <span className="flex-1 text-left">Notes ({notes.length})</span>
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 mr-2"
-                onClick={() => setAddNoteDialogOpen(true)}
-                disabled={!selectedSceneId}
-                title="Add Note"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-
-            {expandedSections.has('notes') && (
-              <div className="ml-2 space-y-0.5">
-                {notes.length === 0 ? (
-                  <div className="text-xs text-muted-foreground px-2 py-1">
-                    No notes for this scene
-                  </div>
-                ) : (
-                  notes.map((note) => (
-                    <div
-                      key={note.id}
-                      className={`group flex items-start gap-2 px-2 py-1 rounded-md cursor-pointer ${
-                        selectedViewType === 'note' && selectedViewId === note.id
-                          ? 'bg-accent text-accent-foreground'
-                          : 'hover:bg-accent/50'
-                      }`}
-                      onClick={() => onViewNote?.(note)}
-                    >
-                      <div className="flex-1 text-xs line-clamp-2">
-                        {note.content.substring(0, 100)}
-                        {note.content.length > 100 && '...'}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                        onClick={(e) => handleDeleteNote(note.id, e)}
-                        title="Delete note"
-                      >
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Rename Chapter Dialog */}
@@ -907,34 +753,6 @@ export function EditorSidebarNew({
             </Button>
             <Button onClick={handleRenameChapter} disabled={!newChapterTitle.trim()}>
               Rename
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Note Dialog */}
-      <Dialog open={addNoteDialogOpen} onOpenChange={setAddNoteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Note</DialogTitle>
-            <DialogDescription>Add a note to this scene</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="note-content">Note Content</Label>
-            <Textarea
-              id="note-content"
-              value={newNoteContent}
-              onChange={(e) => setNewNoteContent(e.target.value)}
-              placeholder="Write your note here... (Markdown supported)"
-              rows={6}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddNoteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateNote} disabled={!newNoteContent.trim() || savingNote}>
-              {savingNote ? 'Saving...' : 'Add Note'}
             </Button>
           </DialogFooter>
         </DialogContent>

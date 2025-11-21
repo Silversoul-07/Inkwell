@@ -61,13 +61,7 @@ interface LorebookEntry {
   useCount: number
 }
 
-interface Note {
-  id: string
-  content: string
-  sceneId: string
-}
-
-type ViewType = 'scene' | 'character' | 'lorebook' | 'note'
+type ViewType = 'scene' | 'character' | 'lorebook'
 
 interface EditorViewProps {
   project: Project
@@ -90,7 +84,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
 
   // View state for different content types
   const [viewType, setViewType] = useState<ViewType>('scene')
-  const [viewContent, setViewContent] = useState<Character | LorebookEntry | Note | null>(null)
+  const [viewContent, setViewContent] = useState<Character | LorebookEntry | null>(null)
 
   const selectedScene = project.chapters
     .flatMap((c) => c.scenes)
@@ -118,11 +112,6 @@ export function EditorView({ project, settings }: EditorViewProps) {
   const handleViewLorebook = useCallback((entry: LorebookEntry) => {
     setViewType('lorebook')
     setViewContent(entry)
-  }, [])
-
-  const handleViewNote = useCallback((note: Note) => {
-    setViewType('note')
-    setViewContent(note)
   }, [])
 
   const handleBackToScene = useCallback(() => {
@@ -167,7 +156,6 @@ export function EditorView({ project, settings }: EditorViewProps) {
             onRefresh={handleRefresh}
             onViewCharacter={handleViewCharacter}
             onViewLorebook={handleViewLorebook}
-            onViewNote={handleViewNote}
             selectedViewType={viewType}
             selectedViewId={viewContent?.id}
           />

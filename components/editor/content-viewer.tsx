@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, User, Book, FileText, ExternalLink } from 'lucide-react'
+import { ArrowLeft, User, Book, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import ReactMarkdown from 'react-markdown'
@@ -25,17 +25,11 @@ interface LorebookEntry {
   useCount: number
 }
 
-interface Note {
-  id: string
-  content: string
-  sceneId: string
-}
-
-type ViewType = 'character' | 'lorebook' | 'note'
+type ViewType = 'character' | 'lorebook'
 
 interface ContentViewerProps {
   type: ViewType
-  content: Character | LorebookEntry | Note
+  content: Character | LorebookEntry
   projectId: string
   onBack: () => void
 }
@@ -64,20 +58,17 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
 
   const getTitle = () => {
     if (type === 'character') return (content as Character).name
-    if (type === 'lorebook') return (content as LorebookEntry).key
-    return 'Note'
+    return (content as LorebookEntry).key
   }
 
   const getIcon = () => {
     if (type === 'character') return <User className="h-5 w-5" />
-    if (type === 'lorebook') return <Book className="h-5 w-5" />
-    return <FileText className="h-5 w-5" />
+    return <Book className="h-5 w-5" />
   }
 
   const getContent = () => {
     if (type === 'character') return formatCharacterMarkdown(content as Character)
-    if (type === 'lorebook') return formatLorebookMarkdown(content as LorebookEntry)
-    return (content as Note).content
+    return formatLorebookMarkdown(content as LorebookEntry)
   }
 
   const handleEditInFullPage = () => {

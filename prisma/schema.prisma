@@ -27,8 +27,6 @@ model User {
   userInstructions UserInstructions[]
   writingModes     WritingMode[]
   pomodoroSessions PomodoroSession[]
-  comments         Comment[]
-  commentReplies   CommentReply[]
   agentConversations AgentConversation[]
   agentMemories    AgentMemory[]
 }
@@ -160,7 +158,6 @@ model Scene {
   updatedAt DateTime @updatedAt
 
   versions  Version[]
-  comments  Comment[]
 
   @@index([chapterId, order])
 }
@@ -342,46 +339,6 @@ model PomodoroSession {
   project         Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([userId])
-}
-
-model Comment {
-  id              String   @id @default(uuid())
-  sceneId         String
-  userId          String
-
-  content         String   // The comment text
-  startPos        Int      // Character position in text
-  endPos          Int      // Character position in text
-  highlightedText String?  // The text that was highlighted
-  type            String   @default("note")  // "note", "question", "todo", "issue", "idea"
-  status          String   @default("open")  // "open", "resolved", "archived"
-  priority        String   @default("normal")  // "low", "normal", "high"
-  color           String?  // Optional color for categorization
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  scene           Scene    @relation(fields: [sceneId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  replies         CommentReply[]
-
-  @@index([sceneId])
-  @@index([userId])
-}
-
-model CommentReply {
-  id         String   @id @default(uuid())
-  commentId  String
-  userId     String
-
-  content    String   // The reply text
-
-  createdAt  DateTime @default(now())
-
-  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([commentId])
 }
 
 // Agentic AI System

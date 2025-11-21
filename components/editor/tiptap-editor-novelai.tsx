@@ -8,7 +8,6 @@ import { AlternativesDialog } from './alternatives-dialog'
 import { EditorContextMenu } from './editor-context-menu'
 import { Button } from '@/components/ui/button'
 import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
-import { Comment } from '@/lib/tiptap/comment-extension'
 import { EditorBottomToolbar } from './editor-bottom-toolbar'
 
 interface Scene {
@@ -102,7 +101,7 @@ export function TiptapEditorNovelAI({
   }, [])
 
   const editor = useEditor({
-    extensions: [StarterKit, Comment],
+    extensions: [StarterKit],
     content: scene.content,
     editorProps: {
       attributes: {
@@ -496,7 +495,7 @@ export function TiptapEditorNovelAI({
             }}
           >
             <div
-              className={`mx-auto font-writer-serif w-full px-8 md:px-12 lg:px-16`}
+              className={`mx-auto font-writer-serif w-full`}
               style={{
                 maxWidth: zenMode ? `${maxWidth}rem` : `${maxWidth * 1.5}rem`,
               }}
