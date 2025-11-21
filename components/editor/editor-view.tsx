@@ -45,6 +45,7 @@ interface Settings {
 interface Character {
   id: string;
   name: string;
+  age: string | null;
   role: string | null;
   description: string | null;
   traits: string | null;
