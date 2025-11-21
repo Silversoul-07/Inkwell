@@ -90,23 +90,6 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-4 p-4 border-b border-border bg-card">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Editor
-        </Button>
-        <div className="flex-1 flex items-center gap-2">
-          {getIcon()}
-          <h1 className="text-xl font-semibold">{getTitle()}</h1>
-        </div>
-        {type !== 'note' && (
-          <Button variant="outline" size="sm" onClick={handleEditInFullPage}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Edit in Full Page
-          </Button>
-        )}
-      </div>
 
       {/* Content */}
       <ScrollArea className="flex-1">
