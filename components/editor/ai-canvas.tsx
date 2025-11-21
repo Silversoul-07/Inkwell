@@ -140,6 +140,11 @@ export function AICanvas({
     }
   }, [selectedText]);
 
+  // Debug: log projectId
+  useEffect(() => {
+    console.log("AICanvas projectId prop:", projectId);
+  }, [projectId]);
+
   const sendMessage = async (customPrompt?: string, customContext?: string) => {
     const promptToSend = customPrompt || input;
     if (!promptToSend.trim() || isLoading) return;
@@ -298,7 +303,9 @@ export function AICanvas({
 
   // Start an agent conversation
   const startAgentConversation = async (agentType: string) => {
+    console.log("startAgentConversation called with projectId:", projectId);
     if (!projectId) {
+      console.log("projectId is falsy:", projectId);
       setMessages((prev) => [
         ...prev,
         {
