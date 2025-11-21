@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState } from "react";
+import Link from "next/link";
 import {
   Home,
   PanelLeft,
@@ -17,9 +17,13 @@ import {
   Timer,
   Download,
   Upload,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ThemeSelector } from '@/components/ui/theme-selector'
+  PanelRight,
+  Info,
+  Zap,
+  PenLine,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ThemeSelector } from "@/components/ui/theme-selector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,38 +31,44 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Separator } from '@/components/ui/separator'
-import { ExportDialog } from './export-dialog'
-import { ImportDialog } from './import-dialog'
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { ExportDialog } from "./export-dialog";
+import { ImportDialog } from "./import-dialog";
 
 interface Project {
-  id: string
-  title: string
+  id: string;
+  title: string;
 }
 
+type EditorMode = "writing" | "ai-storm";
+
 interface EditorToolbarProps {
-  project: Project
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
-  aiSidebarOpen: boolean
-  setAiSidebarOpen: (open: boolean) => void
-  debugSidebarOpen: boolean
-  setDebugSidebarOpen: (open: boolean) => void
-  zenMode: boolean
-  setZenMode: (zen: boolean) => void
-  pomodoroOpen: boolean
-  setPomodoroOpen: (open: boolean) => void
-  settingsDialogOpen: boolean
-  setSettingsDialogOpen: (open: boolean) => void
+  project: Project;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  editorMode: EditorMode;
+  setEditorMode: (mode: EditorMode) => void;
+  contextPanelOpen: boolean;
+  setContextPanelOpen: (open: boolean) => void;
+  debugSidebarOpen: boolean;
+  setDebugSidebarOpen: (open: boolean) => void;
+  zenMode: boolean;
+  setZenMode: (zen: boolean) => void;
+  pomodoroOpen: boolean;
+  setPomodoroOpen: (open: boolean) => void;
+  settingsDialogOpen: boolean;
+  setSettingsDialogOpen: (open: boolean) => void;
 }
 
 export function EditorToolbar({
   project,
   sidebarOpen,
   setSidebarOpen,
-  aiSidebarOpen,
-  setAiSidebarOpen,
+  editorMode,
+  setEditorMode,
+  contextPanelOpen,
+  setContextPanelOpen,
   debugSidebarOpen,
   setDebugSidebarOpen,
   zenMode,
@@ -68,8 +78,8 @@ export function EditorToolbar({
   settingsDialogOpen,
   setSettingsDialogOpen,
 }: EditorToolbarProps) {
-  const [exportOpen, setExportOpen] = useState(false)
-  const [importOpen, setImportOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   return (
     <>
@@ -77,7 +87,12 @@ export function EditorToolbar({
         {/* Left Section - Navigation & Project */}
         <div className="flex items-center gap-2">
           <Link href="/dashboard">
-            <Button variant="ghost" size="icon" className="h-9 w-9" title="Back to Dashboard">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              title="Back to Dashboard"
+            >
               <Home className="h-4 w-4" />
             </Button>
           </Link>
@@ -113,19 +128,28 @@ export function EditorToolbar({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href={`/analytics/${project.id}`} className="cursor-pointer">
+                  <Link
+                    href={`/analytics/${project.id}`}
+                    className="cursor-pointer"
+                  >
                     <BarChart3 className="h-4 w-4 mr-2" />
                     Analytics
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={`/characters/${project.id}`} className="cursor-pointer">
+                  <Link
+                    href={`/characters/${project.id}`}
+                    className="cursor-pointer"
+                  >
                     <Users className="h-4 w-4 mr-2" />
                     Characters
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={`/lorebook/${project.id}`} className="cursor-pointer">
+                  <Link
+                    href={`/lorebook/${project.id}`}
+                    className="cursor-pointer"
+                  >
                     <BookOpen className="h-4 w-4 mr-2" />
                     Lorebook
                   </Link>
@@ -144,34 +168,51 @@ export function EditorToolbar({
           </div>
         </div>
 
-        {/* Right Section - AI Controls & Settings */}
+        {/* Right Section - Mode Toggle & Settings */}
         <div className="flex items-center gap-1.5">
-          {/* AI Assist */}
-          <Button
-            variant={aiSidebarOpen ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => {
-              setAiSidebarOpen(!aiSidebarOpen)
-              if (!aiSidebarOpen) setDebugSidebarOpen(false)
-            }}
-            title="AI Assist"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">AI Assist</span>
-          </Button>
+          {/* Mode Toggle - Writing / AI Storm */}
+          <div className="flex items-center gap-1 bg-muted/50 rounded-md p-1">
+            <Button
+              variant={editorMode === "writing" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 gap-1.5 px-3"
+              onClick={() => setEditorMode("writing")}
+              title="Writing Mode"
+            >
+              <PenLine className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Writing</span>
+            </Button>
+            <Button
+              variant={editorMode === "ai-storm" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 gap-1.5 px-3"
+              onClick={() => setEditorMode("ai-storm")}
+              title="AI Storm Mode"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">AI Storm</span>
+            </Button>
+          </div>
 
           <Separator orientation="vertical" className="h-6 mx-1" />
+
+          {/* Context Panel Toggle - different function based on mode */}
+          <Button
+            variant={contextPanelOpen ? "secondary" : "ghost"}
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setContextPanelOpen(!contextPanelOpen)}
+            title={editorMode === "writing" ? "Scene Context" : "AI Context"}
+          >
+            <PanelRight className="h-4 w-4" />
+          </Button>
 
           {/* Debug */}
           <Button
             variant={debugSidebarOpen ? "secondary" : "ghost"}
             size="icon"
             className="h-9 w-9"
-            onClick={() => {
-              setDebugSidebarOpen(!debugSidebarOpen)
-              if (!debugSidebarOpen) setAiSidebarOpen(false)
-            }}
+            onClick={() => setDebugSidebarOpen(!debugSidebarOpen)}
             title="Debug"
           >
             <Bug className="h-4 w-4" />
@@ -227,5 +268,5 @@ export function EditorToolbar({
         onOpenChange={setImportOpen}
       />
     </>
-  )
+  );
 }
