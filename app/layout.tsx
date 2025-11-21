@@ -16,7 +16,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-writer-sans">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const themes = ['light', 'dark', 'sepia', 'novelai', 'midnight', 'nord', 'forest'];
+                  const stored = localStorage.getItem('theme');
+                  const theme = (stored && themes.includes(stored)) ? stored : 'novelai';
+                  document.documentElement.classList.add(theme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="font-writer-sans" suppressHydrationWarning>
         <AuthSessionProvider>
           <ThemeProvider>
             {children}

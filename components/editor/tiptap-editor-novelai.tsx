@@ -101,7 +101,8 @@ export function TiptapEditorNovelAI({
   }, [])
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    immediatelyRender: false,
+    extensions: [StarterKit as any],
     content: scene.content,
     editorProps: {
       attributes: {
