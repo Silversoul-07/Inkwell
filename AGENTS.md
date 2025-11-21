@@ -52,6 +52,7 @@ npx knip
 ```
 
 **Required environment variables** (copy `.env.example` to `.env`):
+
 ```bash
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="your-secret-key"
@@ -96,6 +97,7 @@ NEXTAUTH_URL="http://localhost:3000"
 ```
 
 **Data Flow:**
+
 1. User authenticates via NextAuth (credentials provider)
 2. React components fetch data through API routes
 3. Prisma ORM handles database operations (SQLite)
@@ -109,11 +111,13 @@ NEXTAUTH_URL="http://localhost:3000"
 > TODO: No test framework currently configured.
 
 **Recommended setup:**
+
 - Unit tests: Jest + React Testing Library
 - E2E tests: Playwright or Cypress
 - API tests: Supertest
 
 **Current quality tools:**
+
 ```bash
 pnpm lint          # ESLint
 npx knip           # Dead code detection
@@ -129,6 +133,7 @@ npx knip           # Dead code detection
 - **License:** > TODO: Add LICENSE file
 
 **Guardrails:**
+
 - Server actions limited to 2MB payload
 - Prisma client singleton prevents connection exhaustion
 
@@ -167,6 +172,7 @@ When automated agents work on this repository:
 - **Theme:** CSS variables in `tailwind.config.ts` (light, dark, sepia)
 
 **Environment variables:**
+
 - `DATABASE_URL` — Database connection string
 - `NEXTAUTH_SECRET` — Session encryption key
 - `NEXTAUTH_URL` — Application URL

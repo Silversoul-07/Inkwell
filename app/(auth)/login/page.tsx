@@ -76,7 +76,7 @@ export default function LoginPage() {
               type="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
               className="h-11 transition-all focus:ring-2 focus:ring-primary"
@@ -92,7 +92,7 @@ export default function LoginPage() {
               type="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
               className="h-11 transition-all focus:ring-2 focus:ring-primary"
@@ -116,7 +116,10 @@ export default function LoginPage() {
 
         <div className="text-center text-sm">
           <span className="text-muted-foreground">Don&apos;t have an account? </span>
-          <Link href="/signup" className="text-primary hover:text-accent transition-colors font-medium">
+          <Link
+            href="/signup"
+            className="text-primary hover:text-accent transition-colors font-medium"
+          >
             Sign up
           </Link>
         </div>

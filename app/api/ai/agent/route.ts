@@ -19,11 +19,7 @@ export async function POST(request: NextRequest) {
       return new Response('Unauthorized', { status: 401 })
     }
 
-    const {
-      query,
-      projectId,
-      context,
-    } = await request.json()
+    const { query, projectId, context } = await request.json()
 
     if (!query) {
       return new Response('Query is required', { status: 400 })
@@ -34,15 +30,9 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          await runAgentQueryStream(
-            session.user.id,
-            query,
-            projectId,
-            context,
-            (chunk) => {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`))
-            }
-          )
+          await runAgentQueryStream(session.user.id, query, projectId, context, chunk => {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`))
+          })
 
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
           controller.close()
@@ -62,7 +52,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     })
   } catch (error: any) {

@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
               maxTokens,
               systemPrompt: finalSystemPrompt,
             },
-            (chunk) => {
+            chunk => {
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`))
             }
           )
@@ -87,9 +87,7 @@ export async function POST(request: NextRequest) {
           controller.close()
         } catch (error: any) {
           controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ error: error.message })}\n\n`
-            )
+            encoder.encode(`data: ${JSON.stringify({ error: error.message })}\n\n`)
           )
           controller.close()
         }
@@ -100,7 +98,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     })
   } catch (error: any) {

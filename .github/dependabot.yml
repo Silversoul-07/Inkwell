@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 10
+    groups:
+      # Group all Next.js related updates
+      next:
+        patterns:
+          - 'next'
+          - 'next-*'
+      # Group all React updates
+      react:
+        patterns:
+          - 'react'
+          - 'react-*'
+      # Group all Radix UI updates
+      radix-ui:
+        patterns:
+          - '@radix-ui/*'
+      # Group all Tiptap updates
+      tiptap:
+        patterns:
+          - '@tiptap/*'
+      # Group all dev dependencies
+      development-dependencies:
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'

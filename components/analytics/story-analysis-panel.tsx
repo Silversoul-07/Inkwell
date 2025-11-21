@@ -1,22 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  SearchCheck,
-  Clock,
-  MessageSquare,
-  Activity,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react'
+import { SearchCheck, Clock, MessageSquare, Activity, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -58,10 +45,7 @@ interface StoryAnalysisPanelProps {
   projectId?: string
 }
 
-export function StoryAnalysisPanel({
-  sceneId,
-  projectId,
-}: StoryAnalysisPanelProps) {
+export function StoryAnalysisPanel({ sceneId, projectId }: StoryAnalysisPanelProps) {
   const [analysis, setAnalysis] = useState<StoryAnalysisResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -135,7 +119,7 @@ export function StoryAnalysisPanel({
           <CardContent className="flex flex-col items-center justify-center py-12">
             <SearchCheck className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              Click "Analyze" to get insights about your story
+              Click &ldquo;Analyze&rdquo; to get insights about your story
             </p>
           </CardContent>
         </Card>
@@ -150,9 +134,7 @@ export function StoryAnalysisPanel({
                 <Clock className="h-5 w-5 text-primary" />
                 <CardTitle>Reading Time</CardTitle>
               </div>
-              <CardDescription>
-                Estimated time for readers to finish
-              </CardDescription>
+              <CardDescription>Estimated time for readers to finish</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -173,17 +155,13 @@ export function StoryAnalysisPanel({
                 <MessageSquare className="h-5 w-5 text-primary" />
                 <CardTitle>Dialogue vs Description</CardTitle>
               </div>
-              <CardDescription>
-                Balance between conversation and narrative
-              </CardDescription>
+              <CardDescription>Balance between conversation and narrative</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span>Dialogue</span>
-                  <Badge variant="outline">
-                    {analysis.dialogueAnalysis.dialoguePercentage}%
-                  </Badge>
+                  <Badge variant="outline">{analysis.dialogueAnalysis.dialoguePercentage}%</Badge>
                 </div>
                 <Progress value={analysis.dialogueAnalysis.dialoguePercentage} />
                 <p className="text-xs text-muted-foreground">
@@ -194,9 +172,7 @@ export function StoryAnalysisPanel({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span>Narrative</span>
-                  <Badge variant="outline">
-                    {analysis.dialogueAnalysis.narrativePercentage}%
-                  </Badge>
+                  <Badge variant="outline">{analysis.dialogueAnalysis.narrativePercentage}%</Badge>
                 </div>
                 <Progress value={analysis.dialogueAnalysis.narrativePercentage} />
                 <p className="text-xs text-muted-foreground">
@@ -213,17 +189,13 @@ export function StoryAnalysisPanel({
                 <Activity className="h-5 w-5 text-primary" />
                 <CardTitle>Sentence Structure & Pacing</CardTitle>
               </div>
-              <CardDescription>
-                Sentence variety and story rhythm
-              </CardDescription>
+              <CardDescription>Sentence variety and story rhythm</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Sentences</p>
-                  <p className="text-2xl font-bold">
-                    {analysis.sentenceStructure.totalSentences}
-                  </p>
+                  <p className="text-2xl font-bold">{analysis.sentenceStructure.totalSentences}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Avg Words/Sentence</p>
@@ -236,21 +208,15 @@ export function StoryAnalysisPanel({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span>Short (&lt; 10 words)</span>
-                  <Badge variant="outline">
-                    {analysis.sentenceStructure.shortSentences}
-                  </Badge>
+                  <Badge variant="outline">{analysis.sentenceStructure.shortSentences}</Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span>Medium (10-20 words)</span>
-                  <Badge variant="outline">
-                    {analysis.sentenceStructure.mediumSentences}
-                  </Badge>
+                  <Badge variant="outline">{analysis.sentenceStructure.mediumSentences}</Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span>Long (&gt; 20 words)</span>
-                  <Badge variant="outline">
-                    {analysis.sentenceStructure.longSentences}
-                  </Badge>
+                  <Badge variant="outline">{analysis.sentenceStructure.longSentences}</Badge>
                 </div>
               </div>
 
@@ -261,8 +227,8 @@ export function StoryAnalysisPanel({
                       analysis.pacingSuggestion.pacing === 'fast'
                         ? 'default'
                         : analysis.pacingSuggestion.pacing === 'moderate'
-                        ? 'secondary'
-                        : 'outline'
+                          ? 'secondary'
+                          : 'outline'
                     }
                   >
                     {analysis.pacingSuggestion.pacing.toUpperCase()} PACING
@@ -280,9 +246,7 @@ export function StoryAnalysisPanel({
                 <SearchCheck className="h-5 w-5 text-primary" />
                 <CardTitle>Word Repetitions</CardTitle>
               </div>
-              <CardDescription>
-                Most frequently used words (excluding common words)
-              </CardDescription>
+              <CardDescription>Most frequently used words (excluding common words)</CardDescription>
             </CardHeader>
             <CardContent>
               {analysis.repetitions.length === 0 ? (
@@ -304,9 +268,7 @@ export function StoryAnalysisPanel({
                           <span className="font-medium">{rep.word}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm text-muted-foreground">
-                            {rep.count} times
-                          </span>
+                          <span className="text-sm text-muted-foreground">{rep.count} times</span>
                           <Badge variant="secondary">{rep.percentage}%</Badge>
                         </div>
                       </div>

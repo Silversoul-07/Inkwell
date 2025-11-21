@@ -25,11 +25,5 @@ export default async function AgentsPage() {
     orderBy: { updatedAt: 'desc' },
   })
 
-  return (
-    <AgentsClient
-      conversations={conversations}
-      projects={projects}
-      userId={session.user.id}
-    />
-  )
+  return <AgentsClient conversations={conversations} projects={projects} userId={session.user.id} />
 }

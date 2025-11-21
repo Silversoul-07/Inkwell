@@ -46,9 +46,7 @@ export default async function AnalyticsPage({
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Analytics</h1>
-          <p className="text-muted-foreground">
-            Track your progress for {project.title}
-          </p>
+          <p className="text-muted-foreground">Track your progress for {project.title}</p>
         </div>
 
         <Tabs defaultValue="writing" className="space-y-6">

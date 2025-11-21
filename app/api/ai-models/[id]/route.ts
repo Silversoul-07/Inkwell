@@ -3,10 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { prisma } from '@/lib/prisma'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
