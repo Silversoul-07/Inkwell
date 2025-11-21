@@ -674,115 +674,144 @@ export function AICanvas({
 
   return (
     <div className="w-full h-full flex flex-col bg-background">
+      {/* Header */}
+      <div className="border-b border-border px-6 py-4 bg-gradient-to-b from-card to-card/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">AI Storm</h2>
+              <p className="text-xs text-muted-foreground">
+                Your creative writing assistant
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={editMode ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setEditMode(!editMode)}
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              Edit Mode
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Edit Mode */}
       {editMode && (
-        <div className="flex-1 flex flex-col p-4 space-y-4 overflow-auto">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Editing Text</label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetEdit}
-                disabled={editingText === selectedText}
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Reset
-              </Button>
+        <div className="flex-1 flex flex-col p-6 overflow-auto">
+          <div className="max-w-4xl mx-auto w-full space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Editing Text</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetEdit}
+                  disabled={editingText === selectedText}
+                >
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  Reset
+                </Button>
+              </div>
+              <Textarea
+                value={editingText}
+                onChange={(e) => setEditingText(e.target.value)}
+                className="min-h-[200px] font-mono text-sm resize-none"
+                placeholder="Select text in the editor to edit it here..."
+              />
             </div>
-            <Textarea
-              value={editingText}
-              onChange={(e) => setEditingText(e.target.value)}
-              className="min-h-[200px] font-mono text-sm resize-none"
-              placeholder="Select text in the editor to edit it here..."
-            />
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Instructions (Optional)
-            </label>
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleMakeEdits();
-                }
-              }}
-              placeholder="e.g., Make it more dramatic, Add more dialogue, etc."
-              className="resize-none"
-              rows={2}
-              disabled={isLoading}
-            />
-          </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Instructions (Optional)
+              </label>
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleMakeEdits();
+                  }
+                }}
+                placeholder="e.g., Make it more dramatic, Add more dialogue, etc."
+                className="resize-none"
+                rows={2}
+                disabled={isLoading}
+              />
+            </div>
 
-          <div className="flex gap-2">
-            <Button
-              onClick={handleImprove}
-              disabled={!editingText.trim() || isLoading}
-              className="flex-1"
-              variant="outline"
-            >
-              <Wand2 className="h-4 w-4 mr-2" />
-              Improve
-            </Button>
-            <Button
-              onClick={handleRewrite}
-              disabled={!editingText.trim() || isLoading}
-              className="flex-1"
-              variant="outline"
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Rewrite
-            </Button>
-            {input.trim() && (
+            <div className="flex gap-2">
               <Button
-                onClick={handleMakeEdits}
+                onClick={handleImprove}
                 disabled={!editingText.trim() || isLoading}
                 className="flex-1"
+                variant="outline"
               >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Apply
-                  </>
-                )}
+                <Wand2 className="h-4 w-4 mr-2" />
+                Improve
               </Button>
+              <Button
+                onClick={handleRewrite}
+                disabled={!editingText.trim() || isLoading}
+                className="flex-1"
+                variant="outline"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Rewrite
+              </Button>
+              {input.trim() && (
+                <Button
+                  onClick={handleMakeEdits}
+                  disabled={!editingText.trim() || isLoading}
+                  className="flex-1"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Apply
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+
+            {/* Results in edit mode */}
+            {messages.length > 0 && (
+              <div className="flex-1 space-y-4 overflow-auto border-t pt-4">
+                <label className="text-sm font-medium">Results</label>
+                {messages
+                  .slice()
+                  .reverse()
+                  .map(
+                    (message, index) =>
+                      message.role === "assistant" && (
+                        <div
+                          key={index}
+                          className="rounded-lg p-3 bg-muted relative group"
+                        >
+                          <MarkdownRenderer content={message.content} />
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="mt-2 w-full"
+                            onClick={() => handleApplyToEditor(message.content)}
+                          >
+                            Apply to Editor
+                          </Button>
+                        </div>
+                      ),
+                  )}
+              </div>
             )}
           </div>
-
-          {/* Results in edit mode */}
-          {messages.length > 0 && (
-            <div className="flex-1 space-y-4 overflow-auto border-t pt-4">
-              <label className="text-sm font-medium">Results</label>
-              {messages
-                .slice()
-                .reverse()
-                .map(
-                  (message, index) =>
-                    message.role === "assistant" && (
-                      <div
-                        key={index}
-                        className="rounded-lg p-3 bg-muted relative group"
-                      >
-                        <MarkdownRenderer content={message.content} />
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="mt-2 w-full"
-                          onClick={() => handleApplyToEditor(message.content)}
-                        >
-                          Apply to Editor
-                        </Button>
-                      </div>
-                    ),
-                )}
-            </div>
-          )}
         </div>
       )}
 
@@ -790,285 +819,312 @@ export function AICanvas({
       {!editMode && (
         <>
           {/* Messages */}
-          <div className="flex-1 overflow-auto p-4 space-y-4">
-            {messages.length === 0 && (
-              <div className="text-center text-muted-foreground text-sm py-8">
-                <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="font-semibold">AI Writing Canvas</p>
-                <p className="mt-2 text-xs max-w-xs mx-auto">
-                  Ask questions, get suggestions, or switch to Edit mode to work
-                  on selected text.
-                </p>
-              </div>
-            )}
+          <div className="flex-1 overflow-auto p-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {messages.length === 0 && (
+                <div className="text-center text-muted-foreground py-20">
+                  <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                    <Sparkles className="h-10 w-10 text-primary opacity-70" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    Welcome to AI Storm
+                  </h3>
+                  <p className="text-sm max-w-md mx-auto mb-6">
+                    Your intelligent creative writing assistant. Ask questions,
+                    brainstorm ideas, or use slash commands to access
+                    specialized agents.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      /character - Create characters
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      /world - Build your world
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      /plan - Plan your story
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      /analyze - Analyze scenes
+                    </Badge>
+                  </div>
+                </div>
+              )}
 
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex flex-col ${
-                  message.role === "user" ? "items-end" : "items-start"
-                }`}
-              >
-                {/* Agent/System badge */}
-                {message.agentType && message.role === "assistant" && (
-                  <Badge variant="outline" className="mb-1 text-xs capitalize">
-                    {message.agentType.replace("-", " ")}
-                  </Badge>
-                )}
-                {message.role === "system" && (
-                  <Badge variant="secondary" className="mb-1 text-xs">
-                    System
-                  </Badge>
-                )}
+              {messages.map((message, index) => (
                 <div
-                  className={`max-w-[85%] rounded-lg p-3 ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : message.role === "system"
-                        ? "bg-yellow-500/10 border border-yellow-500/20"
-                        : message.status === "error"
-                          ? "bg-red-500/10 border border-red-500/20"
-                          : "bg-muted"
+                  key={index}
+                  className={`flex flex-col ${
+                    message.role === "user" ? "items-end" : "items-start"
                   }`}
                 >
-                  {/* Generating indicator */}
-                  {message.status === "generating" && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Generating...</span>
-                    </div>
+                  {/* Agent/System badge */}
+                  {message.agentType && message.role === "assistant" && (
+                    <Badge
+                      variant="outline"
+                      className="mb-1 text-xs capitalize"
+                    >
+                      {message.agentType.replace("-", " ")}
+                    </Badge>
                   )}
-                  {/* Error indicator */}
-                  {message.status === "error" && (
-                    <div className="flex items-center gap-2 text-red-500 mb-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        Error: {message.errorMessage}
-                      </span>
-                    </div>
+                  {message.role === "system" && (
+                    <Badge variant="secondary" className="mb-1 text-xs">
+                      System
+                    </Badge>
                   )}
-                  {message.role === "user" ? (
-                    <p className="text-sm whitespace-pre-wrap">
-                      {message.content}
-                    </p>
-                  ) : message.status !== "generating" ? (
-                    <MarkdownRenderer content={message.content} />
-                  ) : null}
-                  {/* Tool calls display */}
-                  {message.toolCalls && message.toolCalls.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-border">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Tools used:
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {message.toolCalls.map((tool: any, i: number) => (
-                          <Badge
-                            key={i}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {tool.name || tool}
-                          </Badge>
-                        ))}
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : message.role === "system"
+                          ? "bg-yellow-500/10 border border-yellow-500/20"
+                          : message.status === "error"
+                            ? "bg-red-500/10 border border-red-500/20"
+                            : "bg-muted/80 border border-border/50"
+                    }`}
+                  >
+                    {/* Generating indicator */}
+                    {message.status === "generating" && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Generating...</span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                    {/* Error indicator */}
+                    {message.status === "error" && (
+                      <div className="flex items-center gap-2 text-red-500 mb-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          Error: {message.errorMessage}
+                        </span>
+                      </div>
+                    )}
+                    {message.role === "user" ? (
+                      <p className="text-sm whitespace-pre-wrap">
+                        {message.content}
+                      </p>
+                    ) : message.status !== "generating" ? (
+                      <MarkdownRenderer content={message.content} />
+                    ) : null}
+                    {/* Tool calls display */}
+                    {message.toolCalls && message.toolCalls.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-border">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Tools used:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {message.toolCalls.map((tool: any, i: number) => (
+                            <Badge
+                              key={i}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {tool.name || tool}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {message.role === "assistant" &&
+                    message.content &&
+                    !isLoading &&
+                    !message.isCommand &&
+                    message.status !== "generating" &&
+                    message.status !== "error" && (
+                      <div className="flex gap-2 mt-1">
+                        {/* Save to database button for agent content */}
+                        {message.agentType &&
+                          (message.agentType === "character-development" ||
+                            message.agentType === "world-building") && (
+                            <Button
+                              variant={
+                                saveStatus[index] === "saved"
+                                  ? "outline"
+                                  : "default"
+                              }
+                              size="sm"
+                              onClick={() =>
+                                handleSaveToDatabase(
+                                  message.content,
+                                  message.agentType!,
+                                  index,
+                                )
+                              }
+                              disabled={
+                                savingIndex === index ||
+                                saveStatus[index] === "saved"
+                              }
+                            >
+                              {savingIndex === index ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : saveStatus[index] === "saved" ? (
+                                <>
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Saved
+                                </>
+                              ) : saveStatus[index] === "error" ? (
+                                <>
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  Retry
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="h-3 w-3 mr-1" />
+                                  {message.agentType === "character-development"
+                                    ? "Save Character"
+                                    : "Save to Lorebook"}
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleApplyToEditor(message.content)}
+                        >
+                          Apply to Editor
+                        </Button>
+                      </div>
+                    )}
                 </div>
-                {message.role === "assistant" &&
-                  message.content &&
-                  !isLoading &&
-                  !message.isCommand &&
-                  message.status !== "generating" &&
-                  message.status !== "error" && (
-                    <div className="flex gap-2 mt-1">
-                      {/* Save to database button for agent content */}
-                      {message.agentType &&
-                        (message.agentType === "character-development" ||
-                          message.agentType === "world-building") && (
-                          <Button
-                            variant={
-                              saveStatus[index] === "saved"
-                                ? "outline"
-                                : "default"
-                            }
-                            size="sm"
-                            onClick={() =>
-                              handleSaveToDatabase(
-                                message.content,
-                                message.agentType!,
-                                index,
-                              )
-                            }
-                            disabled={
-                              savingIndex === index ||
-                              saveStatus[index] === "saved"
-                            }
-                          >
-                            {savingIndex === index ? (
-                              <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                Saving...
-                              </>
-                            ) : saveStatus[index] === "saved" ? (
-                              <>
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Saved
-                              </>
-                            ) : saveStatus[index] === "error" ? (
-                              <>
-                                <AlertCircle className="h-3 w-3 mr-1" />
-                                Retry
-                              </>
-                            ) : (
-                              <>
-                                <Save className="h-3 w-3 mr-1" />
-                                {message.agentType === "character-development"
-                                  ? "Save Character"
-                                  : "Save to Lorebook"}
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleApplyToEditor(message.content)}
-                      >
-                        Apply to Editor
-                      </Button>
-                    </div>
-                  )}
-              </div>
-            ))}
+              ))}
 
-            <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} />
+            </div>
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-border space-y-3">
-            {/* Active agent indicator */}
-            {activeAgent && (
-              <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium capitalize">
-                    {activeAgent.replace("-", " ")} Agent
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setActiveAgent(null);
-                    setConversationId(null);
-                  }}
-                  className="h-6 text-xs"
-                >
-                  Exit Agent
-                </Button>
-              </div>
-            )}
-
-            {/* Model selector and Ask/Edit toggle */}
-            <div className="flex items-center gap-2">
-              <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="h-8 text-xs w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map((model) => (
-                    <SelectItem
-                      key={model.id}
-                      value={model.id}
-                      className="text-xs"
-                    >
-                      {model.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
-                <Button
-                  variant={editMode ? "ghost" : "secondary"}
-                  size="sm"
-                  onClick={() => setEditMode(false)}
-                  className="h-7 px-3"
-                >
-                  <Sparkles className="h-3 w-3 mr-1.5" />
-                  Ask
-                </Button>
-                <Button
-                  variant={editMode ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setEditMode(true)}
-                  disabled={!selectedText}
-                  className="h-7 px-3"
-                >
-                  <Edit3 className="h-3 w-3 mr-1.5" />
-                  Edit
-                </Button>
-              </div>
-            </div>
-
-            {/* Command menu */}
-            {showCommandMenu && filteredCommands.length > 0 && (
-              <div className="border border-border rounded-lg bg-popover p-1 max-h-48 overflow-auto">
-                {filteredCommands.map((cmd) => (
-                  <button
-                    key={cmd.command}
-                    onClick={() => selectCommand(cmd.command)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-md text-left"
-                  >
-                    <cmd.icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{cmd.command}</span>
-                    <span className="text-muted-foreground text-xs ml-auto">
-                      {cmd.description}
+          <div className="border-t border-border bg-card/50 backdrop-blur-sm">
+            <div className="max-w-4xl mx-auto p-6 space-y-3">
+              {/* Active agent indicator */}
+              {activeAgent && (
+                <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium capitalize">
+                      {activeAgent.replace("-", " ")} Agent
                     </span>
-                  </button>
-                ))}
-              </div>
-            )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setActiveAgent(null);
+                      setConversationId(null);
+                    }}
+                    className="h-6 text-xs"
+                  >
+                    Exit Agent
+                  </Button>
+                </div>
+              )}
 
-            <div className="flex gap-2 relative">
-              <Textarea
-                ref={inputRef}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
+              {/* Model selector and Ask/Edit toggle */}
+              <div className="flex items-center gap-2">
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="h-8 text-xs w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((model) => (
+                      <SelectItem
+                        key={model.id}
+                        value={model.id}
+                        className="text-xs"
+                      >
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
+                  <Button
+                    variant={editMode ? "ghost" : "secondary"}
+                    size="sm"
+                    onClick={() => setEditMode(false)}
+                    className="h-7 px-3"
+                  >
+                    <Sparkles className="h-3 w-3 mr-1.5" />
+                    Ask
+                  </Button>
+                  <Button
+                    variant={editMode ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={() => setEditMode(true)}
+                    disabled={!selectedText}
+                    className="h-7 px-3"
+                  >
+                    <Edit3 className="h-3 w-3 mr-1.5" />
+                    Edit
+                  </Button>
+                </div>
+              </div>
+
+              {/* Command menu */}
+              {showCommandMenu && filteredCommands.length > 0 && (
+                <div className="border border-border rounded-lg bg-popover p-1 max-h-48 overflow-auto">
+                  {filteredCommands.map((cmd) => (
+                    <button
+                      key={cmd.command}
+                      onClick={() => selectCommand(cmd.command)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-md text-left"
+                    >
+                      <cmd.icon className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{cmd.command}</span>
+                      <span className="text-muted-foreground text-xs ml-auto">
+                        {cmd.description}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2 relative">
+                <Textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                    if (e.key === "Escape") {
+                      setShowCommandMenu(false);
+                    }
+                  }}
+                  placeholder={
+                    activeAgent
+                      ? `Chat with ${activeAgent} agent...`
+                      : "Ask for help... (Type / for commands)"
                   }
-                  if (e.key === "Escape") {
-                    setShowCommandMenu(false);
-                  }
-                }}
-                placeholder={
-                  activeAgent
-                    ? `Chat with ${activeAgent} agent...`
-                    : "Ask for help... (Type / for commands)"
-                }
-                className="resize-none"
-                rows={3}
-                disabled={isLoading}
-              />
-              <Button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                size="icon"
-                className="self-end"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
+                  className="resize-none"
+                  rows={3}
+                  disabled={isLoading}
+                />
+                <Button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isLoading}
+                  size="icon"
+                  className="self-end"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Press Enter to send • Type / for commands • /help for all
+                commands
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Press Enter to send • Type / for commands • /help for all commands
-            </p>
           </div>
         </>
       )}
