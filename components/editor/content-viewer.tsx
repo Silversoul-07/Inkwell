@@ -5,8 +5,7 @@ import { User, Book, Save, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { MiniEditor } from './mini-editor'
-import { cn } from '@/lib/utils'
+import { WikiEditor } from './wiki-editor'
 
 interface Character {
   id: string
@@ -37,38 +36,14 @@ interface ContentViewerProps {
   onBack: () => void
 }
 
-interface WikiSectionProps {
-  title: string
-  content: string
-  onChange: (value: string) => void
-}
-
-function WikiSection({ title, content, onChange }: WikiSectionProps) {
-  return (
-    <div className="mb-6">
-      <h2 className="text-lg font-semibold text-foreground border-b border-border pb-1 mb-3">
-        {title}
-      </h2>
-      <MiniEditor
-        content={content}
-        onChange={onChange}
-        placeholder={`Enter ${title.toLowerCase()}...`}
-        minHeight="60px"
-      />
-    </div>
-  )
-}
-
 export function ContentViewer({ type, content, projectId, onBack }: ContentViewerProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
-  // Character state
   const [charData, setCharData] = useState<Character>(
     type === 'character' ? (content as Character) : ({} as Character)
   )
 
-  // Lorebook state
   const [loreData, setLoreData] = useState<LorebookEntry>(
     type === 'lorebook' ? (content as LorebookEntry) : ({} as LorebookEntry)
   )
@@ -107,88 +82,100 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
     }
   }, [type, charData, loreData])
 
-  const getTitle = () => {
-    if (type === 'character') return charData.name
-    return loreData.key
-  }
-
-  const getIcon = () => {
-    if (type === 'character') return <User className="h-6 w-6" />
-    return <Book className="h-6 w-6" />
-  }
-
   return (
     <div className="h-full flex flex-col relative">
-      {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="max-w-3xl mx-auto p-8 pb-24">
-          {/* Wiki Title Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="text-muted-foreground">{getIcon()}</div>
-              <h1 className="text-3xl font-bold text-foreground">{getTitle()}</h1>
+        <article className="max-w-3xl mx-auto p-8 pb-24">
+          {/* Wiki Page Title */}
+          <header className="mb-6 pb-4 border-b-2 border-border">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              {type === 'character' ? <User className="h-4 w-4" /> : <Book className="h-4 w-4" />}
+              <span className="text-xs uppercase tracking-wide">
+                {type === 'character' ? 'Character' : 'Lorebook Entry'}
+              </span>
             </div>
-            <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-serif font-bold">
+              {type === 'character' ? charData.name : loreData.key}
+            </h1>
+            <div className="flex items-center gap-2 mt-2">
               {type === 'character' && charData.role && (
-                <Badge variant="secondary">{charData.role}</Badge>
+                <Badge variant="outline">{charData.role}</Badge>
               )}
               {type === 'lorebook' && loreData.category && (
-                <Badge variant="secondary">{loreData.category}</Badge>
+                <Badge variant="outline">{loreData.category}</Badge>
               )}
               {type === 'lorebook' && (
-                <span className="text-sm text-muted-foreground">
-                  Used {loreData.useCount} times
+                <span className="text-xs text-muted-foreground">
+                  Referenced {loreData.useCount} times
                 </span>
               )}
             </div>
-            <div className="h-px bg-border mt-4" />
-          </div>
+          </header>
 
-          {/* Character Wiki Content */}
+          {/* Character Sections */}
           {type === 'character' && (
-            <div>
-              <WikiSection
-                title="Description"
-                content={charData.description || ''}
-                onChange={(v) => updateCharField('description', v)}
-              />
-              <WikiSection
-                title="Personality Traits"
-                content={charData.traits || ''}
-                onChange={(v) => updateCharField('traits', v)}
-              />
-              <WikiSection
-                title="Background"
-                content={charData.background || ''}
-                onChange={(v) => updateCharField('background', v)}
-              />
-              <WikiSection
-                title="Relationships"
-                content={charData.relationships || ''}
-                onChange={(v) => updateCharField('relationships', v)}
-              />
-              <WikiSection
-                title="Goals & Motivations"
-                content={charData.goals || ''}
-                onChange={(v) => updateCharField('goals', v)}
-              />
+            <div className="space-y-6">
+              <section>
+                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Description</h2>
+                <WikiEditor
+                  content={charData.description || ''}
+                  onChange={(v) => updateCharField('description', v)}
+                  placeholder="Physical appearance, distinguishing features..."
+                />
+              </section>
+
+              <section>
+                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Personality Traits</h2>
+                <WikiEditor
+                  content={charData.traits || ''}
+                  onChange={(v) => updateCharField('traits', v)}
+                  placeholder="Character traits, behaviors, quirks..."
+                />
+              </section>
+
+              <section>
+                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Background</h2>
+                <WikiEditor
+                  content={charData.background || ''}
+                  onChange={(v) => updateCharField('background', v)}
+                  placeholder="History, origin story, past events..."
+                />
+              </section>
+
+              <section>
+                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Relationships</h2>
+                <WikiEditor
+                  content={charData.relationships || ''}
+                  onChange={(v) => updateCharField('relationships', v)}
+                  placeholder="Connections with other characters..."
+                />
+              </section>
+
+              <section>
+                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Goals & Motivations</h2>
+                <WikiEditor
+                  content={charData.goals || ''}
+                  onChange={(v) => updateCharField('goals', v)}
+                  placeholder="What drives this character..."
+                />
+              </section>
             </div>
           )}
 
-          {/* Lorebook Wiki Content */}
+          {/* Lorebook Content */}
           {type === 'lorebook' && (
-            <div>
-              <WikiSection
-                title="Content"
+            <section>
+              <WikiEditor
                 content={loreData.value || ''}
                 onChange={(v) => updateLoreField('value', v)}
+                placeholder="Enter lore content..."
               />
-            </div>
+            </section>
           )}
-        </div>
+        </article>
       </ScrollArea>
 
-      {/* Floating Bottom Save Bar */}
+      {/* Floating Save Bar */}
       {hasChanges && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
           <div className="bg-background border rounded-full shadow-lg px-4 py-2 flex items-center gap-3">
