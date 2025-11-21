@@ -28,3 +28,16 @@ export {
   type ProviderName,
   type ProviderConfigResult,
 } from "./providers";
+
+export {
+  type AgentType,
+  AGENT_NAMES,
+  AGENT_DESCRIPTIONS,
+  AGENT_ICONS,
+} from "./system-prompts";
+
+export {
+  executeAgent,
+  createAgentConversation,
+  getAgentConversations,
+} from "./executor";
