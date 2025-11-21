@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   ContextMenu,
@@ -6,18 +6,39 @@ import {
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from '@/components/ui/context-menu'
-import { ArrowRight, Wand2, CheckCircle, RefreshCw, Minimize2 } from 'lucide-react'
+} from "@/components/ui/context-menu";
+import {
+  ArrowRight,
+  Wand2,
+  CheckCircle,
+  RefreshCw,
+  Minimize2,
+  Bold,
+  Italic,
+  Strikethrough,
+  Code,
+  Heading1,
+  Heading2,
+  List,
+  ListOrdered,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EditorContextMenuProps {
-  children: React.ReactNode
-  hasSelection: boolean
-  isGenerating: boolean
-  onContinue: () => void
-  onAlternative: () => void
-  onFixGrammar: () => void
-  onRephrase: () => void
-  onShorten: () => void
+  children: React.ReactNode;
+  hasSelection: boolean;
+  isGenerating: boolean;
+  onContinue: () => void;
+  onAlternative: () => void;
+  onFixGrammar: () => void;
+  onRephrase: () => void;
+  onShorten: () => void;
+  formatItems?: Array<{
+    icon: any;
+    label: string;
+    action: () => void;
+    active: boolean;
+  }>;
 }
 
 export function EditorContextMenu({
@@ -29,13 +50,39 @@ export function EditorContextMenu({
   onFixGrammar,
   onRephrase,
   onShorten,
+  formatItems = [],
 }: EditorContextMenuProps) {
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        {children}
-      </ContextMenuTrigger>
+      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-56">
+        {/* Formatting Icons Row */}
+        {formatItems.length > 0 && (
+          <>
+            <div className="flex items-center gap-1 px-2 py-1.5">
+              {formatItems.map((item, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={cn(
+                    "p-1.5 rounded hover:bg-muted transition-colors",
+                    item.active && "bg-muted text-primary",
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    item.action();
+                  }}
+                  title={item.label}
+                  disabled={isGenerating}
+                >
+                  <item.icon className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
+            <ContextMenuSeparator />
+          </>
+        )}
+
         {!hasSelection && (
           <>
             <ContextMenuItem onClick={onContinue} disabled={isGenerating}>
@@ -69,5 +116,5 @@ export function EditorContextMenu({
         )}
       </ContextMenuContent>
     </ContextMenu>
-  )
+  );
 }

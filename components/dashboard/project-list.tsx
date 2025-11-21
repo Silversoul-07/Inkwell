@@ -1,49 +1,63 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Plus, Book, FileText, BarChart3, Users, BookOpen } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { CreateProjectDialog } from './create-project-dialog'
+import { useState } from "react";
+import Link from "next/link";
+import { Plus, Book, FileText, BarChart3, Users, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CreateProjectDialog } from "./create-project-dialog";
 
 interface Project {
-  id: string
-  title: string
-  description: string | null
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  title: string;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
   chapters: Array<{
-    id: string
+    id: string;
     scenes: Array<{
-      id: string
-      wordCount: number
-    }>
-  }>
+      id: string;
+      wordCount: number;
+    }>;
+  }>;
 }
 
 interface ProjectListProps {
-  projects: Project[]
+  projects: Project[];
 }
 
 export function ProjectList({ projects }: ProjectListProps) {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const getTotalWords = (project: Project) => {
     return project.chapters.reduce(
       (total, chapter) =>
         total + chapter.scenes.reduce((sum, scene) => sum + scene.wordCount, 0),
-      0
-    )
-  }
+      0,
+    );
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold">Your Projects</h2>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/global/characters">
+            <Button variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              All Characters
+            </Button>
+          </Link>
+          <Link href="/global/lorebook">
+            <Button variant="outline">
+              <BookOpen className="h-4 w-4 mr-2" />
+              All Lorebook
+            </Button>
+          </Link>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
+        </div>
       </div>
 
       {projects.length === 0 ? (
@@ -93,17 +107,32 @@ export function ProjectList({ projects }: ProjectListProps) {
 
               <div className="grid grid-cols-3 gap-2 mt-auto pt-4 border-t border-border">
                 <Link href={`/analytics/${project.id}`}>
-                  <Button variant="outline" size="sm" className="w-full" title="Analytics">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    title="Analytics"
+                  >
                     <BarChart3 className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href={`/characters/${project.id}`}>
-                  <Button variant="outline" size="sm" className="w-full" title="Characters">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    title="Characters"
+                  >
                     <Users className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href={`/lorebook/${project.id}`}>
-                  <Button variant="outline" size="sm" className="w-full" title="Lorebook">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    title="Lorebook"
+                  >
                     <BookOpen className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -118,5 +147,5 @@ export function ProjectList({ projects }: ProjectListProps) {
         onOpenChange={setIsCreateDialogOpen}
       />
     </div>
-  )
+  );
 }
