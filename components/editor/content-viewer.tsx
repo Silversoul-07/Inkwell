@@ -1,11 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { User, Book, Save, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { User, Book, Save, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { MiniEditor } from './mini-editor'
 import { cn } from '@/lib/utils'
@@ -43,42 +41,25 @@ interface WikiSectionProps {
   title: string
   content: string
   onChange: (value: string) => void
-  defaultExpanded?: boolean
 }
 
-function WikiSection({ title, content, onChange, defaultExpanded = true }: WikiSectionProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded)
-
+function WikiSection({ title, content, onChange }: WikiSectionProps) {
   return (
-    <div className="border-b border-border/50 last:border-b-0">
-      <button
-        type="button"
-        className="w-full flex items-center gap-2 py-3 px-1 text-left hover:bg-muted/30 transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        {expanded ? (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        )}
-        <h3 className="font-semibold text-foreground">{title}</h3>
-      </button>
-      {expanded && (
-        <div className="pb-4 px-1">
-          <MiniEditor
-            content={content}
-            onChange={onChange}
-            placeholder={`Enter ${title.toLowerCase()}...`}
-            minHeight="80px"
-          />
-        </div>
-      )}
+    <div className="mb-6">
+      <h2 className="text-lg font-semibold text-foreground border-b border-border pb-1 mb-3">
+        {title}
+      </h2>
+      <MiniEditor
+        content={content}
+        onChange={onChange}
+        placeholder={`Enter ${title.toLowerCase()}...`}
+        minHeight="60px"
+      />
     </div>
   )
 }
 
 export function ContentViewer({ type, content, projectId, onBack }: ContentViewerProps) {
-  const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
@@ -132,74 +113,40 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
   }
 
   const getIcon = () => {
-    if (type === 'character') return <User className="h-5 w-5" />
-    return <Book className="h-5 w-5" />
+    if (type === 'character') return <User className="h-6 w-6" />
+    return <Book className="h-6 w-6" />
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="border-b px-6 py-4 flex items-center justify-between bg-background/95 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-muted">{getIcon()}</div>
-          <div>
-            <h1 className="text-xl font-bold">{getTitle()}</h1>
-            {type === 'character' && charData.role && (
-              <Badge variant="secondary" className="mt-1">
-                {charData.role}
-              </Badge>
-            )}
-            {type === 'lorebook' && loreData.category && (
-              <Badge variant="secondary" className="mt-1">
-                {loreData.category}
-              </Badge>
-            )}
-          </div>
-        </div>
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          className="gap-2"
-        >
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {isSaving ? 'Saving...' : 'Save'}
-        </Button>
-      </div>
-
+    <div className="h-full flex flex-col relative">
       {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="max-w-3xl mx-auto p-6">
-          {type === 'character' && (
-            <div className="space-y-2">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-border/50">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                    Name
-                  </label>
-                  <Input
-                    value={charData.name || ''}
-                    onChange={(e) => updateCharField('name', e.target.value)}
-                    placeholder="Character name"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                    Role
-                  </label>
-                  <Input
-                    value={charData.role || ''}
-                    onChange={(e) => updateCharField('role', e.target.value)}
-                    placeholder="Protagonist, Antagonist, etc."
-                  />
-                </div>
-              </div>
+        <div className="max-w-3xl mx-auto p-8 pb-24">
+          {/* Wiki Title Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="text-muted-foreground">{getIcon()}</div>
+              <h1 className="text-3xl font-bold text-foreground">{getTitle()}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              {type === 'character' && charData.role && (
+                <Badge variant="secondary">{charData.role}</Badge>
+              )}
+              {type === 'lorebook' && loreData.category && (
+                <Badge variant="secondary">{loreData.category}</Badge>
+              )}
+              {type === 'lorebook' && (
+                <span className="text-sm text-muted-foreground">
+                  Used {loreData.useCount} times
+                </span>
+              )}
+            </div>
+            <div className="h-px bg-border mt-4" />
+          </div>
 
-              {/* Wiki Sections */}
+          {/* Character Wiki Content */}
+          {type === 'character' && (
+            <div>
               <WikiSection
                 title="Description"
                 content={charData.description || ''}
@@ -228,47 +175,40 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
             </div>
           )}
 
+          {/* Lorebook Wiki Content */}
           {type === 'lorebook' && (
-            <div className="space-y-2">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-border/50">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                    Entry Name
-                  </label>
-                  <Input
-                    value={loreData.key || ''}
-                    onChange={(e) => updateLoreField('key', e.target.value)}
-                    placeholder="Entry name"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                    Category
-                  </label>
-                  <Input
-                    value={loreData.category || ''}
-                    onChange={(e) => updateLoreField('category', e.target.value)}
-                    placeholder="Location, Magic, etc."
-                  />
-                </div>
-              </div>
-
-              {/* Content */}
+            <div>
               <WikiSection
                 title="Content"
                 content={loreData.value || ''}
                 onChange={(v) => updateLoreField('value', v)}
               />
-
-              {/* Stats */}
-              <div className="pt-4 text-sm text-muted-foreground">
-                Used {loreData.useCount} times
-              </div>
             </div>
           )}
         </div>
       </ScrollArea>
+
+      {/* Floating Bottom Save Bar */}
+      {hasChanges && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+          <div className="bg-background border rounded-full shadow-lg px-4 py-2 flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">Unsaved changes</span>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="rounded-full gap-2"
+            >
+              {isSaving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
