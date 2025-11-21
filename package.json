@@ -18,7 +18,6 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-label": "^2.0.2",
-    "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-progress": "^1.0.3",
     "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-select": "^2.0.0",
@@ -36,7 +35,6 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
     "llamaindex": "^0.12.0",
     "lucide-react": "^0.344.0",
     "next": "^16.0.2-canary.21",
@@ -44,9 +42,9 @@
     "openai": "^6.9.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
     "tailwind-merge": "^2.6.0",
-    "zod": "^3.25.76",
-    "zustand": "^4.5.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

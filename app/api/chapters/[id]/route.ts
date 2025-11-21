@@ -14,42 +14,47 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { content, wordCount } = await request.json()
+    const body = await request.json()
+    const { title, content, wordCount } = body
 
     // Verify ownership
-    const scene = await prisma.scene.findUnique({
+    const chapter = await prisma.chapter.findUnique({
       where: { id },
       include: {
-        chapter: {
-          include: {
-            project: true,
-          },
-        },
+        project: true,
       },
     })
 
-    if (!scene || scene.chapter.project.userId !== session.user.id) {
+    if (!chapter || chapter.project.userId !== session.user.id) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    // Update scene
-    const updated = await prisma.scene.update({
+    // Build update data object
+    const updateData: {
+      title?: string
+      content?: string
+      wordCount?: number
+    } = {}
+
+    if (title !== undefined) updateData.title = title
+    if (content !== undefined) updateData.content = content
+    if (wordCount !== undefined) updateData.wordCount = wordCount
+
+    // Update chapter
+    const updated = await prisma.chapter.update({
       where: { id },
-      data: {
-        content,
-        wordCount,
-      },
+      data: updateData,
     })
 
     // Update project's updatedAt
     await prisma.project.update({
-      where: { id: scene.chapter.projectId },
+      where: { id: chapter.projectId },
       data: { updatedAt: new Date() },
     })
 
     return NextResponse.json(updated)
   } catch (error) {
-    console.error('Scene update error:', error)
+    console.error('Chapter update error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -69,29 +74,25 @@ export async function DELETE(
     }
 
     // Verify ownership
-    const scene = await prisma.scene.findUnique({
+    const chapter = await prisma.chapter.findUnique({
       where: { id },
       include: {
-        chapter: {
-          include: {
-            project: true,
-          },
-        },
+        project: true,
       },
     })
 
-    if (!scene || scene.chapter.project.userId !== session.user.id) {
+    if (!chapter || chapter.project.userId !== session.user.id) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    // Delete scene
-    await prisma.scene.delete({
+    // Delete chapter (this will cascade delete scenes if configured in schema)
+    await prisma.chapter.delete({
       where: { id },
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Scene delete error:', error)
+    console.error('Chapter delete error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
