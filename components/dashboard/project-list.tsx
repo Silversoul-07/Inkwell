@@ -2,9 +2,27 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Book, FileText, BarChart3, Users, BookOpen } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Plus,
+  Book,
+  FileText,
+  BarChart3,
+  Users,
+  BookOpen,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateProjectDialog } from "./create-project-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Project {
   id: string;
@@ -27,6 +45,11 @@ interface ProjectListProps {
 
 export function ProjectList({ projects }: ProjectListProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
 
   const getTotalWords = (project: Project) => {
     return project.chapters.reduce(
@@ -34,6 +57,51 @@ export function ProjectList({ projects }: ProjectListProps) {
         total + chapter.scenes.reduce((sum, scene) => sum + scene.wordCount, 0),
       0,
     );
+  };
+
+  const handleDeleteClick = (project: Project, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setProjectToDelete(project);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/projects/${projectToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete project");
+      }
+
+      toast({
+        title: "Project deleted",
+        description: `"${projectToDelete.title}" has been deleted successfully.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+      router.refresh();
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete project. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setProjectToDelete(null);
   };
 
   return (
@@ -105,7 +173,7 @@ export function ProjectList({ projects }: ProjectListProps) {
                 Updated {new Date(project.updatedAt).toLocaleDateString()}
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mt-auto pt-4 border-t border-border">
+              <div className="grid grid-cols-4 gap-2 mt-auto pt-4 border-t border-border">
                 <Link href={`/analytics/${project.id}`}>
                   <Button
                     variant="outline"
@@ -136,6 +204,15 @@ export function ProjectList({ projects }: ProjectListProps) {
                     <BookOpen className="h-4 w-4" />
                   </Button>
                 </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full hover:bg-destructive hover:text-destructive-foreground"
+                  title="Delete Project"
+                  onClick={(e) => handleDeleteClick(project, e)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           ))}
@@ -146,6 +223,35 @@ export function ProjectList({ projects }: ProjectListProps) {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {projectToDelete?.title}? This
+              action cannot be undone. All chapters, scenes, and associated data
+              will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete Project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
