@@ -162,20 +162,24 @@ export function EditorView({ project, settings }: EditorViewProps) {
         )}
 
         <div className="flex-1 min-w-0 overflow-auto relative">
-          {/* Content display - same for both modes */}
-          {viewType === "scene" && selectedScene && (
-            <TiptapEditorNovelAI
-              key={selectedScene.id}
-              scene={selectedScene}
-              projectId={project.id}
-              settings={settings}
-              zenMode={zenMode}
-              onExitZen={() => setZenMode(false)}
-              chapterTitle={selectedChapter?.title}
-              sceneTitle={selectedScene.title || undefined}
-            />
-          )}
-          {viewType !== "scene" && viewContent && (
+          {/* Writing Mode - Show Editor */}
+          {editorMode === "writing" &&
+            viewType === "scene" &&
+            selectedScene && (
+              <TiptapEditorNovelAI
+                key={selectedScene.id}
+                scene={selectedScene}
+                projectId={project.id}
+                settings={settings}
+                zenMode={zenMode}
+                onExitZen={() => setZenMode(false)}
+                chapterTitle={selectedChapter?.title}
+                sceneTitle={selectedScene.title || undefined}
+              />
+            )}
+
+          {/* Writing Mode - Character/Lorebook View */}
+          {editorMode === "writing" && viewType !== "scene" && viewContent && (
             <ContentViewer
               key={viewContent.id}
               type={viewType}
@@ -184,9 +188,22 @@ export function EditorView({ project, settings }: EditorViewProps) {
               onBack={handleBackToScene}
             />
           )}
+
+          {/* AI Storm Mode - Show AI Canvas */}
+          {editorMode === "ai-storm" && selectedScene && (
+            <div className="w-full h-full flex flex-col bg-background">
+              <AICanvas
+                sceneContext={sceneContext || selectedScene.content}
+                selectedText={selectedText}
+                projectId={project.id}
+                onReplaceSelection={() => {}}
+                onInsertText={() => {}}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Scene Context Panel - Writing Mode */}
+        {/* Scene Context Panel - Writing Mode only */}
         {!zenMode &&
           editorMode === "writing" &&
           contextPanelOpen &&
@@ -199,21 +216,8 @@ export function EditorView({ project, settings }: EditorViewProps) {
             />
           )}
 
-        {/* AI Chat Panel - AI Storm Mode */}
-        {!zenMode &&
-          editorMode === "ai-storm" &&
-          contextPanelOpen &&
-          selectedScene && (
-            <div className="w-96 border-l border-border bg-card flex flex-col h-full">
-              <AICanvas
-                sceneContext={sceneContext || selectedScene.content}
-                selectedText={selectedText}
-                projectId={project.id}
-                onReplaceSelection={() => {}}
-                onInsertText={() => {}}
-              />
-            </div>
-          )}
+        {/* Optional: Additional side panel for AI Storm mode if needed */}
+        {/* Removed duplicate AI Canvas from side panel since it's now in main area */}
 
         {/* Debug Sidebar */}
         {!zenMode && selectedScene && (

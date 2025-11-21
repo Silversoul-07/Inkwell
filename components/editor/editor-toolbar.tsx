@@ -169,41 +169,51 @@ export function EditorToolbar({
             {/* Mode Selector Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-2 min-w-[140px]"
+                >
                   {editorMode === "writing" ? (
                     <>
                       <PenLine className="h-3.5 w-3.5" />
-                      <span className="text-xs font-medium">Writing</span>
+                      <span className="text-xs font-medium">Writing Mode</span>
                     </>
                   ) : (
                     <>
                       <Zap className="h-3.5 w-3.5" />
-                      <span className="text-xs font-medium">AI Storm</span>
+                      <span className="text-xs font-medium">AI Storm Mode</span>
                     </>
                   )}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                  <ChevronDown className="h-3 w-3 opacity-50 ml-auto" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuContent align="start" className="w-56">
                 <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
                   Editor Mode
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setEditorMode("writing")}>
+                <DropdownMenuItem
+                  onClick={() => setEditorMode("writing")}
+                  className={editorMode === "writing" ? "bg-accent" : ""}
+                >
                   <PenLine className="h-4 w-4 mr-2" />
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-0.5">
                     <span className="font-medium">Writing Mode</span>
                     <span className="text-xs text-muted-foreground">
-                      Focus on writing
+                      Focus on writing and editing your story
                     </span>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEditorMode("ai-storm")}>
+                <DropdownMenuItem
+                  onClick={() => setEditorMode("ai-storm")}
+                  className={editorMode === "ai-storm" ? "bg-accent" : ""}
+                >
                   <Zap className="h-4 w-4 mr-2" />
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-0.5">
                     <span className="font-medium">AI Storm Mode</span>
                     <span className="text-xs text-muted-foreground">
-                      AI-powered assistance
+                      Brainstorm and generate ideas with AI
                     </span>
                   </div>
                 </DropdownMenuItem>
