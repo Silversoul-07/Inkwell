@@ -6,6 +6,8 @@ echo "🔧 Running pre-commit checks..."
 # Run lint-staged to auto-fix/validate only staged files
 npx lint-staged
 
+npx tsc --noEmit
+
 # echo "🔍 Checking for unused code with Knip..."
 # npx knip --production --cache
 
