@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { User, Book, Save, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -48,6 +48,16 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
     type === 'lorebook' ? (content as LorebookEntry) : ({} as LorebookEntry)
   )
 
+  // Reset state when content changes (navigating between entries)
+  useEffect(() => {
+    setHasChanges(false)
+    if (type === 'character') {
+      setCharData(content as Character)
+    } else {
+      setLoreData(content as LorebookEntry)
+    }
+  }, [content, type])
+
   const updateCharField = useCallback((field: keyof Character, value: string) => {
     setCharData((prev) => ({ ...prev, [field]: value }))
     setHasChanges(true)
@@ -82,12 +92,14 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
     }
   }, [type, charData, loreData])
 
+  const contentId = type === 'character' ? charData.id : loreData.id
+
   return (
     <div className="h-full flex flex-col relative">
       <ScrollArea className="flex-1">
         <article className="max-w-3xl mx-auto p-8 pb-24">
           {/* Wiki Page Title */}
-          <header className="mb-6 pb-4 border-b-2 border-border">
+          <header className="mb-4 pb-3 border-b-2 border-border">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               {type === 'character' ? <User className="h-4 w-4" /> : <Book className="h-4 w-4" />}
               <span className="text-xs uppercase tracking-wide">
@@ -114,10 +126,11 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
 
           {/* Character Sections */}
           {type === 'character' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <section>
-                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Description</h2>
+                <h2 className="text-lg font-semibold mb-1 text-foreground">Description</h2>
                 <WikiEditor
+                  key={`${contentId}-description`}
                   content={charData.description || ''}
                   onChange={(v) => updateCharField('description', v)}
                   placeholder="Physical appearance, distinguishing features..."
@@ -125,8 +138,9 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
               </section>
 
               <section>
-                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Personality Traits</h2>
+                <h2 className="text-lg font-semibold mb-1 text-foreground">Personality Traits</h2>
                 <WikiEditor
+                  key={`${contentId}-traits`}
                   content={charData.traits || ''}
                   onChange={(v) => updateCharField('traits', v)}
                   placeholder="Character traits, behaviors, quirks..."
@@ -134,8 +148,9 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
               </section>
 
               <section>
-                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Background</h2>
+                <h2 className="text-lg font-semibold mb-1 text-foreground">Background</h2>
                 <WikiEditor
+                  key={`${contentId}-background`}
                   content={charData.background || ''}
                   onChange={(v) => updateCharField('background', v)}
                   placeholder="History, origin story, past events..."
@@ -143,8 +158,9 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
               </section>
 
               <section>
-                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Relationships</h2>
+                <h2 className="text-lg font-semibold mb-1 text-foreground">Relationships</h2>
                 <WikiEditor
+                  key={`${contentId}-relationships`}
                   content={charData.relationships || ''}
                   onChange={(v) => updateCharField('relationships', v)}
                   placeholder="Connections with other characters..."
@@ -152,8 +168,9 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
               </section>
 
               <section>
-                <h2 className="text-xl font-serif font-semibold mb-2 text-foreground">Goals & Motivations</h2>
+                <h2 className="text-lg font-semibold mb-1 text-foreground">Goals & Motivations</h2>
                 <WikiEditor
+                  key={`${contentId}-goals`}
                   content={charData.goals || ''}
                   onChange={(v) => updateCharField('goals', v)}
                   placeholder="What drives this character..."
@@ -166,6 +183,7 @@ export function ContentViewer({ type, content, projectId, onBack }: ContentViewe
           {type === 'lorebook' && (
             <section>
               <WikiEditor
+                key={`${contentId}-value`}
                 content={loreData.value || ''}
                 onChange={(v) => updateLoreField('value', v)}
                 placeholder="Enter lore content..."
