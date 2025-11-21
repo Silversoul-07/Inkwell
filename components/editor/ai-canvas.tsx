@@ -103,6 +103,7 @@ export function AICanvas({
   const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load available AI models from settings
   useEffect(() => {
@@ -129,6 +130,35 @@ export function AICanvas({
     };
     loadModels();
   }, []);
+
+  // Load chat history from localStorage on mount
+  useEffect(() => {
+    if (!projectId || isInitialized) return;
+
+    const storageKey = `inkwell_ai_chat_${projectId}`;
+    try {
+      const savedMessages = localStorage.getItem(storageKey);
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        setMessages(parsed);
+      }
+    } catch (error) {
+      console.error("Failed to load chat history:", error);
+    }
+    setIsInitialized(true);
+  }, [projectId, isInitialized]);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    if (!projectId || !isInitialized) return;
+
+    const storageKey = `inkwell_ai_chat_${projectId}`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch (error) {
+      console.error("Failed to save chat history:", error);
+    }
+  }, [messages, projectId, isInitialized]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -623,6 +653,18 @@ export function AICanvas({
         setMessages([]);
         setActiveAgent(null);
         setConversationId(null);
+        // Clear localStorage as well
+        if (projectId) {
+          const storageKey = `inkwell_ai_chat_${projectId}`;
+          try {
+            localStorage.removeItem(storageKey);
+          } catch (error) {
+            console.error(
+              "Failed to clear chat history from localStorage:",
+              error,
+            );
+          }
+        }
         return true;
 
       default:
