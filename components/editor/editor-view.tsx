@@ -185,6 +185,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
             onClose={() => setAiSidebarOpen(false)}
             sceneContext={sceneContext}
             selectedText={selectedText}
+            projectId={project.id}
             onReplaceSelection={() => {}}
             onInsertText={() => {}}
           />
