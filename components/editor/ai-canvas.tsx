@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Loader2, Wand2, Edit3, Sparkles, RotateCcw, ChevronDown } from 'lucide-react'
+import { Send, Loader2, Wand2, Edit3, Sparkles, RotateCcw, Globe, Users, BookOpen, HelpCircle, Trash2, Bot } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/ai/markdown-renderer'
 import {
   Select,
@@ -12,22 +12,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 
 interface Message {
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'system'
   content: string
+  toolCalls?: any[]
+  isCommand?: boolean
+  agentType?: string
 }
 
 interface AICanvasProps {
   sceneContext: string
   selectedText: string
+  projectId?: string
   onReplaceSelection?: (text: string) => void
   onInsertText?: (text: string) => void
 }
 
+// Slash commands definition
+const SLASH_COMMANDS = [
+  { command: '/help', description: 'Show all available commands', icon: HelpCircle },
+  { command: '/character', description: 'Create a new character (usage: /character <name>)', icon: Users },
+  { command: '/lorebook', description: 'Create a lorebook entry (usage: /lorebook <entry>)', icon: BookOpen },
+  { command: '/world', description: 'Start world-building conversation', icon: Globe },
+  { command: '/plan', description: 'Start story planning conversation', icon: Bot },
+  { command: '/analyze', description: 'Analyze the current scene', icon: Sparkles },
+  { command: '/clear', description: 'Clear chat history', icon: Trash2 },
+]
+
 export function AICanvas({
   sceneContext,
   selectedText,
+  projectId,
   onReplaceSelection,
   onInsertText,
 }: AICanvasProps) {
@@ -38,7 +55,12 @@ export function AICanvas({
   const [editingText, setEditingText] = useState('')
   const [selectedModel, setSelectedModel] = useState('claude-sonnet')
   const [availableModels, setAvailableModels] = useState<any[]>([])
+  const [showCommandMenu, setShowCommandMenu] = useState(false)
+  const [filteredCommands, setFilteredCommands] = useState(SLASH_COMMANDS)
+  const [activeAgent, setActiveAgent] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // Load available AI models from settings
   useEffect(() => {
@@ -158,9 +180,20 @@ export function AICanvas({
       const handled = await handleSlashCommand(input)
       if (handled) {
         setInput('')
+        setShowCommandMenu(false)
         return
       }
     }
+
+    // If we have an active agent, route to agent
+    if (activeAgent && conversationId) {
+      const userMessage: Message = { role: 'user', content: input }
+      setMessages((prev) => [...prev, userMessage])
+      setInput('')
+      await sendAgentMessage(input, activeAgent)
+      return
+    }
+
     sendMessage()
   }
 
@@ -200,33 +233,200 @@ export function AICanvas({
     setEditingText(selectedText || '')
   }
 
-  // Handle slash commands
-  const handleSlashCommand = async (command: string) => {
-    const trimmed = command.trim().toLowerCase()
+  // Handle input changes for command menu
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value
+    setInput(value)
 
-    if (trimmed.startsWith('/character ')) {
-      const name = command.slice(11).trim()
-      setMessages((prev) => [
-        ...prev,
-        { role: 'user', content: `/character ${name}` },
-        { role: 'assistant', content: `Creating character: ${name}...\n\nPlease provide character details in the Characters page.` },
-      ])
-      // TODO: Open character creation dialog or navigate to characters page
-    } else if (trimmed.startsWith('/lorebook ')) {
-      const entry = command.slice(10).trim()
-      setMessages((prev) => [
-        ...prev,
-        { role: 'user', content: `/lorebook ${entry}` },
-        { role: 'assistant', content: `Creating lorebook entry: ${entry}...\n\nPlease add details in the Lorebook page.` },
-      ])
-      // TODO: Open lorebook creation dialog or navigate to lorebook page
-    } else if (trimmed === '/analyze') {
-      sendMessage('Analyze the current scene for plot, pacing, and character development.')
+    // Show command menu when typing /
+    if (value.startsWith('/')) {
+      setShowCommandMenu(true)
+      const search = value.slice(1).toLowerCase()
+      setFilteredCommands(
+        SLASH_COMMANDS.filter(cmd =>
+          cmd.command.slice(1).toLowerCase().includes(search) ||
+          cmd.description.toLowerCase().includes(search)
+        )
+      )
     } else {
-      // Regular message
-      return false
+      setShowCommandMenu(false)
     }
-    return true
+  }
+
+  // Select a command from menu
+  const selectCommand = (command: string) => {
+    setInput(command + ' ')
+    setShowCommandMenu(false)
+    inputRef.current?.focus()
+  }
+
+  // Start an agent conversation
+  const startAgentConversation = async (agentType: string) => {
+    if (!projectId) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'system', content: 'Agent features require an active project. Please open a project first.', isCommand: true },
+      ])
+      return null
+    }
+
+    try {
+      const response = await fetch('/api/agents/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentType, projectId }),
+      })
+
+      if (!response.ok) throw new Error('Failed to start conversation')
+
+      const conversation = await response.json()
+      setConversationId(conversation.id)
+      setActiveAgent(agentType)
+      return conversation.id
+    } catch (error) {
+      console.error('Failed to start agent:', error)
+      return null
+    }
+  }
+
+  // Send message to agent
+  const sendAgentMessage = async (message: string, agentType: string, convId?: string) => {
+    const targetConvId = convId || conversationId
+    if (!targetConvId) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/agents/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId: targetConvId,
+          agentType,
+          message,
+          modelId: selectedModel,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Agent request failed')
+
+      const result = await response.json()
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: result.content,
+          toolCalls: result.toolCalls,
+          agentType,
+        },
+      ])
+    } catch (error) {
+      console.error('Agent error:', error)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: 'Sorry, the agent encountered an error. Please try again.' },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle slash commands
+  const handleSlashCommand = async (command: string): Promise<boolean> => {
+    const trimmed = command.trim().toLowerCase()
+    const parts = command.trim().split(' ')
+    const cmd = parts[0].toLowerCase()
+    const args = parts.slice(1).join(' ')
+
+    switch (cmd) {
+      case '/help':
+        const helpText = SLASH_COMMANDS.map(c => `**${c.command}** - ${c.description}`).join('\n')
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', content: '/help', isCommand: true },
+          { role: 'assistant', content: `## Available Commands\n\n${helpText}\n\n### Agent Modes\nUse **/world** or **/plan** to start specialized AI agent conversations that can access your project data.`, isCommand: true },
+        ])
+        return true
+
+      case '/character':
+        if (!args) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'user', content: '/character', isCommand: true },
+            { role: 'assistant', content: 'Usage: `/character <name>`\n\nExample: `/character Elena Blackwood`', isCommand: true },
+          ])
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'user', content: `/character ${args}`, isCommand: true },
+          ])
+          // Use character development agent
+          const convId = await startAgentConversation('character-development')
+          if (convId) {
+            await sendAgentMessage(`Help me create a character named "${args}". Generate a detailed character profile including background, personality traits, motivations, and potential story arcs.`, 'character-development', convId)
+          }
+        }
+        return true
+
+      case '/lorebook':
+        if (!args) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'user', content: '/lorebook', isCommand: true },
+            { role: 'assistant', content: 'Usage: `/lorebook <entry name>`\n\nExample: `/lorebook The Crystal Kingdom`', isCommand: true },
+          ])
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'user', content: `/lorebook ${args}`, isCommand: true },
+          ])
+          // Use world-building agent
+          const convId = await startAgentConversation('world-building')
+          if (convId) {
+            await sendAgentMessage(`Create a lorebook entry for "${args}". Include detailed information, context, and how it fits into the world.`, 'world-building', convId)
+          }
+        }
+        return true
+
+      case '/world':
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', content: '/world', isCommand: true },
+          { role: 'assistant', content: '**World-Building Agent activated.** I can help you develop your story world, create locations, magic systems, cultures, and more. What would you like to explore?', agentType: 'world-building', isCommand: true },
+        ])
+        await startAgentConversation('world-building')
+        return true
+
+      case '/plan':
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', content: '/plan', isCommand: true },
+          { role: 'assistant', content: '**Story Planning Agent activated.** I can help you plan your narrative, develop plot arcs, and structure your story. What aspect of your story would you like to work on?', agentType: 'story-planning', isCommand: true },
+        ])
+        await startAgentConversation('story-planning')
+        return true
+
+      case '/analyze':
+        if (!sceneContext.trim()) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'user', content: '/analyze', isCommand: true },
+            { role: 'assistant', content: 'No scene content to analyze. Please write some content in the editor first.', isCommand: true },
+          ])
+        } else {
+          sendMessage('Analyze this scene for plot, pacing, character development, and provide specific suggestions for improvement.', sceneContext.slice(-4000))
+        }
+        return true
+
+      case '/clear':
+        setMessages([])
+        setActiveAgent(null)
+        setConversationId(null)
+        return true
+
+      default:
+        return false
+    }
   }
 
   return (
@@ -360,10 +560,23 @@ export function AICanvas({
                   message.role === 'user' ? 'items-end' : 'items-start'
                 }`}
               >
+                {/* Agent/System badge */}
+                {message.agentType && message.role === 'assistant' && (
+                  <Badge variant="outline" className="mb-1 text-xs capitalize">
+                    {message.agentType.replace('-', ' ')}
+                  </Badge>
+                )}
+                {message.role === 'system' && (
+                  <Badge variant="secondary" className="mb-1 text-xs">
+                    System
+                  </Badge>
+                )}
                 <div
                   className={`max-w-[85%] rounded-lg p-3 ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
+                      : message.role === 'system'
+                      ? 'bg-yellow-500/10 border border-yellow-500/20'
                       : 'bg-muted'
                   }`}
                 >
@@ -372,8 +585,21 @@ export function AICanvas({
                   ) : (
                     <MarkdownRenderer content={message.content} />
                   )}
+                  {/* Tool calls display */}
+                  {message.toolCalls && message.toolCalls.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-1">Tools used:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {message.toolCalls.map((tool: any, i: number) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            {tool.name || tool}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {message.role === 'assistant' && message.content && !isLoading && (
+                {message.role === 'assistant' && message.content && !isLoading && !message.isCommand && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -391,6 +617,27 @@ export function AICanvas({
 
           {/* Input */}
           <div className="p-4 border-t border-border space-y-3">
+            {/* Active agent indicator */}
+            {activeAgent && (
+              <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium capitalize">{activeAgent.replace('-', ' ')} Agent</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setActiveAgent(null)
+                    setConversationId(null)
+                  }}
+                  className="h-6 text-xs"
+                >
+                  Exit Agent
+                </Button>
+              </div>
+            )}
+
             {/* Model selector and Ask/Edit toggle */}
             <div className="flex items-center gap-2">
               <Select value={selectedModel} onValueChange={setSelectedModel}>
@@ -429,17 +676,38 @@ export function AICanvas({
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Command menu */}
+            {showCommandMenu && filteredCommands.length > 0 && (
+              <div className="border border-border rounded-lg bg-popover p-1 max-h-48 overflow-auto">
+                {filteredCommands.map((cmd) => (
+                  <button
+                    key={cmd.command}
+                    onClick={() => selectCommand(cmd.command)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-md text-left"
+                  >
+                    <cmd.icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{cmd.command}</span>
+                    <span className="text-muted-foreground text-xs ml-auto">{cmd.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 relative">
               <Textarea
+                ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
                     handleSend()
                   }
+                  if (e.key === 'Escape') {
+                    setShowCommandMenu(false)
+                  }
                 }}
-                placeholder="Ask for help... (Type / for commands)"
+                placeholder={activeAgent ? `Chat with ${activeAgent} agent...` : "Ask for help... (Type / for commands)"}
                 className="resize-none"
                 rows={3}
                 disabled={isLoading}
@@ -458,7 +726,7 @@ export function AICanvas({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Press Enter to send • Type / for commands
+              Press Enter to send • Type / for commands • /help for all commands
             </p>
           </div>
         </>

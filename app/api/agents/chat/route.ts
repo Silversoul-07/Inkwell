@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
       modelId,
     })
 
-    return NextResponse.json({ message: response })
+    // Return response in expected format for client
+    return NextResponse.json({
+      content: response.content,
+      toolCalls: response.toolCalls || [],
+      toolResults: response.toolResults || [],
+      role: response.role,
+    })
   } catch (error: any) {
     console.error('Error executing agent:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

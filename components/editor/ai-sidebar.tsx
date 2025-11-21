@@ -9,6 +9,7 @@ interface AISidebarProps {
   onClose: () => void
   sceneContext: string
   selectedText: string
+  projectId?: string
   onReplaceSelection?: (text: string) => void
   onInsertText?: (text: string) => void
 }
@@ -18,6 +19,7 @@ export function AISidebar({
   onClose,
   sceneContext,
   selectedText,
+  projectId,
   onReplaceSelection,
   onInsertText,
 }: AISidebarProps) {
@@ -43,6 +45,7 @@ export function AISidebar({
         <AICanvas
           sceneContext={sceneContext}
           selectedText={selectedText}
+          projectId={projectId}
           onReplaceSelection={onReplaceSelection}
           onInsertText={onInsertText}
         />
