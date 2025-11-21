@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
       title
     )
 
-    return NextResponse.json({ conversation })
+    // Return conversation directly for easier client handling
+    return NextResponse.json(conversation)
   } catch (error: any) {
     console.error('Error creating conversation:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

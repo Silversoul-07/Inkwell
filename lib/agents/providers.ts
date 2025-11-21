@@ -238,11 +238,78 @@ export function createProvider(
   }
 }
 
+import { prisma } from "@/lib/prisma";
+
+export interface ProviderConfigResult {
+  provider: ProviderName;
+  apiKey: string;
+  model: string | null;
+  baseUrl?: string;
+}
+
+/**
+ * Get provider config from user's AI model settings (GUI-only, no env variables)
+ * @param userId - The user ID to fetch settings for
+ * @param modelId - Optional specific model ID to use
+ */
+export async function getProviderConfigFromDB(
+  userId: string,
+  modelId?: string
+): Promise<ProviderConfigResult> {
+  let aiModel;
+
+  if (modelId) {
+    // Get specific model
+    aiModel = await prisma.aIModel.findFirst({
+      where: { id: modelId, userId },
+    });
+  } else {
+    // Get default model
+    aiModel = await prisma.aIModel.findFirst({
+      where: { userId, isDefault: true },
+    });
+
+    // Fallback to any model if no default
+    if (!aiModel) {
+      aiModel = await prisma.aIModel.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+  }
+
+  if (!aiModel) {
+    throw new Error(
+      "No AI model configured. Please add an API key in Settings > AI Models."
+    );
+  }
+
+  if (!aiModel.apiKey) {
+    throw new Error(
+      `API key not configured for model: ${aiModel.name}. Please update in Settings > AI Models.`
+    );
+  }
+
+  return {
+    provider: aiModel.provider as ProviderName,
+    apiKey: aiModel.apiKey,
+    model: aiModel.model,
+    baseUrl: aiModel.baseUrl || undefined,
+  };
+}
+
+/**
+ * @deprecated Use getProviderConfigFromDB instead. This function uses env variables.
+ */
 export function getProviderConfig(): {
   provider: ProviderName;
   apiKey: string;
   model: string | null;
 } {
+  console.warn(
+    "getProviderConfig() is deprecated. Use getProviderConfigFromDB() for GUI-based API key management."
+  );
+
   const provider = (process.env.AI_PROVIDER || "gemini") as ProviderName;
   const model = process.env.AI_MODEL || null;
 
@@ -268,7 +335,9 @@ export function getProviderConfig(): {
   }
 
   if (!apiKey) {
-    throw new Error(`API key not found for provider: ${provider}`);
+    throw new Error(
+      `API key not found for provider: ${provider}. Please configure in Settings > AI Models.`
+    );
   }
 
   return { provider, apiKey, model };

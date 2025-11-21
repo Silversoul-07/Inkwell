@@ -22,7 +22,9 @@ export {
 export {
   createProvider,
   getProviderConfig,
+  getProviderConfigFromDB,
   PROVIDERS,
   type AIProvider,
   type ProviderName,
+  type ProviderConfigResult,
 } from "./providers";
