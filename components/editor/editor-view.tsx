@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { EditorSidebarNew } from './editor-sidebar'
 import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
@@ -70,9 +70,6 @@ interface EditorViewProps {
 
 export function EditorView({ project, settings }: EditorViewProps) {
   const router = useRouter()
-  const [selectedSceneId, setSelectedSceneId] = useState<string>(
-    project.chapters[0]?.scenes[0]?.id || ''
-  )
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [aiSidebarOpen, setAiSidebarOpen] = useState(false)
   const [debugSidebarOpen, setDebugSidebarOpen] = useState(false)
@@ -82,9 +79,64 @@ export function EditorView({ project, settings }: EditorViewProps) {
   const [sceneContext, setSceneContext] = useState('')
   const [selectedText, setSelectedText] = useState('')
 
-  // View state for different content types
+  // View state
   const [viewType, setViewType] = useState<ViewType>('scene')
+  const [selectedSceneId, setSelectedSceneId] = useState<string>(
+    project.chapters[0]?.scenes[0]?.id || ''
+  )
   const [viewContent, setViewContent] = useState<Character | LorebookEntry | null>(null)
+
+  // Parse hash and update state
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1) // Remove #
+      if (!hash) {
+        // Default to first scene
+        const firstSceneId = project.chapters[0]?.scenes[0]?.id
+        if (firstSceneId) {
+          window.location.hash = `scene-${firstSceneId}`
+        }
+        return
+      }
+
+      const [type, id] = hash.split('-')
+
+      if (type === 'scene') {
+        setViewType('scene')
+        setSelectedSceneId(id)
+        setViewContent(null)
+      } else if (type === 'character') {
+        // Fetch character data
+        fetch(`/api/characters?projectId=${project.id}`)
+          .then(res => res.json())
+          .then((chars: Character[]) => {
+            const char = chars.find(c => c.id === id)
+            if (char) {
+              setViewType('character')
+              setViewContent(char)
+            }
+          })
+      } else if (type === 'lorebook') {
+        // Fetch lorebook data
+        fetch(`/api/lorebook?projectId=${project.id}`)
+          .then(res => res.json())
+          .then((entries: LorebookEntry[]) => {
+            const entry = entries.find(e => e.id === id)
+            if (entry) {
+              setViewType('lorebook')
+              setViewContent(entry)
+            }
+          })
+      }
+    }
+
+    // Initial parse
+    handleHashChange()
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [project.id, project.chapters])
 
   const selectedScene = project.chapters
     .flatMap((c) => c.scenes)
@@ -99,25 +151,20 @@ export function EditorView({ project, settings }: EditorViewProps) {
   }, [router])
 
   const handleSelectScene = useCallback((sceneId: string) => {
-    setSelectedSceneId(sceneId)
-    setViewType('scene')
-    setViewContent(null)
+    window.location.hash = `scene-${sceneId}`
   }, [])
 
   const handleViewCharacter = useCallback((character: Character) => {
-    setViewType('character')
-    setViewContent(character)
+    window.location.hash = `character-${character.id}`
   }, [])
 
   const handleViewLorebook = useCallback((entry: LorebookEntry) => {
-    setViewType('lorebook')
-    setViewContent(entry)
+    window.location.hash = `lorebook-${entry.id}`
   }, [])
 
   const handleBackToScene = useCallback(() => {
-    setViewType('scene')
-    setViewContent(null)
-  }, [])
+    window.location.hash = `scene-${selectedSceneId}`
+  }, [selectedSceneId])
 
   const handleReplaceSelection = useCallback((text: string) => {
     console.log('Replace selection:', text)
@@ -157,7 +204,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
             onViewCharacter={handleViewCharacter}
             onViewLorebook={handleViewLorebook}
             selectedViewType={viewType}
-            selectedViewId={viewContent?.id}
+            selectedViewId={viewContent?.id || selectedSceneId}
           />
         )}
 
@@ -176,6 +223,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
           )}
           {viewType !== 'scene' && viewContent && (
             <ContentViewer
+              key={viewContent.id}
               type={viewType}
               content={viewContent}
               projectId={project.id}
@@ -184,7 +232,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
           )}
         </div>
 
-        {/* AI Sidebar - Push Layout */}
+        {/* AI Sidebar */}
         {!zenMode && selectedScene && (
           <AISidebar
             isOpen={aiSidebarOpen}
@@ -196,7 +244,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
           />
         )}
 
-        {/* Debug Sidebar - Push Layout */}
+        {/* Debug Sidebar */}
         {!zenMode && selectedScene && (
           <DebugSidebar
             isOpen={debugSidebarOpen}
@@ -207,10 +255,10 @@ export function EditorView({ project, settings }: EditorViewProps) {
         )}
       </div>
 
-      {/* Pomodoro Timer - Floating */}
+      {/* Pomodoro Timer */}
       {pomodoroOpen && <PomodoroTimer projectId={project.id} />}
 
-      {/* Settings Dialog - Floating */}
+      {/* Settings Dialog */}
       <SettingsDialog
         open={settingsDialogOpen}
         onOpenChange={setSettingsDialogOpen}
