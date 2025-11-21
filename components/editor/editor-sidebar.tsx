@@ -38,8 +38,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import ReactMarkdown from 'react-markdown'
 
 interface Scene {
   id: string
@@ -92,6 +90,9 @@ interface EditorSidebarNewProps {
   selectedSceneId: string
   onSelectScene: (sceneId: string) => void
   onRefresh: () => void
+  onViewCharacter?: (character: Character) => void
+  onViewLorebook?: (entry: LorebookEntry) => void
+  onViewNote?: (note: Note) => void
 }
 
 type SectionType = 'chapters' | 'characters' | 'lorebook' | 'notes'
@@ -101,6 +102,9 @@ export function EditorSidebarNew({
   selectedSceneId,
   onSelectScene,
   onRefresh,
+  onViewCharacter,
+  onViewLorebook,
+  onViewNote,
 }: EditorSidebarNewProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
@@ -127,11 +131,6 @@ export function EditorSidebarNew({
   const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false)
   const [newNoteContent, setNewNoteContent] = useState('')
   const [savingNote, setSavingNote] = useState(false)
-
-  // View modals state
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
-  const [selectedLorebook, setSelectedLorebook] = useState<LorebookEntry | null>(null)
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null)
 
   // Real data from APIs
   const [characters, setCharacters] = useState<Character[]>([])
@@ -399,9 +398,6 @@ export function EditorSidebarNew({
 
       if (response.ok) {
         setNotes(notes.filter((n) => n.id !== noteId))
-        if (selectedNote?.id === noteId) {
-          setSelectedNote(null)
-        }
       } else {
         alert('Failed to delete note')
       }
@@ -423,27 +419,6 @@ export function EditorSidebarNew({
     })
     return grouped
   }, [lorebookEntries])
-
-  // Format character as markdown
-  const formatCharacterMarkdown = (char: Character) => {
-    let md = `# ${char.name}\n\n`
-    if (char.role) md += `**Role:** ${char.role}\n\n`
-    if (char.description) md += `## Description\n${char.description}\n\n`
-    if (char.traits) md += `## Personality Traits\n${char.traits}\n\n`
-    if (char.background) md += `## Background\n${char.background}\n\n`
-    if (char.relationships) md += `## Relationships\n${char.relationships}\n\n`
-    if (char.goals) md += `## Goals & Motivations\n${char.goals}\n\n`
-    return md
-  }
-
-  // Format lorebook as markdown
-  const formatLorebookMarkdown = (entry: LorebookEntry) => {
-    let md = `# ${entry.key}\n\n`
-    if (entry.category) md += `**Category:** ${entry.category}\n\n`
-    md += `${entry.value}\n\n`
-    md += `---\n*Used ${entry.useCount} times*`
-    return md
-  }
 
   return (
     <div className="w-[280px] border-r border-border bg-card flex flex-col overflow-hidden">
@@ -705,7 +680,7 @@ export function EditorSidebarNew({
                     <div
                       key={character.id}
                       className="group flex items-center gap-1 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
-                      onClick={() => setSelectedCharacter(character)}
+                      onClick={() => onViewCharacter?.(character)}
                     >
                       <button
                         onClick={(e) => {
@@ -801,7 +776,7 @@ export function EditorSidebarNew({
                             <div
                               key={entry.id}
                               className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
-                              onClick={() => setSelectedLorebook(entry)}
+                              onClick={() => onViewLorebook?.(entry)}
                             >
                               <span className="flex-1 text-xs truncate">{entry.key}</span>
                               <span className="text-xs text-muted-foreground flex-shrink-0">
@@ -866,7 +841,7 @@ export function EditorSidebarNew({
                     <div
                       key={note.id}
                       className="group flex items-start gap-2 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
-                      onClick={() => setSelectedNote(note)}
+                      onClick={() => onViewNote?.(note)}
                     >
                       <div className="flex-1 text-xs line-clamp-2">
                         {note.content.substring(0, 100)}
@@ -945,86 +920,6 @@ export function EditorSidebarNew({
         </DialogContent>
       </Dialog>
 
-      {/* View Character Dialog */}
-      <Dialog open={!!selectedCharacter} onOpenChange={() => setSelectedCharacter(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>{selectedCharacter?.name}</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh]">
-            <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
-              {selectedCharacter && (
-                <ReactMarkdown>{formatCharacterMarkdown(selectedCharacter)}</ReactMarkdown>
-              )}
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSelectedCharacter(null)
-                router.push(`/characters/${project.id}`)
-              }}
-            >
-              Edit in Full Page
-            </Button>
-            <Button onClick={() => setSelectedCharacter(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Lorebook Dialog */}
-      <Dialog open={!!selectedLorebook} onOpenChange={() => setSelectedLorebook(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>{selectedLorebook?.key}</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh]">
-            <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
-              {selectedLorebook && (
-                <ReactMarkdown>{formatLorebookMarkdown(selectedLorebook)}</ReactMarkdown>
-              )}
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSelectedLorebook(null)
-                router.push(`/lorebook/${project.id}`)
-              }}
-            >
-              Edit in Full Page
-            </Button>
-            <Button onClick={() => setSelectedLorebook(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Note Dialog */}
-      <Dialog open={!!selectedNote} onOpenChange={() => setSelectedNote(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Note</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh]">
-            <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
-              {selectedNote && <ReactMarkdown>{selectedNote.content}</ReactMarkdown>}
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (selectedNote) handleDeleteNote(selectedNote.id)
-              }}
-            >
-              Delete Note
-            </Button>
-            <Button onClick={() => setSelectedNote(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

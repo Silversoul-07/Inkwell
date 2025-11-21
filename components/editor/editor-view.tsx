@@ -9,6 +9,7 @@ import { AISidebar } from './ai-sidebar'
 import { DebugSidebar } from './debug-sidebar'
 import { PomodoroTimer } from './pomodoro-timer'
 import { SettingsDialog } from '@/components/dialogs/settings-dialog-full'
+import { ContentViewer } from './content-viewer'
 
 interface Scene {
   id: string
@@ -41,6 +42,33 @@ interface Settings {
   autoSaveInterval: number
 }
 
+interface Character {
+  id: string
+  name: string
+  role: string | null
+  description: string | null
+  traits: string | null
+  background: string | null
+  relationships: string | null
+  goals: string | null
+}
+
+interface LorebookEntry {
+  id: string
+  key: string
+  value: string
+  category: string | null
+  useCount: number
+}
+
+interface Note {
+  id: string
+  content: string
+  sceneId: string
+}
+
+type ViewType = 'scene' | 'character' | 'lorebook' | 'note'
+
 interface EditorViewProps {
   project: Project
   settings: Settings | null
@@ -60,6 +88,10 @@ export function EditorView({ project, settings }: EditorViewProps) {
   const [sceneContext, setSceneContext] = useState('')
   const [selectedText, setSelectedText] = useState('')
 
+  // View state for different content types
+  const [viewType, setViewType] = useState<ViewType>('scene')
+  const [viewContent, setViewContent] = useState<Character | LorebookEntry | Note | null>(null)
+
   const selectedScene = project.chapters
     .flatMap((c) => c.scenes)
     .find((s) => s.id === selectedSceneId)
@@ -72,13 +104,37 @@ export function EditorView({ project, settings }: EditorViewProps) {
     router.refresh()
   }, [router])
 
+  const handleSelectScene = useCallback((sceneId: string) => {
+    setSelectedSceneId(sceneId)
+    setViewType('scene')
+    setViewContent(null)
+  }, [])
+
+  const handleViewCharacter = useCallback((character: Character) => {
+    setViewType('character')
+    setViewContent(character)
+  }, [])
+
+  const handleViewLorebook = useCallback((entry: LorebookEntry) => {
+    setViewType('lorebook')
+    setViewContent(entry)
+  }, [])
+
+  const handleViewNote = useCallback((note: Note) => {
+    setViewType('note')
+    setViewContent(note)
+  }, [])
+
+  const handleBackToScene = useCallback(() => {
+    setViewType('scene')
+    setViewContent(null)
+  }, [])
+
   const handleReplaceSelection = useCallback((text: string) => {
-    // This will be called from AICanvas to replace selected text
     console.log('Replace selection:', text)
   }, [])
 
   const handleInsertText = useCallback((text: string) => {
-    // This will be called from AICanvas to insert text
     console.log('Insert text:', text)
   }, [])
 
@@ -107,13 +163,16 @@ export function EditorView({ project, settings }: EditorViewProps) {
           <EditorSidebarNew
             project={project}
             selectedSceneId={selectedSceneId}
-            onSelectScene={setSelectedSceneId}
+            onSelectScene={handleSelectScene}
             onRefresh={handleRefresh}
+            onViewCharacter={handleViewCharacter}
+            onViewLorebook={handleViewLorebook}
+            onViewNote={handleViewNote}
           />
         )}
 
         <div className="flex-1 min-w-0 overflow-auto relative">
-          {selectedScene && (
+          {viewType === 'scene' && selectedScene && (
             <TiptapEditorNovelAI
               key={selectedScene.id}
               scene={selectedScene}
@@ -123,6 +182,14 @@ export function EditorView({ project, settings }: EditorViewProps) {
               onExitZen={() => setZenMode(false)}
               chapterTitle={selectedChapter?.title}
               sceneTitle={selectedScene.title || undefined}
+            />
+          )}
+          {viewType !== 'scene' && viewContent && (
+            <ContentViewer
+              type={viewType}
+              content={viewContent}
+              projectId={project.id}
+              onBack={handleBackToScene}
             />
           )}
         </div>
