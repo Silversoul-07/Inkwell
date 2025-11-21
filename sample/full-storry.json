@@ -1,0 +1,66 @@
+{
+  "chapters": [
+    {
+      "title": "The Awakening",
+      "scenes": [
+        {
+          "title": "Elena's Dream",
+          "content": "Elena woke with a start, her heart pounding in her chest. The dream had been so vivid—shadows creeping across the land, consuming everything in their path. In the center of it all, three crystalline objects pulsed with an otherworldly light.\n\nShe sat up in her narrow bed in the Guard barracks, wiping cold sweat from her brow. The first rays of dawn were just beginning to filter through the small window. It was the third time this week she'd had the same nightmare.\n\n\"You okay?\" Marcus's voice came from the doorway. He was already dressed in his casual clothes, probably heading to the smithy.\n\nElena forced a smile. \"Just a bad dream. I'm fine.\"\n\nBut she wasn't fine, and they both knew it. Something was wrong in the kingdom, and Elena could feel it in her bones."
+        },
+        {
+          "title": "The King's Summons",
+          "content": "The royal messenger arrived just as Elena finished her morning training. The summons was unexpected—King Aldric wanted to see her immediately in his private study, not the throne room.\n\nElena changed quickly into her formal Guard uniform, the silver armor catching the morning light. As she walked through the castle corridors, she noticed servants whispering nervously. Even the usually jovial guards seemed tense.\n\nWhen she entered the study, the king looked older than she'd ever seen him. Dark circles shadowed his eyes, and his hands trembled slightly as he gestured for her to sit.\n\n\"Elena,\" he began, his voice heavy with a burden she couldn't yet understand. \"I need to tell you something about your parents. Something I should have told you years ago.\""
+        }
+      ]
+    },
+    {
+      "title": "Shadows Gathering",
+      "scenes": [
+        {
+          "title": "Lord Malachar's Plan",
+          "content": "In the darkest tower of his estate, Lord Malachar stood before a mirror that showed no reflection. Instead, it rippled with shadows that moved with a life of their own.\n\n\"The first key is within reach,\" he murmured to the darkness. \"The girl doesn't know what she carries. Her mother hid it well.\"\n\nA voice like grinding stone emerged from the mirror. \"The time grows short, Malachar. The Void weakens. We need all three keys before the next new moon, or the seal will strengthen for another century.\"\n\n\"I am aware,\" Malachar replied coolly. \"Everything is proceeding as planned. The king suspects nothing, and his little protégé is about to walk right into our hands.\"\n\nHe turned to leave, his robes swirling around him like living shadows. \"Soon, the Shadowborn will walk this realm again. And I will rule at their side.\""
+        }
+      ]
+    }
+  ],
+  "characters": [
+    {
+      "name": "Elena Blackwood",
+      "age": "28",
+      "role": "Protagonist",
+      "description": "Tall and athletic with dark hair and piercing green eyes.",
+      "traits": "[\"brave\", \"intelligent\", \"stubborn\"]",
+      "background": "Raised by her grandmother after losing her parents. Joined the Royal Guard at 18.",
+      "relationships": "{\"Marcus\": \"childhood friend\", \"King Aldric\": \"mentor\"}",
+      "goals": "To uncover the truth about her parents' death and protect the kingdom."
+    },
+    {
+      "name": "Lord Malachar",
+      "age": "Unknown",
+      "role": "Antagonist",
+      "description": "Pale skin, jet-black hair, silver eyes. Always in dark robes.",
+      "traits": "[\"manipulative\", \"patient\", \"ruthless\"]",
+      "background": "Ancient sorcerer posing as a nobleman. Seeking the Crystal Keys.",
+      "relationships": "{\"King Aldric\": \"trusted advisor but secret enemy\"}",
+      "goals": "To unlock the Void Gate and rule both realms."
+    }
+  ],
+  "lorebook": [
+    {
+      "key": "Crystal Keys",
+      "value": "Three ancient artifacts that seal the Void Gate. Made of Starfire (gold), Moonwell (silver), and Shadowheart (black) crystals.",
+      "category": "Magic",
+      "keys": "[\"Crystal Keys\", \"keys\"]",
+      "triggerMode": "auto",
+      "priority": 10
+    },
+    {
+      "key": "Void Gate",
+      "value": "A massive stone archway in the Forbidden Mountains that connects to the Void dimension where Shadowborn are imprisoned.",
+      "category": "Locations",
+      "keys": "[\"Void Gate\", \"gate\"]",
+      "triggerMode": "auto",
+      "priority": 9
+    }
+  ]
+}

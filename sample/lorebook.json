@@ -1,0 +1,112 @@
+{
+  "lorebook": [
+    {
+      "key": "Whispering Forest",
+      "value": "An ancient and magical forest that borders the southern edge of the kingdom. Known for the strange sounds that emanate from deep within—whispers in an unknown language that some say are the voices of nature spirits. The forest is home to rare herbs and dangerous creatures. Most villagers avoid venturing too deep, as many who do never return. Elena's grandmother was one of the few who knew safe paths through the forest.",
+      "category": "Locations",
+      "keys": "[\"Whispering Forest\", \"forest\", \"whispers\"]",
+      "triggerMode": "auto",
+      "priority": 7,
+      "searchable": true
+    },
+    {
+      "key": "Crystal Keys",
+      "value": "Three ancient artifacts of immense power, forged in the First Age by the Elder Mages to seal the Void Gate. Each key is made of a different crystalline substance: Starfire Crystal (golden), Moonwell Crystal (silver), and Shadowheart Crystal (black). The keys were scattered across the realm and hidden in sacred places. Legend says that if all three are brought together at the Void Gate, the seal will break and unleash the Shadowborn army.",
+      "category": "Magic",
+      "keys": "[\"Crystal Keys\", \"Starfire Crystal\", \"Moonwell Crystal\", \"Shadowheart Crystal\", \"keys\"]",
+      "triggerMode": "auto",
+      "priority": 10,
+      "searchable": true
+    },
+    {
+      "key": "Royal Guard",
+      "value": "The elite military force that protects the royal family and maintains order in the capital. To join the Royal Guard requires passing rigorous physical and mental tests. Members wear distinctive silver armor with the kingdom's crest—a crowned lion holding a sword. The Guard is known for accepting members regardless of their birth status, judged only on merit and skill. Current Commander: Sir Gareth Ironheart.",
+      "category": "Organizations",
+      "keys": "[\"Royal Guard\", \"Guard\", \"silver armor\"]",
+      "triggerMode": "auto",
+      "priority": 6,
+      "searchable": true
+    },
+    {
+      "key": "Void Gate",
+      "value": "A massive stone archway located in the Forbidden Mountains, covered in ancient runes that pulse with dark energy. Created by accident during the First Age when mages attempted to tap into the space between worlds. The gate connects the mortal realm to the Void—a dimension of shadows and nightmares where the Shadowborn were banished. The gate was sealed by the Elder Mages using the three Crystal Keys. It is protected by powerful wards and constantly guarded by the Order of the Silver Dawn.",
+      "category": "Locations",
+      "keys": "[\"Void Gate\", \"gate\", \"Forbidden Mountains\"]",
+      "triggerMode": "auto",
+      "priority": 9,
+      "searchable": true
+    },
+    {
+      "key": "Arcane Academy",
+      "value": "The premier institution for magical education, located on an island in Lake Ethereal. Founded 800 years ago by the Arch-Mage Council. Students must show magical aptitude to be admitted and undergo seven years of intensive training. The academy has produced some of the greatest mages in history but has also been the site of several catastrophic magical accidents. Current headmaster: Arch-Mage Theron Brightspark.",
+      "category": "Organizations",
+      "keys": "[\"Arcane Academy\", \"academy\", \"Lake Ethereal\"]",
+      "triggerMode": "auto",
+      "priority": 7,
+      "searchable": true
+    },
+    {
+      "key": "Shadowborn",
+      "value": "Ancient creatures of living darkness, born from the nightmares and fears of mortals. They were banished to the Void at the end of the First Age after nearly destroying civilization. Shadowborn can take various forms but are most commonly seen as humanoid figures made of writhing shadows with glowing red eyes. They feed on fear and despair, growing stronger in the presence of negative emotions. Vulnerable to light magic and blessed weapons. Their touch can corrupt living beings, slowly turning them into shadow thralls.",
+      "category": "Creatures",
+      "keys": "[\"Shadowborn\", \"shadow creatures\", \"darkness\"]",
+      "triggerMode": "auto",
+      "priority": 8,
+      "searchable": true
+    },
+    {
+      "key": "First Age",
+      "value": "The era approximately 2,000 years ago when magic first emerged in the world. It was a time of great wonders and terrible catastrophes. Powerful mages reshaped the landscape, created magical artifacts, and pushed the boundaries of what was possible. However, their hubris led to the creation of the Void Gate and the emergence of the Shadowborn. The First Age ended with the Sealing War, where the combined forces of all races managed to banish the Shadowborn and seal the Void Gate. Many magical secrets from this age have been lost to time.",
+      "category": "History",
+      "keys": "[\"First Age\", \"ancient times\", \"Elder Mages\"]",
+      "triggerMode": "auto",
+      "priority": 8,
+      "searchable": true
+    },
+    {
+      "key": "Order of the Silver Dawn",
+      "value": "A secretive religious and military order dedicated to guarding the Void Gate and preventing the return of the Shadowborn. Members take lifetime vows of service and undergo both combat training and magical education. They wear distinctive silver robes with a sun symbol and are recognizable by the silver tattoo of a rising sun on their left hand. The Order maintains a fortress monastery near the Void Gate. Current Grand Master: Sister Avaline Lightbringer.",
+      "category": "Organizations",
+      "keys": "[\"Order of the Silver Dawn\", \"Silver Dawn\", \"silver robes\"]",
+      "triggerMode": "auto",
+      "priority": 7,
+      "searchable": true
+    },
+    {
+      "key": "Prophecy of the Shadow's Return",
+      "value": "An ancient prophecy found in the ruins of an Elder Mage sanctuary: 'When three keys unite in malice's hand, the gate shall wake and shadows stand. But hope remains in humble birth, a warrior-soul of common earth. With allies three of different kind, together they shall fate unbind. Light and dark must merge as one, before the final war is won.' Most scholars debate its interpretation, but recent events suggest it may be coming true. King Aldric believes Elena is the warrior mentioned in the prophecy.",
+      "category": "History",
+      "keys": "[\"prophecy\", \"Shadow's Return\", \"ancient prophecy\"]",
+      "triggerMode": "auto",
+      "priority": 9,
+      "searchable": true
+    },
+    {
+      "key": "Elven Territories",
+      "value": "The northern forests where the elven people have lived for millennia. These ancient woodlands are protected by powerful nature magic, making them difficult for outsiders to navigate. Elven society values wisdom, artistry, and harmony with nature. They have a complex relationship with the human kingdoms—sometimes allies, sometimes isolators. The elves possess long memories and remember the First Age better than any other race. They were instrumental in sealing the Void Gate and still maintain watchers who monitor for signs of the Shadowborn's return.",
+      "category": "Locations",
+      "keys": "[\"Elven Territories\", \"elven forests\", \"elves\"]",
+      "triggerMode": "auto",
+      "priority": 6,
+      "searchable": true
+    },
+    {
+      "key": "Shadow Corruption",
+      "value": "The process by which Shadowborn influence transforms living beings. It begins with nightmares and paranoia, progresses to physical symptoms (darkening veins, cold skin, aversion to light), and ends with complete transformation into a shadow thrall—a mindless servant of the Shadowborn. Early stages can be treated with light magic and special herbs from the Whispering Forest. Advanced stages are considered irreversible. Victims retain their skills and knowledge but lose all free will and emotion.",
+      "category": "Magic",
+      "keys": "[\"Shadow Corruption\", \"corruption\", \"shadow thrall\"]",
+      "triggerMode": "auto",
+      "priority": 8,
+      "searchable": true
+    },
+    {
+      "key": "Light Magic",
+      "value": "One of the fundamental schools of magic, drawing power from positive emotions, life force, and celestial bodies. Light magic is particularly effective against shadow creatures and corruption. It can heal wounds, purify tainted areas, and create protective barriers. However, it requires a pure heart and strong will to master. The most powerful light mages can channel sunlight itself into devastating attacks. The Order of the Silver Dawn specializes in this form of magic. Light magic is draining to use and requires time to recover between major spells.",
+      "category": "Magic",
+      "keys": "[\"Light Magic\", \"light spell\", \"holy magic\"]",
+      "triggerMode": "auto",
+      "priority": 7,
+      "searchable": true
+    }
+  ]
+}

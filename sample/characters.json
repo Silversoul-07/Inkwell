@@ -1,0 +1,54 @@
+{
+  "characters": [
+    {
+      "name": "Elena Blackwood",
+      "age": "28",
+      "role": "Protagonist",
+      "description": "Tall and athletic with dark hair and piercing green eyes. Often wears practical clothing suited for adventure.",
+      "traits": "[\"brave\", \"intelligent\", \"stubborn\", \"compassionate\", \"independent\"]",
+      "background": "Elena grew up in a small village on the edge of the Whispering Forest. She lost her parents at a young age and was raised by her grandmother, a renowned herbalist. This upbringing gave her deep knowledge of plants and natural remedies. At 18, she left to join the Royal Guard, where she excelled in combat training and tactical strategy.",
+      "relationships": "{\"Marcus\": \"childhood friend and confidant\", \"King Aldric\": \"mentor and father figure\", \"Lyra\": \"rival turned ally\"}",
+      "goals": "To uncover the truth about her parents' mysterious death and protect the kingdom from the growing shadow threat. She also seeks to prove that commoners can be just as capable as nobility."
+    },
+    {
+      "name": "Marcus Stormwind",
+      "age": "30",
+      "role": "Supporting Character",
+      "description": "Broad-shouldered with sandy blonde hair and a perpetual smile. Has a scar across his left eyebrow from a childhood accident.",
+      "traits": "[\"loyal\", \"humorous\", \"protective\", \"hot-headed\", \"optimistic\"]",
+      "background": "Marcus is the eldest son of a blacksmith in Elena's village. He trained alongside Elena in the Royal Guard but chose to leave after two years to help his aging father with the smithy. He secretly harbors feelings for Elena and would do anything to keep her safe.",
+      "relationships": "{\"Elena\": \"best friend and secret love interest\", \"Thomas Stormwind\": \"father\", \"Sarah Stormwind\": \"younger sister\"}",
+      "goals": "To support Elena in her quest while managing his family business. Dreams of one day opening a renowned armory in the capital."
+    },
+    {
+      "name": "Lord Malachar",
+      "age": "Unknown (appears 40s)",
+      "role": "Antagonist",
+      "description": "Pale skin with jet-black hair slicked back. Piercing silver eyes that seem to see through people. Always dressed in immaculate dark robes with silver embroidery.",
+      "traits": "[\"manipulative\", \"patient\", \"ruthless\", \"charismatic\", \"calculating\"]",
+      "background": "Lord Malachar appeared at court ten years ago, claiming to be a distant relative of an old noble family. He quickly rose through the ranks using his charm and strategic mind. Unknown to most, he is actually an ancient sorcerer who has been waiting centuries for the right moment to seize power.",
+      "relationships": "{\"King Aldric\": \"trusted advisor but secret enemy\", \"Elena\": \"sees her as a threat to his plans\", \"Lady Morgana\": \"mysterious ally\"}",
+      "goals": "To obtain the three Crystal Keys that will unlock the Void Gate, releasing an ancient darkness that will allow him to rule both the mortal realm and the shadow realm."
+    },
+    {
+      "name": "Lyra Moonwhisper",
+      "age": "26",
+      "role": "Deuteragonist",
+      "description": "Lithe and graceful with silver-white hair and violet eyes. Moves with an otherworldly elegance. Wears flowing robes that seem to shift colors in different lights.",
+      "traits": "[\"mysterious\", \"wise\", \"reserved\", \"powerful\", \"haunted\"]",
+      "background": "Lyra is from the Elven territories to the north. She was once a prodigy at the Arcane Academy but was expelled after a magical experiment went wrong, killing three students. She has spent the last five years in self-imposed exile, trying to master her dangerous abilities.",
+      "relationships": "{\"Elena\": \"initially rivals, becomes close ally\", \"Arch-Mage Theron\": \"former mentor who betrayed her\", \"The Shadow Council\": \"mysterious group she owes a debt to\"}",
+      "goals": "To redeem herself and prove that her magic can be used for good. She also seeks revenge against those who framed her for the academy tragedy."
+    },
+    {
+      "name": "King Aldric the Wise",
+      "age": "67",
+      "role": "Supporting Character",
+      "description": "Distinguished-looking with silver hair and beard. Deep-set eyes that carry the weight of a lifetime of rule. Despite his age, he carries himself with dignity and strength.",
+      "traits": "[\"wise\", \"fair\", \"tired\", \"strategic\", \"secretive\"]",
+      "background": "King Aldric has ruled the kingdom for 40 years, bringing prosperity and peace. However, recent years have seen increasing threats from beyond the borders. He knows more about the ancient prophecies than he lets on and has been secretly preparing for the coming darkness.",
+      "relationships": "{\"Elena\": \"sees her as the kingdom's hope\", \"Lord Malachar\": \"trusts him but has growing doubts\", \"Queen Isabella (deceased)\": \"beloved wife who died 10 years ago\"}",
+      "goals": "To ensure the kingdom's survival after his death. He is secretly training Elena to take on a role that goes beyond the Royal Guard, though he hasn't revealed the full truth yet."
+    }
+  ]
+}
