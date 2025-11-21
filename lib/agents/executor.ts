@@ -5,6 +5,7 @@ import {
   CharacterDeveloperAgent,
   StoryPlannerAgent,
 } from "./agents";
+import { FlexibleAgent } from "./flexible-agent";
 import { getProviderConfigFromDB } from "./providers";
 import type { AgentType } from "./system-prompts";
 
@@ -13,7 +14,7 @@ interface ExecuteAgentParams {
   userId: string;
   projectId?: string;
   userMessage: string;
-  agentType: AgentType;
+  agentType: AgentType | "flexible";
   modelId?: string;
 }
 
@@ -66,33 +67,43 @@ export async function executeAgent(
   const effectiveProjectId = projectId || "default";
 
   try {
-    switch (agentType) {
-      case "world-building":
-        response = await (agent as WorldBuilderAgent).buildWorld(
-          effectiveProjectId,
-          contextStr
-            ? `Previous conversation:\n${contextStr}\n\nUser: ${userMessage}`
-            : userMessage,
-        );
-        break;
-      case "character-development":
-        response = await (agent as CharacterDeveloperAgent).developCharacter(
-          effectiveProjectId,
-          contextStr
-            ? `Previous conversation:\n${contextStr}\n\nUser: ${userMessage}`
-            : userMessage,
-        );
-        break;
-      case "story-planning":
-        response = await (agent as StoryPlannerAgent).createOutline(
-          effectiveProjectId,
-          contextStr
-            ? `Previous conversation:\n${contextStr}\n\nUser: ${userMessage}`
-            : userMessage,
-        );
-        break;
-      default:
-        throw new Error(`Unknown agent type: ${agentType}`);
+    if (agentType === "flexible") {
+      // Use the new flexible agent with conversation history
+      response = await (agent as FlexibleAgent).chat(
+        effectiveProjectId,
+        userMessage,
+        history,
+      );
+    } else {
+      // Legacy agents with old behavior
+      switch (agentType) {
+        case "world-building":
+          response = await (agent as WorldBuilderAgent).buildWorld(
+            effectiveProjectId,
+            contextStr
+              ? `Previous conversation:\n${contextStr}\n\nUser: ${userMessage}`
+              : userMessage,
+          );
+          break;
+        case "character-development":
+          response = await (agent as CharacterDeveloperAgent).developCharacter(
+            effectiveProjectId,
+            contextStr
+              ? `Previous conversation:\n${contextStr}\n\nUser: ${userMessage}`
+              : userMessage,
+          );
+          break;
+        case "story-planning":
+          response = await (agent as StoryPlannerAgent).createOutline(
+            effectiveProjectId,
+            contextStr
+              ? `Previous conversation:\n${contextStr}\n\nUser: ${userMessage}`
+              : userMessage,
+          );
+          break;
+        default:
+          throw new Error(`Unknown agent type: ${agentType}`);
+      }
     }
   } catch (error: any) {
     console.error("Agent execution error:", error);
@@ -132,7 +143,11 @@ export async function executeAgent(
   };
 }
 
-function createAgentByType(agentType: AgentType, apiKey: string) {
+function createAgentByType(agentType: AgentType | "flexible", apiKey: string) {
+  if (agentType === "flexible") {
+    return new FlexibleAgent(apiKey);
+  }
+
   switch (agentType) {
     case "world-building":
       return new WorldBuilderAgent(apiKey);
@@ -147,16 +162,18 @@ function createAgentByType(agentType: AgentType, apiKey: string) {
 
 export async function createAgentConversation(
   userId: string,
-  agentType: AgentType,
+  agentType: AgentType | "flexible",
   projectId?: string,
   title?: string,
 ) {
   const conversation = await prisma.agentConversation.create({
     data: {
       userId,
-      agentType,
+      agentType: agentType === "flexible" ? "story-planning" : agentType, // Store as story-planning for DB compatibility
       projectId: projectId && projectId !== "none" ? projectId : null,
-      title: title || `${agentType} conversation`,
+      title:
+        title ||
+        (agentType === "flexible" ? "AI Chat" : `${agentType} conversation`),
     },
     include: {
       project: {
