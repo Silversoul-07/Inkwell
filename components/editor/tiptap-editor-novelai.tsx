@@ -53,7 +53,6 @@ interface TiptapEditorNovelAIProps {
     pov?: string;
     tense?: string;
   };
-  onSceneContextChange?: (context: string) => void;
 }
 
 export function TiptapEditorNovelAI({
@@ -65,7 +64,6 @@ export function TiptapEditorNovelAI({
   chapterTitle,
   sceneTitle,
   projectMetadata,
-  onSceneContextChange,
 }: TiptapEditorNovelAIProps) {
   const [wordCount, setWordCount] = useState(scene.wordCount);
   const [isSaving, setIsSaving] = useState(false);
@@ -143,7 +141,6 @@ export function TiptapEditorNovelAI({
       const chars = text.length;
       setWordCount(words);
       setCharacterCount(chars);
-      onSceneContextChange?.(text.slice(-4000));
     },
     onSelectionUpdate: ({ editor }) => {
       const { from, to } = editor.state.selection;
@@ -208,13 +205,6 @@ export function TiptapEditorNovelAI({
       saveContent();
     };
   }, [saveContent]);
-
-  // Initialize scene context on mount
-  useEffect(() => {
-    if (editor) {
-      onSceneContextChange?.(editor.getText().slice(-4000));
-    }
-  }, [editor, onSceneContextChange]);
 
   // Zen mode keyboard shortcut (Escape to exit)
   useEffect(() => {
