@@ -16,6 +16,9 @@ import {
   HelpCircle,
   Trash2,
   Bot,
+  Save,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ai/markdown-renderer";
 import {
@@ -33,6 +36,8 @@ interface Message {
   toolCalls?: any[];
   isCommand?: boolean;
   agentType?: string;
+  status?: "generating" | "error" | "success";
+  errorMessage?: string;
 }
 
 interface AICanvasProps {
@@ -139,11 +144,6 @@ export function AICanvas({
       setEditingText(selectedText);
     }
   }, [selectedText]);
-
-  // Debug: log projectId
-  useEffect(() => {
-    console.log("AICanvas projectId prop:", projectId);
-  }, [projectId]);
 
   const sendMessage = async (customPrompt?: string, customContext?: string) => {
     const promptToSend = customPrompt || input;
@@ -269,6 +269,85 @@ export function AICanvas({
     }
   };
 
+  // Save agent content to database (character or lorebook)
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [saveStatus, setSaveStatus] = useState<
+    Record<number, "saving" | "saved" | "error">
+  >({});
+
+  const handleSaveToDatabase = async (
+    content: string,
+    agentType: string,
+    index: number,
+  ) => {
+    if (!projectId) return;
+
+    setSavingIndex(index);
+    setSaveStatus((prev) => ({ ...prev, [index]: "saving" }));
+
+    try {
+      // Try to parse JSON from the content
+      let data;
+      const jsonMatch =
+        content.match(/```json\n?([\s\S]*?)\n?```/) ||
+        content.match(/\[[\s\S]*\]/) ||
+        content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          data = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        } catch {
+          // Not valid JSON, use content as-is
+        }
+      }
+
+      if (agentType === "character-development") {
+        // Save as character
+        const characterData = Array.isArray(data) ? data[0] : data;
+        const response = await fetch("/api/characters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId,
+            name: characterData?.name || "New Character",
+            role: characterData?.role || null,
+            description: characterData?.description || content,
+            traits: characterData?.traits || null,
+            background: characterData?.background || null,
+            relationships: characterData?.relationships || null,
+            goals: characterData?.goals || null,
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to save character");
+      } else if (agentType === "world-building") {
+        // Save as lorebook entry
+        const entries = Array.isArray(data)
+          ? data
+          : [data || { key: "New Entry", value: content }];
+        for (const entry of entries) {
+          const response = await fetch("/api/lorebook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              projectId,
+              key: entry.key || "New Entry",
+              value: entry.value || content,
+              category: entry.category || "General",
+              keys: entry.keys || [],
+            }),
+          });
+          if (!response.ok) throw new Error("Failed to save lorebook entry");
+        }
+      }
+
+      setSaveStatus((prev) => ({ ...prev, [index]: "saved" }));
+    } catch (error) {
+      console.error("Save error:", error);
+      setSaveStatus((prev) => ({ ...prev, [index]: "error" }));
+    } finally {
+      setSavingIndex(null);
+    }
+  };
+
   const handleResetEdit = () => {
     setEditingText(selectedText || "");
   };
@@ -303,9 +382,7 @@ export function AICanvas({
 
   // Start an agent conversation
   const startAgentConversation = async (agentType: string) => {
-    console.log("startAgentConversation called with projectId:", projectId);
     if (!projectId) {
-      console.log("projectId is falsy:", projectId);
       setMessages((prev) => [
         ...prev,
         {
@@ -348,6 +425,19 @@ export function AICanvas({
     if (!targetConvId) return;
 
     setIsLoading(true);
+
+    // Add generating message
+    const generatingIndex = messages.length;
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content: "",
+        agentType,
+        status: "generating",
+      },
+    ]);
+
     try {
       const response = await fetch("/api/agents/chat", {
         method: "POST",
@@ -356,34 +446,43 @@ export function AICanvas({
           conversationId: targetConvId,
           agentType,
           message,
+          projectId,
           modelId: selectedModel,
         }),
       });
 
-      if (!response.ok) throw new Error("Agent request failed");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Agent request failed");
+      }
 
       const result = await response.json();
       const content = result.message?.content || result.content;
       const toolCalls = result.message?.toolCalls || result.toolCalls;
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content,
-          toolCalls,
-          agentType,
-        },
-      ]);
-    } catch (error) {
+      // Update the generating message with actual content
+      setMessages((prev) =>
+        prev.map((msg, idx) =>
+          idx === generatingIndex
+            ? { ...msg, content, toolCalls, status: "success" }
+            : msg,
+        ),
+      );
+    } catch (error: any) {
       console.error("Agent error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, the agent encountered an error. Please try again.",
-        },
-      ]);
+      // Update the generating message to show error
+      setMessages((prev) =>
+        prev.map((msg, idx) =>
+          idx === generatingIndex
+            ? {
+                ...msg,
+                content: "Failed to generate response.",
+                status: "error",
+                errorMessage: error.message || "Unknown error",
+              }
+            : msg,
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -685,16 +784,34 @@ export function AICanvas({
                       ? "bg-primary text-primary-foreground"
                       : message.role === "system"
                         ? "bg-yellow-500/10 border border-yellow-500/20"
-                        : "bg-muted"
+                        : message.status === "error"
+                          ? "bg-red-500/10 border border-red-500/20"
+                          : "bg-muted"
                   }`}
                 >
+                  {/* Generating indicator */}
+                  {message.status === "generating" && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Generating...</span>
+                    </div>
+                  )}
+                  {/* Error indicator */}
+                  {message.status === "error" && (
+                    <div className="flex items-center gap-2 text-red-500 mb-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        Error: {message.errorMessage}
+                      </span>
+                    </div>
+                  )}
                   {message.role === "user" ? (
                     <p className="text-sm whitespace-pre-wrap">
                       {message.content}
                     </p>
-                  ) : (
+                  ) : message.status !== "generating" ? (
                     <MarkdownRenderer content={message.content} />
-                  )}
+                  ) : null}
                   {/* Tool calls display */}
                   {message.toolCalls && message.toolCalls.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-border">
@@ -718,15 +835,66 @@ export function AICanvas({
                 {message.role === "assistant" &&
                   message.content &&
                   !isLoading &&
-                  !message.isCommand && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-1"
-                      onClick={() => handleApplyToEditor(message.content)}
-                    >
-                      Apply to Editor
-                    </Button>
+                  !message.isCommand &&
+                  message.status !== "generating" &&
+                  message.status !== "error" && (
+                    <div className="flex gap-2 mt-1">
+                      {/* Save to database button for agent content */}
+                      {message.agentType &&
+                        (message.agentType === "character-development" ||
+                          message.agentType === "world-building") && (
+                          <Button
+                            variant={
+                              saveStatus[index] === "saved"
+                                ? "outline"
+                                : "default"
+                            }
+                            size="sm"
+                            onClick={() =>
+                              handleSaveToDatabase(
+                                message.content,
+                                message.agentType!,
+                                index,
+                              )
+                            }
+                            disabled={
+                              savingIndex === index ||
+                              saveStatus[index] === "saved"
+                            }
+                          >
+                            {savingIndex === index ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Saving...
+                              </>
+                            ) : saveStatus[index] === "saved" ? (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Saved
+                              </>
+                            ) : saveStatus[index] === "error" ? (
+                              <>
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Retry
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-3 w-3 mr-1" />
+                                {message.agentType === "character-development"
+                                  ? "Save Character"
+                                  : "Save to Lorebook"}
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleApplyToEditor(message.content)}
+                      >
+                        Apply to Editor
+                      </Button>
+                    </div>
                   )}
               </div>
             ))}
