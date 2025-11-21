@@ -13,17 +13,15 @@ import {
   BookOpen,
   Star,
   MoreVertical,
-  Maximize2,
   Trash2,
   Book,
-  Sparkles,
-  FileEdit,
   Filter,
   Edit,
   ExternalLink,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +38,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import ReactMarkdown from 'react-markdown'
 
 interface Scene {
@@ -68,6 +67,10 @@ interface Character {
   name: string
   role: string | null
   description: string | null
+  traits: string | null
+  background: string | null
+  relationships: string | null
+  goals: string | null
 }
 
 interface LorebookEntry {
@@ -113,12 +116,22 @@ export function EditorSidebarNew({
   const [pinnedCharacters, setPinnedCharacters] = useState<Set<string>>(new Set())
   const [isCreating, setIsCreating] = useState(false)
   const [showFilterMenu, setShowFilterMenu] = useState(false)
-  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
+  const [hiddenSections, setHiddenSections] = useState<Set<string>>(new Set())
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [chapterToRename, setChapterToRename] = useState<Chapter | null>(null)
   const [newChapterTitle, setNewChapterTitle] = useState('')
+
+  // Add Note dialog state
+  const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false)
+  const [newNoteContent, setNewNoteContent] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
+
+  // View modals state
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
+  const [selectedLorebook, setSelectedLorebook] = useState<LorebookEntry | null>(null)
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null)
 
   // Real data from APIs
   const [characters, setCharacters] = useState<Character[]>([])
@@ -200,6 +213,16 @@ export function EditorSidebarNew({
       newPinned.add(characterId)
     }
     setPinnedCharacters(newPinned)
+  }
+
+  const toggleHiddenSection = (section: string) => {
+    const newHidden = new Set(hiddenSections)
+    if (newHidden.has(section)) {
+      newHidden.delete(section)
+    } else {
+      newHidden.add(section)
+    }
+    setHiddenSections(newHidden)
   }
 
   // Filter chapters and scenes based on search
@@ -334,7 +357,39 @@ export function EditorSidebarNew({
     }
   }
 
-  const handleDeleteNote = async (noteId: string) => {
+  const handleCreateNote = async () => {
+    if (!newNoteContent.trim() || !selectedSceneId) return
+
+    setSavingNote(true)
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sceneId: selectedSceneId,
+          content: newNoteContent,
+          type: 'note',
+        }),
+      })
+
+      if (response.ok) {
+        const newNote = await response.json()
+        setNotes([...notes, newNote])
+        setNewNoteContent('')
+        setAddNoteDialogOpen(false)
+      } else {
+        alert('Failed to create note')
+      }
+    } catch (error) {
+      console.error('Error creating note:', error)
+      alert('Error creating note')
+    } finally {
+      setSavingNote(false)
+    }
+  }
+
+  const handleDeleteNote = async (noteId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
     if (!confirm('Are you sure you want to delete this note?')) return
 
     try {
@@ -344,6 +399,9 @@ export function EditorSidebarNew({
 
       if (response.ok) {
         setNotes(notes.filter((n) => n.id !== noteId))
+        if (selectedNote?.id === noteId) {
+          setSelectedNote(null)
+        }
       } else {
         alert('Failed to delete note')
       }
@@ -365,6 +423,27 @@ export function EditorSidebarNew({
     })
     return grouped
   }, [lorebookEntries])
+
+  // Format character as markdown
+  const formatCharacterMarkdown = (char: Character) => {
+    let md = `# ${char.name}\n\n`
+    if (char.role) md += `**Role:** ${char.role}\n\n`
+    if (char.description) md += `## Description\n${char.description}\n\n`
+    if (char.traits) md += `## Personality Traits\n${char.traits}\n\n`
+    if (char.background) md += `## Background\n${char.background}\n\n`
+    if (char.relationships) md += `## Relationships\n${char.relationships}\n\n`
+    if (char.goals) md += `## Goals & Motivations\n${char.goals}\n\n`
+    return md
+  }
+
+  // Format lorebook as markdown
+  const formatLorebookMarkdown = (entry: LorebookEntry) => {
+    let md = `# ${entry.key}\n\n`
+    if (entry.category) md += `**Category:** ${entry.category}\n\n`
+    md += `${entry.value}\n\n`
+    md += `---\n*Used ${entry.useCount} times*`
+    return md
+  }
 
   return (
     <div className="w-[280px] border-r border-border bg-card flex flex-col overflow-hidden">
@@ -388,78 +467,38 @@ export function EditorSidebarNew({
                   size="icon"
                   className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-accent"
                 >
-                  <Filter className={`h-3.5 w-3.5 ${activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <Filter className={`h-3.5 w-3.5 ${hiddenSections.size > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuItem
-                  onClick={() => {
-                    const newFilters = new Set(activeFilters)
-                    if (newFilters.has('chapters')) {
-                      newFilters.delete('chapters')
-                    } else {
-                      newFilters.add('chapters')
-                    }
-                    setActiveFilters(newFilters)
-                  }}
-                >
+                <DropdownMenuItem onClick={() => toggleHiddenSection('chapters')}>
                   <FileText className="h-4 w-4 mr-2" />
                   Chapters
-                  {activeFilters.has('chapters') && <span className="ml-auto">✓</span>}
+                  {!hiddenSections.has('chapters') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    const newFilters = new Set(activeFilters)
-                    if (newFilters.has('characters')) {
-                      newFilters.delete('characters')
-                    } else {
-                      newFilters.add('characters')
-                    }
-                    setActiveFilters(newFilters)
-                  }}
-                >
+                <DropdownMenuItem onClick={() => toggleHiddenSection('characters')}>
                   <Users className="h-4 w-4 mr-2" />
                   Characters
-                  {activeFilters.has('characters') && <span className="ml-auto">✓</span>}
+                  {!hiddenSections.has('characters') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    const newFilters = new Set(activeFilters)
-                    if (newFilters.has('lorebook')) {
-                      newFilters.delete('lorebook')
-                    } else {
-                      newFilters.add('lorebook')
-                    }
-                    setActiveFilters(newFilters)
-                  }}
-                >
+                <DropdownMenuItem onClick={() => toggleHiddenSection('lorebook')}>
                   <Book className="h-4 w-4 mr-2" />
                   Lorebook
-                  {activeFilters.has('lorebook') && <span className="ml-auto">✓</span>}
+                  {!hiddenSections.has('lorebook') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    const newFilters = new Set(activeFilters)
-                    if (newFilters.has('notes')) {
-                      newFilters.delete('notes')
-                    } else {
-                      newFilters.add('notes')
-                    }
-                    setActiveFilters(newFilters)
-                  }}
-                >
+                <DropdownMenuItem onClick={() => toggleHiddenSection('notes')}>
                   <BookOpen className="h-4 w-4 mr-2" />
                   Notes
-                  {activeFilters.has('notes') && <span className="ml-auto">✓</span>}
+                  {!hiddenSections.has('notes') && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                {activeFilters.size > 0 && (
+                {hiddenSections.size > 0 && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => setActiveFilters(new Set())}
+                      onClick={() => setHiddenSections(new Set())}
                       className="text-muted-foreground"
                     >
-                      Clear filters
+                      Show all sections
                     </DropdownMenuItem>
                   </>
                 )}
@@ -487,7 +526,10 @@ export function EditorSidebarNew({
                 <MapPin className="h-4 w-4 mr-2" />
                 New Location
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem
+                onClick={() => setAddNoteDialogOpen(true)}
+                disabled={!selectedSceneId}
+              >
                 <BookOpen className="h-4 w-4 mr-2" />
                 New Note
               </DropdownMenuItem>
@@ -499,141 +541,133 @@ export function EditorSidebarNew({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {/* Chapters & Scenes Section */}
-        <div className="space-y-1">
-          <button
-            onClick={() => toggleSection('chapters')}
-            className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-          >
-            {expandedSections.has('chapters') ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            <FileText className="h-4 w-4" />
-            <span className="flex-1 text-left">Chapters</span>
-          </button>
+        {!hiddenSections.has('chapters') && (
+          <div className="space-y-1">
+            <button
+              onClick={() => toggleSection('chapters')}
+              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
+            >
+              {expandedSections.has('chapters') ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <FileText className="h-4 w-4" />
+              <span className="flex-1 text-left">Chapters</span>
+            </button>
 
-          {expandedSections.has('chapters') && (
-            <div className="ml-2 space-y-1">
-              {filteredChapters.map((chapter) => (
-                <div key={chapter.id} className="space-y-0.5">
-                  <div className="w-full flex items-center gap-1 group">
-                    <button
-                      onClick={() => {
-                        // If chapter has no scenes, select the chapter itself
-                        if (chapter.scenes.length === 0) {
-                          // Just expand/collapse
-                          toggleChapter(chapter.id)
-                        } else {
-                          toggleChapter(chapter.id)
-                        }
-                      }}
-                      className="flex-1 flex items-center gap-2 px-2 py-1 text-sm hover:bg-accent/50 rounded-md min-w-0"
-                    >
-                      {chapter.scenes.length > 0 ? (
-                        expandedChapters.has(chapter.id) ? (
-                          <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+            {expandedSections.has('chapters') && (
+              <div className="ml-2 space-y-1">
+                {filteredChapters.map((chapter) => (
+                  <div key={chapter.id} className="space-y-0.5">
+                    <div className="w-full flex items-center gap-1 group">
+                      <button
+                        onClick={() => toggleChapter(chapter.id)}
+                        className="flex-1 flex items-center gap-2 px-2 py-1 text-sm hover:bg-accent/50 rounded-md min-w-0"
+                      >
+                        {chapter.scenes.length > 0 ? (
+                          expandedChapters.has(chapter.id) ? (
+                            <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+                          )
                         ) : (
-                          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
-                        )
-                      ) : (
-                        <div className="h-3.5 w-3.5 flex-shrink-0" />
-                      )}
-                      <span className="flex-1 text-left font-medium truncate">
-                        {chapter.title}
-                      </span>
-                    </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                        >
-                          <MoreVertical className="h-3 w-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleCreateScene(chapter.id)}
-                        >
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Scene
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setChapterToRename(chapter)
-                            setNewChapterTitle(chapter.title)
-                            setRenameDialogOpen(true)
-                          }}
-                        >
-                          <Edit className="h-3 w-3 mr-2" />
-                          Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteChapter(chapter.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-3 w-3 mr-2" />
-                          Delete Chapter
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  {expandedChapters.has(chapter.id) && chapter.scenes.length > 0 && (
-                    <div className="ml-5 space-y-0.5">
-                      {chapter.scenes.map((scene, index) => (
-                        <div key={scene.id} className="group flex items-center gap-1">
-                          <button
-                            onClick={() => onSelectScene(scene.id)}
-                            className={`flex-1 flex items-center gap-2 px-2 py-1 text-xs rounded-md min-w-0 ${
-                              selectedSceneId === scene.id
-                                ? 'bg-accent text-accent-foreground'
-                                : 'hover:bg-accent/50'
-                            }`}
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
-                                selectedSceneId === scene.id
-                                  ? 'bg-primary'
-                                  : 'bg-transparent'
-                              }`}
-                            />
-                            <span className="flex-1 text-left truncate">
-                              {scene.title || `Scene ${index + 1}`}
-                            </span>
-                            <span className="text-xs text-muted-foreground flex-shrink-0">
-                              {scene.wordCount}
-                            </span>
-                          </button>
+                          <div className="h-3.5 w-3.5 flex-shrink-0" />
+                        )}
+                        <span className="flex-1 text-left font-medium truncate">
+                          {chapter.title}
+                        </span>
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                            onClick={(e) => handleDeleteScene(scene.id, e)}
-                            title="Delete scene"
                           >
-                            <Trash2 className="h-3 w-3 text-destructive" />
+                            <MoreVertical className="h-3 w-3" />
                           </Button>
-                        </div>
-                      ))}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleCreateScene(chapter.id)}>
+                            <Plus className="h-3 w-3 mr-2" />
+                            Add Scene
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setChapterToRename(chapter)
+                              setNewChapterTitle(chapter.title)
+                              setRenameDialogOpen(true)
+                            }}
+                          >
+                            <Edit className="h-3 w-3 mr-2" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteChapter(chapter.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3 mr-2" />
+                            Delete Chapter
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  )}
-                  {expandedChapters.has(chapter.id) && chapter.scenes.length === 0 && (
-                    <div className="ml-5 text-xs text-muted-foreground px-2 py-1">
-                      No scenes. Right-click chapter to add one.
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                    {expandedChapters.has(chapter.id) && chapter.scenes.length > 0 && (
+                      <div className="ml-5 space-y-0.5">
+                        {chapter.scenes.map((scene, index) => (
+                          <div key={scene.id} className="group flex items-center gap-1">
+                            <button
+                              onClick={() => onSelectScene(scene.id)}
+                              className={`flex-1 flex items-center gap-2 px-2 py-1 text-xs rounded-md min-w-0 ${
+                                selectedSceneId === scene.id
+                                  ? 'bg-accent text-accent-foreground'
+                                  : 'hover:bg-accent/50'
+                              }`}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+                                  selectedSceneId === scene.id
+                                    ? 'bg-primary'
+                                    : 'bg-transparent'
+                                }`}
+                              />
+                              <span className="flex-1 text-left truncate">
+                                {scene.title || `Scene ${index + 1}`}
+                              </span>
+                              <span className="text-xs text-muted-foreground flex-shrink-0">
+                                {scene.wordCount}
+                              </span>
+                            </button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                              onClick={(e) => handleDeleteScene(scene.id, e)}
+                              title="Delete scene"
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {expandedChapters.has(chapter.id) && chapter.scenes.length === 0 && (
+                      <div className="ml-5 text-xs text-muted-foreground px-2 py-1">
+                        No scenes. Click menu to add one.
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Characters Section */}
-        {!activeFilters.has('characters') && (
+        {!hiddenSections.has('characters') && (
           <div className="space-y-1">
             <button
               onClick={() => toggleSection('characters')}
@@ -654,7 +688,7 @@ export function EditorSidebarNew({
                   e.stopPropagation()
                   router.push(`/characters/${project.id}`)
                 }}
-                title="Open Characters page"
+                title="Manage Characters"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
@@ -671,7 +705,7 @@ export function EditorSidebarNew({
                     <div
                       key={character.id}
                       className="group flex items-center gap-1 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
-                      onClick={() => router.push(`/characters/${project.id}`)}
+                      onClick={() => setSelectedCharacter(character)}
                     >
                       <button
                         onClick={(e) => {
@@ -713,7 +747,7 @@ export function EditorSidebarNew({
         )}
 
         {/* Lorebook Section */}
-        {!activeFilters.has('lorebook') && (
+        {!hiddenSections.has('lorebook') && (
           <div className="space-y-1">
             <button
               onClick={() => toggleSection('lorebook')}
@@ -734,7 +768,7 @@ export function EditorSidebarNew({
                   e.stopPropagation()
                   router.push(`/lorebook/${project.id}`)
                 }}
-                title="Open Lorebook page"
+                title="Manage Lorebook"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
@@ -767,7 +801,7 @@ export function EditorSidebarNew({
                             <div
                               key={entry.id}
                               className="group flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
-                              onClick={() => router.push(`/lorebook/${project.id}`)}
+                              onClick={() => setSelectedLorebook(entry)}
                             >
                               <span className="flex-1 text-xs truncate">{entry.key}</span>
                               <span className="text-xs text-muted-foreground flex-shrink-0">
@@ -794,20 +828,32 @@ export function EditorSidebarNew({
         )}
 
         {/* Notes Section */}
-        {!activeFilters.has('notes') && (
+        {!hiddenSections.has('notes') && (
           <div className="space-y-1">
-            <button
-              onClick={() => toggleSection('notes')}
-              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-            >
-              {expandedSections.has('notes') ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-              <BookOpen className="h-4 w-4" />
-              <span className="flex-1 text-left">Notes ({notes.length})</span>
-            </button>
+            <div className="flex items-center">
+              <button
+                onClick={() => toggleSection('notes')}
+                className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
+              >
+                {expandedSections.has('notes') ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <BookOpen className="h-4 w-4" />
+                <span className="flex-1 text-left">Notes ({notes.length})</span>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 mr-2"
+                onClick={() => setAddNoteDialogOpen(true)}
+                disabled={!selectedSceneId}
+                title="Add Note"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
 
             {expandedSections.has('notes') && (
               <div className="ml-2 space-y-0.5">
@@ -819,16 +865,18 @@ export function EditorSidebarNew({
                   notes.map((note) => (
                     <div
                       key={note.id}
-                      className="group flex items-start gap-2 px-2 py-1 hover:bg-accent/50 rounded-md"
+                      className="group flex items-start gap-2 px-2 py-1 hover:bg-accent/50 rounded-md cursor-pointer"
+                      onClick={() => setSelectedNote(note)}
                     >
-                      <div className="flex-1 text-xs prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown>{note.content}</ReactMarkdown>
+                      <div className="flex-1 text-xs line-clamp-2">
+                        {note.content.substring(0, 100)}
+                        {note.content.length > 100 && '...'}
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                        onClick={() => handleDeleteNote(note.id)}
+                        onClick={(e) => handleDeleteNote(note.id, e)}
                         title="Delete note"
                       >
                         <Trash2 className="h-3 w-3 text-destructive" />
@@ -847,9 +895,7 @@ export function EditorSidebarNew({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename Chapter</DialogTitle>
-            <DialogDescription>
-              Enter a new title for this chapter
-            </DialogDescription>
+            <DialogDescription>Enter a new title for this chapter</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="chapter-title">Chapter Title</Label>
@@ -861,19 +907,121 @@ export function EditorSidebarNew({
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setRenameDialogOpen(false)
-                setChapterToRename(null)
-                setNewChapterTitle('')
-              }}
-            >
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleRenameChapter} disabled={!newChapterTitle.trim()}>
               Rename
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Note Dialog */}
+      <Dialog open={addNoteDialogOpen} onOpenChange={setAddNoteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Note</DialogTitle>
+            <DialogDescription>Add a note to this scene</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="note-content">Note Content</Label>
+            <Textarea
+              id="note-content"
+              value={newNoteContent}
+              onChange={(e) => setNewNoteContent(e.target.value)}
+              placeholder="Write your note here... (Markdown supported)"
+              rows={6}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddNoteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateNote} disabled={!newNoteContent.trim() || savingNote}>
+              {savingNote ? 'Saving...' : 'Add Note'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Character Dialog */}
+      <Dialog open={!!selectedCharacter} onOpenChange={() => setSelectedCharacter(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{selectedCharacter?.name}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
+              {selectedCharacter && (
+                <ReactMarkdown>{formatCharacterMarkdown(selectedCharacter)}</ReactMarkdown>
+              )}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedCharacter(null)
+                router.push(`/characters/${project.id}`)
+              }}
+            >
+              Edit in Full Page
+            </Button>
+            <Button onClick={() => setSelectedCharacter(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Lorebook Dialog */}
+      <Dialog open={!!selectedLorebook} onOpenChange={() => setSelectedLorebook(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{selectedLorebook?.key}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
+              {selectedLorebook && (
+                <ReactMarkdown>{formatLorebookMarkdown(selectedLorebook)}</ReactMarkdown>
+              )}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedLorebook(null)
+                router.push(`/lorebook/${project.id}`)
+              }}
+            >
+              Edit in Full Page
+            </Button>
+            <Button onClick={() => setSelectedLorebook(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Note Dialog */}
+      <Dialog open={!!selectedNote} onOpenChange={() => setSelectedNote(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Note</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
+              {selectedNote && <ReactMarkdown>{selectedNote.content}</ReactMarkdown>}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedNote) handleDeleteNote(selectedNote.id)
+              }}
+            >
+              Delete Note
+            </Button>
+            <Button onClick={() => setSelectedNote(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
