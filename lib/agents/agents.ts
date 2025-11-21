@@ -688,16 +688,43 @@ REVISED TEXT:`;
 }
 
 export class AgentCoordinator {
-  worldBuilder: WorldBuilderAgent;
-  characterDev: CharacterDeveloperAgent;
-  storyPlanner: StoryPlannerAgent;
-  editor: EditingAgent;
+  private _worldBuilder: WorldBuilderAgent | null = null;
+  private _characterDev: CharacterDeveloperAgent | null = null;
+  private _storyPlanner: StoryPlannerAgent | null = null;
+  private _editor: EditingAgent | null = null;
+  private apiKey?: string;
 
   constructor(apiKey?: string) {
-    this.worldBuilder = new WorldBuilderAgent(apiKey);
-    this.characterDev = new CharacterDeveloperAgent(apiKey);
-    this.storyPlanner = new StoryPlannerAgent(apiKey);
-    this.editor = new EditingAgent(apiKey);
+    this.apiKey = apiKey;
+  }
+
+  // Lazy initialization getters
+  get worldBuilder(): WorldBuilderAgent {
+    if (!this._worldBuilder) {
+      this._worldBuilder = new WorldBuilderAgent(this.apiKey);
+    }
+    return this._worldBuilder;
+  }
+
+  get characterDev(): CharacterDeveloperAgent {
+    if (!this._characterDev) {
+      this._characterDev = new CharacterDeveloperAgent(this.apiKey);
+    }
+    return this._characterDev;
+  }
+
+  get storyPlanner(): StoryPlannerAgent {
+    if (!this._storyPlanner) {
+      this._storyPlanner = new StoryPlannerAgent(this.apiKey);
+    }
+    return this._storyPlanner;
+  }
+
+  get editor(): EditingAgent {
+    if (!this._editor) {
+      this._editor = new EditingAgent(this.apiKey);
+    }
+    return this._editor;
   }
 
   async processTask(

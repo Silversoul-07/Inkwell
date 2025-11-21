@@ -1,13 +1,13 @@
-import OpenAI from 'openai'
-import { prisma } from '@/lib/prisma'
+import OpenAI from "openai";
+import { prisma } from "@/lib/prisma";
 
 export interface AIGenerationOptions {
-  prompt: string
-  context?: string
-  temperature?: number
-  maxTokens?: number
-  systemPrompt?: string
-  modelId?: string // Optional: use specific model instead of default
+  prompt: string;
+  context?: string;
+  temperature?: number;
+  maxTokens?: number;
+  systemPrompt?: string;
+  modelId?: string; // Optional: use specific model instead of default
 }
 
 /**
@@ -25,7 +25,7 @@ async function getAIModel(userId: string, modelId?: string) {
         id: modelId,
         userId,
       },
-    })
+    });
   } else {
     // Use default model
     model = await prisma.aIModel.findFirst({
@@ -33,75 +33,77 @@ async function getAIModel(userId: string, modelId?: string) {
         userId,
         isDefault: true,
       },
-    })
+    });
   }
 
   // Fallback: try to get any model for this user
   if (!model) {
     model = await prisma.aIModel.findFirst({
       where: { userId },
-    })
+    });
   }
 
   if (!model) {
-    throw new Error('No AI model configured. Please add an AI model in Settings → AI Models.')
+    throw new Error(
+      "No AI model configured. Please add an AI model in Settings → AI Models.",
+    );
   }
 
   if (!model.apiKey) {
-    throw new Error(`AI model "${model.name}" has no API key configured.`)
+    throw new Error(`AI model "${model.name}" has no API key configured.`);
   }
 
-  return model
+  return model;
 }
 
 export async function generateWithAI(
   userId: string,
   options: AIGenerationOptions,
-  onChunk?: (chunk: string) => void
+  onChunk?: (chunk: string) => void,
 ): Promise<string> {
   // Get the AI model to use
-  const model = await getAIModel(userId, options.modelId)
+  const model = await getAIModel(userId, options.modelId);
 
   // Get user settings for defaults
   const settings = await prisma.settings.findUnique({
     where: { userId },
-  })
+  });
 
   // Normalize endpoint URL
-  let baseURL = model.baseUrl?.trim() || 'https://api.openai.com/v1'
-  if (baseURL.endsWith('/')) {
-    baseURL = baseURL.slice(0, -1)
+  let baseURL = model.baseUrl?.trim() || "https://api.openai.com/v1";
+  if (baseURL.endsWith("/")) {
+    baseURL = baseURL.slice(0, -1);
   }
 
   // Create OpenAI client with custom endpoint
   const openai = new OpenAI({
-    apiKey: model.apiKey,
+    apiKey: model.apiKey || "",
     baseURL: baseURL,
-  })
+  });
 
-  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = []
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
 
   // Add system prompt if provided
   if (options.systemPrompt || settings?.aiSystemPrompt) {
     messages.push({
-      role: 'system',
-      content: options.systemPrompt || settings?.aiSystemPrompt || '',
-    })
+      role: "system",
+      content: options.systemPrompt || settings?.aiSystemPrompt || "",
+    });
   }
 
   // Add context if provided
   if (options.context) {
     messages.push({
-      role: 'user',
+      role: "user",
       content: `Context:\n${options.context}`,
-    })
+    });
   }
 
   // Add the main prompt
   messages.push({
-    role: 'user',
+    role: "user",
     content: options.prompt,
-  })
+  });
 
   try {
     if (onChunk) {
@@ -112,18 +114,18 @@ export async function generateWithAI(
         temperature: options.temperature ?? settings?.aiTemperature ?? 0.7,
         max_tokens: options.maxTokens ?? settings?.aiMaxTokens ?? 2000,
         stream: true,
-      })
+      });
 
-      let fullText = ''
+      let fullText = "";
       for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || ''
+        const content = chunk.choices[0]?.delta?.content || "";
         if (content) {
-          fullText += content
-          onChunk(content)
+          fullText += content;
+          onChunk(content);
         }
       }
 
-      return fullText
+      return fullText;
     } else {
       // Non-streaming response
       const completion = await openai.chat.completions.create({
@@ -132,67 +134,74 @@ export async function generateWithAI(
         temperature: options.temperature ?? settings?.aiTemperature ?? 0.7,
         max_tokens: options.maxTokens ?? settings?.aiMaxTokens ?? 2000,
         stream: false,
-      })
+      });
 
-      return completion.choices[0]?.message?.content || ''
+      return completion.choices[0]?.message?.content || "";
     }
   } catch (error: any) {
-    console.error('AI generation error:', error)
+    console.error("AI generation error:", error);
 
     // Provide helpful error messages
     if (error.status === 401) {
-      throw new Error(`Authentication failed for model "${model.name}". Please check your API key.`)
+      throw new Error(
+        `Authentication failed for model "${model.name}". Please check your API key.`,
+      );
     } else if (error.status === 404) {
-      throw new Error(`Model "${model.model}" not found. Please verify the model name is correct.`)
+      throw new Error(
+        `Model "${model.model}" not found. Please verify the model name is correct.`,
+      );
     } else if (error.status === 429) {
-      throw new Error('Rate limit exceeded. Please try again later.')
+      throw new Error("Rate limit exceeded. Please try again later.");
     } else {
-      throw new Error(`AI generation failed: ${error.message || 'Unknown error'}`)
+      throw new Error(
+        `AI generation failed: ${error.message || "Unknown error"}`,
+      );
     }
   }
 }
 
 export function buildContextFromScene(
   sceneContent: string,
-  maxChars: number = 4000
+  maxChars: number = 4000,
 ): string {
   // Get the last N characters of the scene as context
   if (sceneContent.length <= maxChars) {
-    return sceneContent
+    return sceneContent;
   }
 
-  return '...' + sceneContent.slice(-maxChars)
+  return "..." + sceneContent.slice(-maxChars);
 }
 
 export function buildContextFromProject(
   chapters: Array<{
-    title: string
+    title: string;
     scenes: Array<{
-      content: string
-      order: number
-    }>
+      content: string;
+      order: number;
+    }>;
   }>,
   currentSceneId: string,
-  maxChars: number = 8000
+  maxChars: number = 8000,
 ): string {
   // Build a summary of the project for context
-  let context = ''
+  let context = "";
 
   for (const chapter of chapters) {
-    context += `\n## ${chapter.title}\n\n`
+    context += `\n## ${chapter.title}\n\n`;
     for (const scene of chapter.scenes.sort((a, b) => a.order - b.order)) {
       // Truncate long scenes
-      const content = scene.content.length > 500
-        ? scene.content.slice(0, 500) + '...'
-        : scene.content
-      context += content + '\n\n'
+      const content =
+        scene.content.length > 500
+          ? scene.content.slice(0, 500) + "..."
+          : scene.content;
+      context += content + "\n\n";
     }
   }
 
   // Truncate to max chars
   if (context.length > maxChars) {
-    context = context.slice(0, maxChars) + '\n\n[Context truncated...]'
+    context = context.slice(0, maxChars) + "\n\n[Context truncated...]";
   }
 
-  return context
+  return context;
 }
