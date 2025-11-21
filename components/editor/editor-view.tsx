@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { EditorSidebarNew } from "./editor-sidebar";
 import { TiptapEditorNovelAI } from "./tiptap-editor-novelai";
 import { EditorToolbar } from "./editor-toolbar";
-import { AISidebar } from "./ai-sidebar";
+import { AICanvas } from "./ai-canvas";
 import { DebugSidebar } from "./debug-sidebar";
 import { PomodoroTimer } from "./pomodoro-timer";
 import { SettingsDialog } from "@/components/dialogs/settings-dialog";
@@ -190,11 +190,9 @@ export function EditorView({ project, settings }: EditorViewProps) {
           )}
 
           {editorMode === "ai-storm" && selectedScene && (
-            <div className="h-full">
-              <AISidebar
-                isOpen={true}
-                onClose={() => {}}
-                sceneContext={sceneContext}
+            <div className="h-full w-full max-w-5xl mx-auto">
+              <AICanvas
+                sceneContext={sceneContext || selectedScene.content}
                 selectedText={selectedText}
                 projectId={project.id}
                 onReplaceSelection={() => {}}

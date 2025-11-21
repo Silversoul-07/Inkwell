@@ -93,8 +93,28 @@ export function SceneContextPanel({
 
         // Check for character mentions
         characters.forEach((char: Character) => {
-          const nameRegex = new RegExp(`\\b${char.name}\\b`, "i");
-          if (nameRegex.test(sceneContent)) {
+          // Escape special regex characters in name
+          const escapedName = char.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          // Check for full name or individual parts (first name, last name)
+          const nameParts = char.name.split(/\s+/);
+          const patterns = [escapedName]; // Full name
+          if (nameParts.length > 1) {
+            // Also check for individual name parts
+            nameParts.forEach((part) => {
+              if (part.length > 2) {
+                // Only add parts longer than 2 chars
+                const escapedPart = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                patterns.push(escapedPart);
+              }
+            });
+          }
+
+          const mentioned = patterns.some((pattern) => {
+            const regex = new RegExp(`\\b${pattern}\\b`, "i");
+            return regex.test(sceneContent);
+          });
+
+          if (mentioned && !detectedCharacters.find((c) => c.id === char.id)) {
             detectedCharacters.push(char);
           }
         });

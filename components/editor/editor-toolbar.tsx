@@ -107,21 +107,6 @@ export function EditorToolbar({
             <PanelLeft className="h-4 w-4" />
           </Button>
 
-          {/* Context Panel Toggle - different function based on mode */}
-          <Button
-            variant={contextPanelOpen ? "secondary" : "ghost"}
-            size="icon"
-            className="h-9 w-9"
-            onClick={() => setContextPanelOpen(!contextPanelOpen)}
-            title={editorMode === "writing" ? "Scene Context" : "AI Context"}
-          >
-            {editorMode === "writing" ? (
-              <Info className="h-4 w-4" />
-            ) : (
-              <PanelRight className="h-4 w-4" />
-            )}
-          </Button>
-
           <Separator orientation="vertical" className="h-6 mx-1" />
 
           <div className="flex items-center gap-2">
@@ -210,6 +195,17 @@ export function EditorToolbar({
           </div>
 
           <Separator orientation="vertical" className="h-6 mx-1" />
+
+          {/* Context Panel Toggle - different function based on mode */}
+          <Button
+            variant={contextPanelOpen ? "secondary" : "ghost"}
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setContextPanelOpen(!contextPanelOpen)}
+            title={editorMode === "writing" ? "Scene Context" : "AI Context"}
+          >
+            <PanelRight className="h-4 w-4" />
+          </Button>
 
           {/* Debug */}
           <Button
