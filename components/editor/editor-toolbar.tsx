@@ -114,6 +114,50 @@ export function EditorToolbar({
               {project.title}
             </h1>
 
+            {/* Mode Selector Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 gap-1">
+                  {editorMode === "writing" ? (
+                    <>
+                      <PenLine className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">Writing</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">AI Storm</span>
+                    </>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                  Editor Mode
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setEditorMode("writing")}>
+                  <PenLine className="h-4 w-4 mr-2" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Writing Mode</span>
+                    <span className="text-xs text-muted-foreground">
+                      Focus on writing
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEditorMode("ai-storm")}>
+                  <Zap className="h-4 w-4 mr-2" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">AI Storm Mode</span>
+                    <span className="text-xs text-muted-foreground">
+                      AI-powered assistance
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Project Tools Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -168,34 +212,8 @@ export function EditorToolbar({
           </div>
         </div>
 
-        {/* Right Section - Mode Toggle & Settings */}
+        {/* Right Section - Settings & Tools */}
         <div className="flex items-center gap-1.5">
-          {/* Mode Toggle - Writing / AI Storm */}
-          <div className="flex items-center gap-1 bg-muted/50 rounded-md p-1">
-            <Button
-              variant={editorMode === "writing" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 gap-1.5 px-3"
-              onClick={() => setEditorMode("writing")}
-              title="Writing Mode"
-            >
-              <PenLine className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Writing</span>
-            </Button>
-            <Button
-              variant={editorMode === "ai-storm" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 gap-1.5 px-3"
-              onClick={() => setEditorMode("ai-storm")}
-              title="AI Storm Mode"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">AI Storm</span>
-            </Button>
-          </div>
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
           {/* Context Panel Toggle - different function based on mode */}
           <Button
             variant={contextPanelOpen ? "secondary" : "ghost"}
