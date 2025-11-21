@@ -1,10 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { signOut } from 'next-auth/react'
 import { Settings as SettingsIcon, LogOut, Feather } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeSelector } from '@/components/ui/theme-selector'
-import Link from 'next/link'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { SettingsDialog } from '@/components/dialogs/settings-dialog'
 
 interface DashboardHeaderProps {
   user: {
@@ -24,6 +25,8 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ user, settings }: DashboardHeaderProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
   const initials = user.name
     ? user.name
         .split(' ')
@@ -34,6 +37,7 @@ export function DashboardHeader({ user, settings }: DashboardHeaderProps) {
     : user.email[0].toUpperCase()
 
   return (
+    <>
     <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -46,11 +50,14 @@ export function DashboardHeader({ user, settings }: DashboardHeaderProps) {
         <div className="flex items-center gap-2">
           <ThemeSelector />
 
-          <Link href="/settings">
-            <Button variant="ghost" size="icon" title="Settings">
-              <SettingsIcon className="h-5 w-5" />
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Settings"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <SettingsIcon className="h-5 w-5" />
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -70,11 +77,12 @@ export function DashboardHeader({ user, settings }: DashboardHeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/settings" className="cursor-pointer">
-                  <SettingsIcon className="h-4 w-4 mr-2" />
-                  Settings
-                </Link>
+              <DropdownMenuItem
+                onClick={() => setSettingsOpen(true)}
+                className="cursor-pointer"
+              >
+                <SettingsIcon className="h-4 w-4 mr-2" />
+                Settings
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => signOut({ callbackUrl: '/login' })}
@@ -87,6 +95,12 @@ export function DashboardHeader({ user, settings }: DashboardHeaderProps) {
           </DropdownMenu>
         </div>
       </div>
+
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+      />
     </header>
+    </>
   )
 }

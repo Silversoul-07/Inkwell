@@ -123,6 +123,7 @@ export function SettingsDialog({ open, onOpenChange, initialTab = 'editor' }: Se
             "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]"
           )}
         >
+          <DialogPrimitive.Title className="sr-only">Settings</DialogPrimitive.Title>
           {/* Sidebar */}
           <div className="w-[240px] flex-shrink-0 border-r bg-muted/30 flex flex-col">
             <div className="p-5 border-b">

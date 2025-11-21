@@ -8,7 +8,7 @@ import { EditorToolbar } from './editor-toolbar'
 import { AISidebar } from './ai-sidebar'
 import { DebugSidebar } from './debug-sidebar'
 import { PomodoroTimer } from './pomodoro-timer'
-import { SettingsDialog } from '@/components/dialogs/settings-dialog-full'
+import { SettingsDialog } from '@/components/dialogs/settings-dialog'
 import { ContentViewer } from './content-viewer'
 
 interface Scene {
