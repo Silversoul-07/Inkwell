@@ -612,6 +612,18 @@ export function AICanvas({
               </div>
             ))}
 
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex items-start gap-2">
+                <div className="bg-muted rounded-lg px-3 py-2 max-w-[85%]">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Generating...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
