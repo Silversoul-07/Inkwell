@@ -165,6 +165,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
               onExitZen={() => setZenMode(false)}
               chapterTitle={selectedChapter?.title}
               sceneTitle={selectedScene.title || undefined}
+              onSceneContextChange={setSceneContext}
             />
           )}
           {viewType !== "scene" && viewContent && (
