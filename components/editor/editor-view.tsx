@@ -10,6 +10,8 @@ import { DebugSidebar } from "./debug-sidebar";
 import { PomodoroTimer } from "./pomodoro-timer";
 import { SettingsDialog } from "@/components/dialogs/settings-dialog";
 import { ContentViewer } from "./content-viewer";
+import { SceneContextPanel } from "./scene-context-panel";
+import { AIContextIndicator } from "./ai-context-indicator";
 
 interface Scene {
   id: string;
@@ -63,6 +65,7 @@ interface LorebookEntry {
 }
 
 type ViewType = "scene" | "character" | "lorebook";
+type EditorMode = "writing" | "ai-storm";
 
 interface EditorViewProps {
   project: Project;
@@ -72,7 +75,8 @@ interface EditorViewProps {
 export function EditorView({ project, settings }: EditorViewProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [aiSidebarOpen, setAiSidebarOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>("writing");
+  const [contextPanelOpen, setContextPanelOpen] = useState(false);
   const [debugSidebarOpen, setDebugSidebarOpen] = useState(false);
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
   const [zenMode, setZenMode] = useState(false);
@@ -128,8 +132,10 @@ export function EditorView({ project, settings }: EditorViewProps) {
           project={project}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
-          aiSidebarOpen={aiSidebarOpen}
-          setAiSidebarOpen={setAiSidebarOpen}
+          editorMode={editorMode}
+          setEditorMode={setEditorMode}
+          contextPanelOpen={contextPanelOpen}
+          setContextPanelOpen={setContextPanelOpen}
           debugSidebarOpen={debugSidebarOpen}
           setDebugSidebarOpen={setDebugSidebarOpen}
           zenMode={zenMode}
@@ -156,42 +162,72 @@ export function EditorView({ project, settings }: EditorViewProps) {
         )}
 
         <div className="flex-1 min-w-0 overflow-auto relative">
-          {viewType === "scene" && selectedScene && (
-            <TiptapEditorNovelAI
-              key={selectedScene.id}
-              scene={selectedScene}
-              projectId={project.id}
-              settings={settings}
-              zenMode={zenMode}
-              onExitZen={() => setZenMode(false)}
-              chapterTitle={selectedChapter?.title}
-              sceneTitle={selectedScene.title || undefined}
-              onSceneContextChange={setSceneContext}
+          {editorMode === "writing" && (
+            <>
+              {viewType === "scene" && selectedScene && (
+                <TiptapEditorNovelAI
+                  key={selectedScene.id}
+                  scene={selectedScene}
+                  projectId={project.id}
+                  settings={settings}
+                  zenMode={zenMode}
+                  onExitZen={() => setZenMode(false)}
+                  chapterTitle={selectedChapter?.title}
+                  sceneTitle={selectedScene.title || undefined}
+                  onSceneContextChange={setSceneContext}
             />
+              )}
+              {viewType !== "scene" && viewContent && (
+                <ContentViewer
+                  key={viewContent.id}
+                  type={viewType}
+                  content={viewContent}
+                  projectId={project.id}
+                  onBack={handleBackToScene}
+                />
+              )}
+            </>
           )}
-          {viewType !== "scene" && viewContent && (
-            <ContentViewer
-              key={viewContent.id}
-              type={viewType}
-              content={viewContent}
-              projectId={project.id}
-              onBack={handleBackToScene}
-            />
+
+          {editorMode === "ai-storm" && selectedScene && (
+            <div className="h-full">
+              <AISidebar
+                isOpen={true}
+                onClose={() => {}}
+                sceneContext={sceneContext}
+                selectedText={selectedText}
+                projectId={project.id}
+                onReplaceSelection={() => {}}
+                onInsertText={() => {}}
+              />
+            </div>
           )}
         </div>
 
-        {/* AI Sidebar */}
-        {!zenMode && selectedScene && (
-          <AISidebar
-            isOpen={aiSidebarOpen}
-            onClose={() => setAiSidebarOpen(false)}
-            sceneContext={sceneContext}
-            selectedText={selectedText}
-            projectId={project.id}
-            onReplaceSelection={() => {}}
-            onInsertText={() => {}}
-          />
-        )}
+        {/* Scene Context Panel - Writing Mode */}
+        {!zenMode &&
+          editorMode === "writing" &&
+          contextPanelOpen &&
+          selectedScene && (
+            <SceneContextPanel
+              sceneContent={selectedScene.content}
+              projectId={project.id}
+              onViewCharacter={handleViewCharacter}
+              onViewLorebook={handleViewLorebook}
+            />
+          )}
+
+        {/* AI Context Indicator - AI Storm Mode */}
+        {!zenMode &&
+          editorMode === "ai-storm" &&
+          contextPanelOpen &&
+          selectedScene && (
+            <AIContextIndicator
+              sceneContext={sceneContext || selectedScene.content}
+              projectId={project.id}
+              selectedText={selectedText}
+            />
+          )}
 
         {/* Debug Sidebar */}
         {!zenMode && selectedScene && (
