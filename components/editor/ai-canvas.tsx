@@ -1,45 +1,82 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Send, Loader2, Wand2, Edit3, Sparkles, RotateCcw, Globe, Users, BookOpen, HelpCircle, Trash2, Bot } from 'lucide-react'
-import { MarkdownRenderer } from '@/components/ai/markdown-renderer'
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Send,
+  Loader2,
+  Wand2,
+  Edit3,
+  Sparkles,
+  RotateCcw,
+  Globe,
+  Users,
+  BookOpen,
+  HelpCircle,
+  Trash2,
+  Bot,
+} from "lucide-react";
+import { MarkdownRenderer } from "@/components/ai/markdown-renderer";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface Message {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  toolCalls?: any[]
-  isCommand?: boolean
-  agentType?: string
+  role: "user" | "assistant" | "system";
+  content: string;
+  toolCalls?: any[];
+  isCommand?: boolean;
+  agentType?: string;
 }
 
 interface AICanvasProps {
-  sceneContext: string
-  selectedText: string
-  projectId?: string
-  onReplaceSelection?: (text: string) => void
-  onInsertText?: (text: string) => void
+  sceneContext: string;
+  selectedText: string;
+  projectId?: string;
+  onReplaceSelection?: (text: string) => void;
+  onInsertText?: (text: string) => void;
 }
 
 // Slash commands definition
 const SLASH_COMMANDS = [
-  { command: '/help', description: 'Show all available commands', icon: HelpCircle },
-  { command: '/character', description: 'Create a new character (usage: /character <name>)', icon: Users },
-  { command: '/lorebook', description: 'Create a lorebook entry (usage: /lorebook <entry>)', icon: BookOpen },
-  { command: '/world', description: 'Start world-building conversation', icon: Globe },
-  { command: '/plan', description: 'Start story planning conversation', icon: Bot },
-  { command: '/analyze', description: 'Analyze the current scene', icon: Sparkles },
-  { command: '/clear', description: 'Clear chat history', icon: Trash2 },
-]
+  {
+    command: "/help",
+    description: "Show all available commands",
+    icon: HelpCircle,
+  },
+  {
+    command: "/character",
+    description: "Create a new character (usage: /character <name>)",
+    icon: Users,
+  },
+  {
+    command: "/lorebook",
+    description: "Create a lorebook entry (usage: /lorebook <entry>)",
+    icon: BookOpen,
+  },
+  {
+    command: "/world",
+    description: "Start world-building conversation",
+    icon: Globe,
+  },
+  {
+    command: "/plan",
+    description: "Start story planning conversation",
+    icon: Bot,
+  },
+  {
+    command: "/analyze",
+    description: "Analyze the current scene",
+    icon: Sparkles,
+  },
+  { command: "/clear", description: "Clear chat history", icon: Trash2 },
+];
 
 export function AICanvas({
   sceneContext,
@@ -48,111 +85,112 @@ export function AICanvas({
   onReplaceSelection,
   onInsertText,
 }: AICanvasProps) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [editMode, setEditMode] = useState(false)
-  const [editingText, setEditingText] = useState('')
-  const [selectedModel, setSelectedModel] = useState('claude-sonnet')
-  const [availableModels, setAvailableModels] = useState<any[]>([])
-  const [showCommandMenu, setShowCommandMenu] = useState(false)
-  const [filteredCommands, setFilteredCommands] = useState(SLASH_COMMANDS)
-  const [activeAgent, setActiveAgent] = useState<string | null>(null)
-  const [conversationId, setConversationId] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingText, setEditingText] = useState("");
+  const [selectedModel, setSelectedModel] = useState("claude-sonnet");
+  const [availableModels, setAvailableModels] = useState<any[]>([]);
+  const [showCommandMenu, setShowCommandMenu] = useState(false);
+  const [filteredCommands, setFilteredCommands] = useState(SLASH_COMMANDS);
+  const [activeAgent, setActiveAgent] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Load available AI models from settings
   useEffect(() => {
     const loadModels = async () => {
       try {
-        const response = await fetch('/api/ai-models')
+        const response = await fetch("/api/ai-models");
         if (response.ok) {
-          const models = await response.json()
-          setAvailableModels(models.filter((m: any) => m.isEnabled))
+          const models = await response.json();
+          setAvailableModels(models.filter((m: any) => m.isEnabled));
           if (models.length > 0) {
-            const defaultModel = models.find((m: any) => m.isDefault) || models[0]
-            setSelectedModel(defaultModel.id)
+            const defaultModel =
+              models.find((m: any) => m.isDefault) || models[0];
+            setSelectedModel(defaultModel.id);
           }
         }
       } catch (error) {
-        console.error('Failed to load models:', error)
+        console.error("Failed to load models:", error);
         // Fallback to default models
         setAvailableModels([
-          { id: 'claude-sonnet', name: 'Claude Sonnet', provider: 'anthropic' },
-          { id: 'gpt-4', name: 'GPT-4', provider: 'openai' },
-        ])
+          { id: "claude-sonnet", name: "Claude Sonnet", provider: "anthropic" },
+          { id: "gpt-4", name: "GPT-4", provider: "openai" },
+        ]);
       }
-    }
-    loadModels()
-  }, [])
+    };
+    loadModels();
+  }, []);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   // When selected text changes, update editing text
   useEffect(() => {
     if (selectedText) {
-      setEditingText(selectedText)
+      setEditingText(selectedText);
     }
-  }, [selectedText])
+  }, [selectedText]);
 
   const sendMessage = async (customPrompt?: string, customContext?: string) => {
-    const promptToSend = customPrompt || input
-    if (!promptToSend.trim() || isLoading) return
+    const promptToSend = customPrompt || input;
+    if (!promptToSend.trim() || isLoading) return;
 
-    const userMessage: Message = { role: 'user', content: promptToSend }
-    setMessages((prev) => [...prev, userMessage])
-    if (!customPrompt) setInput('')
-    setIsLoading(true)
+    const userMessage: Message = { role: "user", content: promptToSend };
+    setMessages((prev) => [...prev, userMessage]);
+    if (!customPrompt) setInput("");
+    setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptToSend,
           context: customContext || sceneContext.slice(-4000),
           systemPrompt:
-            'You are an expert creative writing assistant. Provide clear, actionable feedback and suggestions. When editing text, return ONLY the edited version without explanations unless asked.',
+            "You are an expert creative writing assistant. Provide clear, actionable feedback and suggestions. When editing text, return ONLY the edited version without explanations unless asked.",
         }),
-      })
+      });
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let assistantMessage = ''
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage = "";
 
-      if (!reader) return
+      if (!reader) return;
 
       // Add an empty assistant message that we'll update
-      setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n').filter((line) => line.trim() !== '')
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') continue
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
 
             try {
-              const parsed = JSON.parse(data)
+              const parsed = JSON.parse(data);
               if (parsed.chunk) {
-                assistantMessage += parsed.chunk
+                assistantMessage += parsed.chunk;
                 // Update the last message
                 setMessages((prev) => [
                   ...prev.slice(0, -1),
-                  { role: 'assistant', content: assistantMessage },
-                ])
+                  { role: "assistant", content: assistantMessage },
+                ]);
               }
             } catch (e) {
               // Skip parsing errors
@@ -161,277 +199,333 @@ export function AICanvas({
         }
       }
     } catch (error) {
-      console.error('Chat error:', error)
+      console.error("Chat error:", error);
       setMessages((prev) => [
         ...prev,
         {
-          role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
         },
-      ])
+      ]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSend = async () => {
     // Check if input is a slash command
-    if (input.trim().startsWith('/')) {
-      const handled = await handleSlashCommand(input)
+    if (input.trim().startsWith("/")) {
+      const handled = await handleSlashCommand(input);
       if (handled) {
-        setInput('')
-        setShowCommandMenu(false)
-        return
+        setInput("");
+        setShowCommandMenu(false);
+        return;
       }
     }
 
     // If we have an active agent, route to agent
     if (activeAgent && conversationId) {
-      const userMessage: Message = { role: 'user', content: input }
-      setMessages((prev) => [...prev, userMessage])
-      setInput('')
-      await sendAgentMessage(input, activeAgent)
-      return
+      const userMessage: Message = { role: "user", content: input };
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
+      await sendAgentMessage(input, activeAgent);
+      return;
     }
 
-    sendMessage()
-  }
+    sendMessage();
+  };
 
   const handleImprove = () => {
-    if (!editingText.trim()) return
+    if (!editingText.trim()) return;
     sendMessage(
       `Improve this text by making it more engaging and polished. Return ONLY the improved version:\n\n${editingText}`,
-      editingText
-    )
-  }
+      editingText,
+    );
+  };
 
   const handleRewrite = () => {
-    if (!editingText.trim()) return
+    if (!editingText.trim()) return;
     sendMessage(
       `Rewrite this text in a different way while keeping the same meaning. Return ONLY the rewritten version:\n\n${editingText}`,
-      editingText
-    )
-  }
+      editingText,
+    );
+  };
 
   const handleMakeEdits = () => {
-    if (!editingText.trim() || !input.trim()) return
-    sendMessage(
-      `${input}\n\nText to edit:\n${editingText}`,
-      editingText
-    )
-  }
+    if (!editingText.trim() || !input.trim()) return;
+    sendMessage(`${input}\n\nText to edit:\n${editingText}`, editingText);
+  };
 
   const handleApplyToEditor = (content: string) => {
     if (selectedText && onReplaceSelection) {
-      onReplaceSelection(content)
+      onReplaceSelection(content);
     } else if (onInsertText) {
-      onInsertText(content)
+      onInsertText(content);
     }
-  }
+  };
 
   const handleResetEdit = () => {
-    setEditingText(selectedText || '')
-  }
+    setEditingText(selectedText || "");
+  };
 
   // Handle input changes for command menu
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value
-    setInput(value)
+    const value = e.target.value;
+    setInput(value);
 
     // Show command menu when typing /
-    if (value.startsWith('/')) {
-      setShowCommandMenu(true)
-      const search = value.slice(1).toLowerCase()
+    if (value.startsWith("/")) {
+      setShowCommandMenu(true);
+      const search = value.slice(1).toLowerCase();
       setFilteredCommands(
-        SLASH_COMMANDS.filter(cmd =>
-          cmd.command.slice(1).toLowerCase().includes(search) ||
-          cmd.description.toLowerCase().includes(search)
-        )
-      )
+        SLASH_COMMANDS.filter(
+          (cmd) =>
+            cmd.command.slice(1).toLowerCase().includes(search) ||
+            cmd.description.toLowerCase().includes(search),
+        ),
+      );
     } else {
-      setShowCommandMenu(false)
+      setShowCommandMenu(false);
     }
-  }
+  };
 
   // Select a command from menu
   const selectCommand = (command: string) => {
-    setInput(command + ' ')
-    setShowCommandMenu(false)
-    inputRef.current?.focus()
-  }
+    setInput(command + " ");
+    setShowCommandMenu(false);
+    inputRef.current?.focus();
+  };
 
   // Start an agent conversation
   const startAgentConversation = async (agentType: string) => {
     if (!projectId) {
       setMessages((prev) => [
         ...prev,
-        { role: 'system', content: 'Agent features require an active project. Please open a project first.', isCommand: true },
-      ])
-      return null
+        {
+          role: "system",
+          content:
+            "Agent features require an active project. Please open a project first.",
+          isCommand: true,
+        },
+      ]);
+      return null;
     }
 
     try {
-      const response = await fetch('/api/agents/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/agents/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agentType, projectId }),
-      })
+      });
 
-      if (!response.ok) throw new Error('Failed to start conversation')
+      if (!response.ok) throw new Error("Failed to start conversation");
 
-      const conversation = await response.json()
-      setConversationId(conversation.id)
-      setActiveAgent(agentType)
-      return conversation.id
+      const data = await response.json();
+      const conversation = data.conversation || data;
+      setConversationId(conversation.id);
+      setActiveAgent(agentType);
+      return conversation.id;
     } catch (error) {
-      console.error('Failed to start agent:', error)
-      return null
+      console.error("Failed to start agent:", error);
+      return null;
     }
-  }
+  };
 
   // Send message to agent
-  const sendAgentMessage = async (message: string, agentType: string, convId?: string) => {
-    const targetConvId = convId || conversationId
-    if (!targetConvId) return
+  const sendAgentMessage = async (
+    message: string,
+    agentType: string,
+    convId?: string,
+  ) => {
+    const targetConvId = convId || conversationId;
+    if (!targetConvId) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await fetch('/api/agents/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/agents/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationId: targetConvId,
           agentType,
           message,
           modelId: selectedModel,
         }),
-      })
+      });
 
-      if (!response.ok) throw new Error('Agent request failed')
+      if (!response.ok) throw new Error("Agent request failed");
 
-      const result = await response.json()
+      const result = await response.json();
+      const content = result.message?.content || result.content;
+      const toolCalls = result.message?.toolCalls || result.toolCalls;
 
       setMessages((prev) => [
         ...prev,
         {
-          role: 'assistant',
-          content: result.content,
-          toolCalls: result.toolCalls,
+          role: "assistant",
+          content,
+          toolCalls,
           agentType,
         },
-      ])
+      ]);
     } catch (error) {
-      console.error('Agent error:', error)
+      console.error("Agent error:", error);
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, the agent encountered an error. Please try again.' },
-      ])
+        {
+          role: "assistant",
+          content: "Sorry, the agent encountered an error. Please try again.",
+        },
+      ]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Handle slash commands
   const handleSlashCommand = async (command: string): Promise<boolean> => {
-    const trimmed = command.trim().toLowerCase()
-    const parts = command.trim().split(' ')
-    const cmd = parts[0].toLowerCase()
-    const args = parts.slice(1).join(' ')
+    const trimmed = command.trim().toLowerCase();
+    const parts = command.trim().split(" ");
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1).join(" ");
 
     switch (cmd) {
-      case '/help':
-        const helpText = SLASH_COMMANDS.map(c => `**${c.command}** - ${c.description}`).join('\n')
+      case "/help":
+        const helpText = SLASH_COMMANDS.map(
+          (c) => `**${c.command}** - ${c.description}`,
+        ).join("\n");
         setMessages((prev) => [
           ...prev,
-          { role: 'user', content: '/help', isCommand: true },
-          { role: 'assistant', content: `## Available Commands\n\n${helpText}\n\n### Agent Modes\nUse **/world** or **/plan** to start specialized AI agent conversations that can access your project data.`, isCommand: true },
-        ])
-        return true
+          { role: "user", content: "/help", isCommand: true },
+          {
+            role: "assistant",
+            content: `## Available Commands\n\n${helpText}\n\n### Agent Modes\nUse **/world** or **/plan** to start specialized AI agent conversations that can access your project data.`,
+            isCommand: true,
+          },
+        ]);
+        return true;
 
-      case '/character':
+      case "/character":
         if (!args) {
           setMessages((prev) => [
             ...prev,
-            { role: 'user', content: '/character', isCommand: true },
-            { role: 'assistant', content: 'Usage: `/character <name>`\n\nExample: `/character Elena Blackwood`', isCommand: true },
-          ])
+            { role: "user", content: "/character", isCommand: true },
+            {
+              role: "assistant",
+              content:
+                "Usage: `/character <name>`\n\nExample: `/character Elena Blackwood`",
+              isCommand: true,
+            },
+          ]);
         } else {
           setMessages((prev) => [
             ...prev,
-            { role: 'user', content: `/character ${args}`, isCommand: true },
-          ])
+            { role: "user", content: `/character ${args}`, isCommand: true },
+          ]);
           // Use character development agent
-          const convId = await startAgentConversation('character-development')
+          const convId = await startAgentConversation("character-development");
           if (convId) {
-            await sendAgentMessage(`Help me create a character named "${args}". Generate a detailed character profile including background, personality traits, motivations, and potential story arcs.`, 'character-development', convId)
+            await sendAgentMessage(
+              `Help me create a character named "${args}". Generate a detailed character profile including background, personality traits, motivations, and potential story arcs.`,
+              "character-development",
+              convId,
+            );
           }
         }
-        return true
+        return true;
 
-      case '/lorebook':
+      case "/lorebook":
         if (!args) {
           setMessages((prev) => [
             ...prev,
-            { role: 'user', content: '/lorebook', isCommand: true },
-            { role: 'assistant', content: 'Usage: `/lorebook <entry name>`\n\nExample: `/lorebook The Crystal Kingdom`', isCommand: true },
-          ])
+            { role: "user", content: "/lorebook", isCommand: true },
+            {
+              role: "assistant",
+              content:
+                "Usage: `/lorebook <entry name>`\n\nExample: `/lorebook The Crystal Kingdom`",
+              isCommand: true,
+            },
+          ]);
         } else {
           setMessages((prev) => [
             ...prev,
-            { role: 'user', content: `/lorebook ${args}`, isCommand: true },
-          ])
+            { role: "user", content: `/lorebook ${args}`, isCommand: true },
+          ]);
           // Use world-building agent
-          const convId = await startAgentConversation('world-building')
+          const convId = await startAgentConversation("world-building");
           if (convId) {
-            await sendAgentMessage(`Create a lorebook entry for "${args}". Include detailed information, context, and how it fits into the world.`, 'world-building', convId)
+            await sendAgentMessage(
+              `Create a lorebook entry for "${args}". Include detailed information, context, and how it fits into the world.`,
+              "world-building",
+              convId,
+            );
           }
         }
-        return true
+        return true;
 
-      case '/world':
+      case "/world":
         setMessages((prev) => [
           ...prev,
-          { role: 'user', content: '/world', isCommand: true },
-          { role: 'assistant', content: '**World-Building Agent activated.** I can help you develop your story world, create locations, magic systems, cultures, and more. What would you like to explore?', agentType: 'world-building', isCommand: true },
-        ])
-        await startAgentConversation('world-building')
-        return true
+          { role: "user", content: "/world", isCommand: true },
+          {
+            role: "assistant",
+            content:
+              "**World-Building Agent activated.** I can help you develop your story world, create locations, magic systems, cultures, and more. What would you like to explore?",
+            agentType: "world-building",
+            isCommand: true,
+          },
+        ]);
+        await startAgentConversation("world-building");
+        return true;
 
-      case '/plan':
+      case "/plan":
         setMessages((prev) => [
           ...prev,
-          { role: 'user', content: '/plan', isCommand: true },
-          { role: 'assistant', content: '**Story Planning Agent activated.** I can help you plan your narrative, develop plot arcs, and structure your story. What aspect of your story would you like to work on?', agentType: 'story-planning', isCommand: true },
-        ])
-        await startAgentConversation('story-planning')
-        return true
+          { role: "user", content: "/plan", isCommand: true },
+          {
+            role: "assistant",
+            content:
+              "**Story Planning Agent activated.** I can help you plan your narrative, develop plot arcs, and structure your story. What aspect of your story would you like to work on?",
+            agentType: "story-planning",
+            isCommand: true,
+          },
+        ]);
+        await startAgentConversation("story-planning");
+        return true;
 
-      case '/analyze':
+      case "/analyze":
         if (!sceneContext.trim()) {
           setMessages((prev) => [
             ...prev,
-            { role: 'user', content: '/analyze', isCommand: true },
-            { role: 'assistant', content: 'No scene content to analyze. Please write some content in the editor first.', isCommand: true },
-          ])
+            { role: "user", content: "/analyze", isCommand: true },
+            {
+              role: "assistant",
+              content:
+                "No scene content to analyze. Please write some content in the editor first.",
+              isCommand: true,
+            },
+          ]);
         } else {
-          sendMessage('Analyze this scene for plot, pacing, character development, and provide specific suggestions for improvement.', sceneContext.slice(-4000))
+          sendMessage(
+            "Analyze this scene for plot, pacing, character development, and provide specific suggestions for improvement.",
+            sceneContext.slice(-4000),
+          );
         }
-        return true
+        return true;
 
-      case '/clear':
-        setMessages([])
-        setActiveAgent(null)
-        setConversationId(null)
-        return true
+      case "/clear":
+        setMessages([]);
+        setActiveAgent(null);
+        setConversationId(null);
+        return true;
 
       default:
-        return false
+        return false;
     }
-  }
+  };
 
   return (
     <div className="w-full h-full flex flex-col bg-background">
-
       {/* Edit Mode */}
       {editMode && (
         <div className="flex-1 flex flex-col p-4 space-y-4 overflow-auto">
@@ -457,14 +551,16 @@ export function AICanvas({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Instructions (Optional)</label>
+            <label className="text-sm font-medium">
+              Instructions (Optional)
+            </label>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleMakeEdits()
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleMakeEdits();
                 }
               }}
               placeholder="e.g., Make it more dramatic, Add more dialogue, etc."
@@ -515,24 +611,28 @@ export function AICanvas({
           {messages.length > 0 && (
             <div className="flex-1 space-y-4 overflow-auto border-t pt-4">
               <label className="text-sm font-medium">Results</label>
-              {messages.slice().reverse().map((message, index) => (
-                message.role === 'assistant' && (
-                  <div
-                    key={index}
-                    className="rounded-lg p-3 bg-muted relative group"
-                  >
-                    <MarkdownRenderer content={message.content} />
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="mt-2 w-full"
-                      onClick={() => handleApplyToEditor(message.content)}
-                    >
-                      Apply to Editor
-                    </Button>
-                  </div>
-                )
-              ))}
+              {messages
+                .slice()
+                .reverse()
+                .map(
+                  (message, index) =>
+                    message.role === "assistant" && (
+                      <div
+                        key={index}
+                        className="rounded-lg p-3 bg-muted relative group"
+                      >
+                        <MarkdownRenderer content={message.content} />
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="mt-2 w-full"
+                          onClick={() => handleApplyToEditor(message.content)}
+                        >
+                          Apply to Editor
+                        </Button>
+                      </div>
+                    ),
+                )}
             </div>
           )}
         </div>
@@ -548,7 +648,8 @@ export function AICanvas({
                 <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="font-semibold">AI Writing Canvas</p>
                 <p className="mt-2 text-xs max-w-xs mx-auto">
-                  Ask questions, get suggestions, or switch to Edit mode to work on selected text.
+                  Ask questions, get suggestions, or switch to Edit mode to work
+                  on selected text.
                 </p>
               </div>
             )}
@@ -557,41 +658,49 @@ export function AICanvas({
               <div
                 key={index}
                 className={`flex flex-col ${
-                  message.role === 'user' ? 'items-end' : 'items-start'
+                  message.role === "user" ? "items-end" : "items-start"
                 }`}
               >
                 {/* Agent/System badge */}
-                {message.agentType && message.role === 'assistant' && (
+                {message.agentType && message.role === "assistant" && (
                   <Badge variant="outline" className="mb-1 text-xs capitalize">
-                    {message.agentType.replace('-', ' ')}
+                    {message.agentType.replace("-", " ")}
                   </Badge>
                 )}
-                {message.role === 'system' && (
+                {message.role === "system" && (
                   <Badge variant="secondary" className="mb-1 text-xs">
                     System
                   </Badge>
                 )}
                 <div
                   className={`max-w-[85%] rounded-lg p-3 ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : message.role === 'system'
-                      ? 'bg-yellow-500/10 border border-yellow-500/20'
-                      : 'bg-muted'
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : message.role === "system"
+                        ? "bg-yellow-500/10 border border-yellow-500/20"
+                        : "bg-muted"
                   }`}
                 >
-                  {message.role === 'user' ? (
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "user" ? (
+                    <p className="text-sm whitespace-pre-wrap">
+                      {message.content}
+                    </p>
                   ) : (
                     <MarkdownRenderer content={message.content} />
                   )}
                   {/* Tool calls display */}
                   {message.toolCalls && message.toolCalls.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-border">
-                      <p className="text-xs text-muted-foreground mb-1">Tools used:</p>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Tools used:
+                      </p>
                       <div className="flex flex-wrap gap-1">
                         {message.toolCalls.map((tool: any, i: number) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
+                          <Badge
+                            key={i}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {tool.name || tool}
                           </Badge>
                         ))}
@@ -599,16 +708,19 @@ export function AICanvas({
                     </div>
                   )}
                 </div>
-                {message.role === 'assistant' && message.content && !isLoading && !message.isCommand && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-1"
-                    onClick={() => handleApplyToEditor(message.content)}
-                  >
-                    Apply to Editor
-                  </Button>
-                )}
+                {message.role === "assistant" &&
+                  message.content &&
+                  !isLoading &&
+                  !message.isCommand && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-1"
+                      onClick={() => handleApplyToEditor(message.content)}
+                    >
+                      Apply to Editor
+                    </Button>
+                  )}
               </div>
             ))}
 
@@ -622,14 +734,16 @@ export function AICanvas({
               <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
                   <Bot className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium capitalize">{activeAgent.replace('-', ' ')} Agent</span>
+                  <span className="text-sm font-medium capitalize">
+                    {activeAgent.replace("-", " ")} Agent
+                  </span>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setActiveAgent(null)
-                    setConversationId(null)
+                    setActiveAgent(null);
+                    setConversationId(null);
                   }}
                   className="h-6 text-xs"
                 >
@@ -646,7 +760,11 @@ export function AICanvas({
                 </SelectTrigger>
                 <SelectContent>
                   {availableModels.map((model) => (
-                    <SelectItem key={model.id} value={model.id} className="text-xs">
+                    <SelectItem
+                      key={model.id}
+                      value={model.id}
+                      className="text-xs"
+                    >
                       {model.name}
                     </SelectItem>
                   ))}
@@ -655,7 +773,7 @@ export function AICanvas({
 
               <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
                 <Button
-                  variant={editMode ? 'ghost' : 'secondary'}
+                  variant={editMode ? "ghost" : "secondary"}
                   size="sm"
                   onClick={() => setEditMode(false)}
                   className="h-7 px-3"
@@ -664,7 +782,7 @@ export function AICanvas({
                   Ask
                 </Button>
                 <Button
-                  variant={editMode ? 'secondary' : 'ghost'}
+                  variant={editMode ? "secondary" : "ghost"}
                   size="sm"
                   onClick={() => setEditMode(true)}
                   disabled={!selectedText}
@@ -687,7 +805,9 @@ export function AICanvas({
                   >
                     <cmd.icon className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{cmd.command}</span>
-                    <span className="text-muted-foreground text-xs ml-auto">{cmd.description}</span>
+                    <span className="text-muted-foreground text-xs ml-auto">
+                      {cmd.description}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -699,15 +819,19 @@ export function AICanvas({
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSend()
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
                   }
-                  if (e.key === 'Escape') {
-                    setShowCommandMenu(false)
+                  if (e.key === "Escape") {
+                    setShowCommandMenu(false);
                   }
                 }}
-                placeholder={activeAgent ? `Chat with ${activeAgent} agent...` : "Ask for help... (Type / for commands)"}
+                placeholder={
+                  activeAgent
+                    ? `Chat with ${activeAgent} agent...`
+                    : "Ask for help... (Type / for commands)"
+                }
                 className="resize-none"
                 rows={3}
                 disabled={isLoading}
@@ -732,5 +856,5 @@ export function AICanvas({
         </>
       )}
     </div>
-  )
+  );
 }
