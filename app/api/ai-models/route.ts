@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Add isEnabled field if it doesn't exist (for compatibility)
-    const modelsWithEnabled = models.map(m => ({
+    const modelsWithEnabled = models.map((m: any) => ({
       ...m,
       isEnabled: (m as any).isEnabled !== false,
     }))

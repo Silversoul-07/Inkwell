@@ -10,7 +10,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   // Simple markdown parser
   const renderMarkdown = (text: string) => {
     const lines = text.split('\n')
-    const elements: JSX.Element[] = []
+    const elements: React.ReactElement[] = []
     let inCodeBlock = false
     let codeLines: string[] = []
     let codeLanguage = ''
@@ -21,10 +21,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         if (inCodeBlock) {
           // End code block
           elements.push(
-            <pre
-              key={`code-${index}`}
-              className="bg-muted p-3 rounded-lg overflow-x-auto my-2"
-            >
+            <pre key={`code-${index}`} className="bg-muted p-3 rounded-lg overflow-x-auto my-2">
               <code className="text-sm font-mono">{codeLines.join('\n')}</code>
             </pre>
           )
@@ -80,10 +77,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       // Blockquotes
       else if (line.startsWith('> ')) {
         elements.push(
-          <blockquote
-            key={index}
-            className="border-l-4 border-primary pl-4 italic my-2"
-          >
+          <blockquote key={index} className="border-l-4 border-primary pl-4 italic my-2">
             {formatInlineMarkdown(line.slice(2))}
           </blockquote>
         )
@@ -108,7 +102,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   }
 
   const formatInlineMarkdown = (text: string) => {
-    const parts: (string | JSX.Element)[] = []
+    const parts: (string | React.ReactElement)[] = []
     let remaining = text
     let key = 0
 
@@ -125,10 +119,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           }
         }
         parts.push(
-          <code
-            key={`code-${key++}`}
-            className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono"
-          >
+          <code key={`code-${key++}`} className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
             {codeMatch[1]}
           </code>
         )
@@ -175,7 +166,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   }
 
   const formatBoldItalic = (text: string, key: number) => {
-    const parts: (string | JSX.Element)[] = []
+    const parts: (string | React.ReactElement)[] = []
     let remaining = text
     let innerKey = 0
 
@@ -237,8 +228,6 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   }
 
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none">
-      {renderMarkdown(content)}
-    </div>
+    <div className="prose prose-sm dark:prose-invert max-w-none">{renderMarkdown(content)}</div>
   )
 }

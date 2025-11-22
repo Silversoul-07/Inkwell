@@ -56,14 +56,16 @@ export async function buildUserInstructions(
 
   // Sort by scope hierarchy (character > project > global) and then by priority
   const scopeOrder = { character: 3, project: 2, global: 1 }
-  const sorted = allInstructions.sort((a, b) => {
-    const scopeDiff = scopeOrder[b.scope as keyof typeof scopeOrder] - scopeOrder[a.scope as keyof typeof scopeOrder]
+  const sorted = allInstructions.sort((a: any, b: any) => {
+    const scopeDiff =
+      scopeOrder[b.scope as keyof typeof scopeOrder] -
+      scopeOrder[a.scope as keyof typeof scopeOrder]
     if (scopeDiff !== 0) return scopeDiff
     return b.priority - a.priority
   })
 
   // Combine into single string
-  const combined = sorted.map((i) => i.instructions).join('\n\n')
+  const combined = sorted.map((i: any) => i.instructions).join('\n\n')
   return combined
 }
 
@@ -108,7 +110,7 @@ export async function buildAIContext(options: ContextOptions): Promise<BuiltCont
     })
 
     lorebookEntries = formatTriggeredEntries(triggered)
-    triggeredLorebookIds = triggered.map((t) => t.entry.id)
+    triggeredLorebookIds = triggered.map(t => t.entry.id)
   }
 
   // Build character info

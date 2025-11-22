@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Combine all scene content
-      const allScenes = project.chapters.flatMap((ch) => ch.scenes)
-      contentToAnalyze = allScenes.map((s) => s.content).join('\n\n')
+      const allScenes = project.chapters.flatMap((ch: any) => ch.scenes)
+      contentToAnalyze = allScenes.map((s: any) => s.content).join('\n\n')
     }
 
     if (!contentToAnalyze) {
@@ -85,9 +85,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Story analysis error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
