@@ -1,26 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  TrendingUp,
-  Flame,
-  Award,
-  Clock,
-  BookOpen,
-  Loader2,
-  Plus,
-  Target,
-} from 'lucide-react'
+import { TrendingUp, Flame, Award, Clock, BookOpen, Loader2, Plus, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -94,11 +79,6 @@ export function WritingAnalyticsDashboard({
     targetWords: 500,
   })
 
-  useEffect(() => {
-    loadAnalytics()
-    loadGoals()
-  }, [projectId, period])
-
   const loadAnalytics = async () => {
     try {
       let url = `/api/analytics/stats?period=${period}`
@@ -134,6 +114,11 @@ export function WritingAnalyticsDashboard({
       console.error('Failed to load goals:', error)
     }
   }
+
+  useEffect(() => {
+    loadAnalytics()
+    loadGoals()
+  }, [projectId, period]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreateGoal = async () => {
     try {
@@ -182,9 +167,7 @@ export function WritingAnalyticsDashboard({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Writing Analytics</h2>
-          <p className="text-sm text-muted-foreground">
-            Your progress over the last {period} days
-          </p>
+          <p className="text-sm text-muted-foreground">Your progress over the last {period} days</p>
         </div>
       </div>
 
@@ -217,9 +200,7 @@ export function WritingAnalyticsDashboard({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {formatDuration(analytics.totalDuration)}
-            </div>
+            <div className="text-3xl font-bold">{formatDuration(analytics.totalDuration)}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Avg {formatDuration(analytics.avgDurationPerSession)} per session
             </p>
@@ -254,9 +235,7 @@ export function WritingAnalyticsDashboard({
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{analytics.longestStreak}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Personal best
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Personal best</p>
           </CardContent>
         </Card>
       </div>
@@ -267,7 +246,9 @@ export function WritingAnalyticsDashboard({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Writing Goals</CardTitle>
-              <CardDescription>Track your progress toward daily, weekly, and project goals</CardDescription>
+              <CardDescription>
+                Track your progress toward daily, weekly, and project goals
+              </CardDescription>
             </div>
             <Dialog open={isCreateGoalOpen} onOpenChange={setIsCreateGoalOpen}>
               <DialogTrigger asChild>
@@ -288,9 +269,7 @@ export function WritingAnalyticsDashboard({
                     <Label htmlFor="goalType">Goal Type</Label>
                     <Select
                       value={newGoal.type}
-                      onValueChange={(value) =>
-                        setNewGoal({ ...newGoal, type: value })
-                      }
+                      onValueChange={value => setNewGoal({ ...newGoal, type: value })}
                     >
                       <SelectTrigger id="goalType">
                         <SelectValue />
@@ -309,7 +288,7 @@ export function WritingAnalyticsDashboard({
                       id="targetWords"
                       type="number"
                       value={newGoal.targetWords}
-                      onChange={(e) =>
+                      onChange={e =>
                         setNewGoal({
                           ...newGoal,
                           targetWords: parseInt(e.target.value) || 0,
@@ -336,7 +315,7 @@ export function WritingAnalyticsDashboard({
               <p>No active goals. Create one to get started!</p>
             </div>
           ) : (
-            goals.map((goal) => (
+            goals.map(goal => (
               <div key={goal.id} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -344,9 +323,7 @@ export function WritingAnalyticsDashboard({
                       {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
                     </Badge>
                     {goal.project && (
-                      <span className="text-sm text-muted-foreground">
-                        {goal.project.title}
-                      </span>
+                      <span className="text-sm text-muted-foreground">{goal.project.title}</span>
                     )}
                   </div>
                   <span className="text-sm font-medium">
@@ -354,9 +331,7 @@ export function WritingAnalyticsDashboard({
                   </span>
                 </div>
                 <Progress value={goal.progress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {goal.progress}% complete
-                </p>
+                <p className="text-xs text-muted-foreground">{goal.progress}% complete</p>
               </div>
             ))
           )}
@@ -372,7 +347,7 @@ export function WritingAnalyticsDashboard({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {analytics.projectBreakdown.map((project) => (
+              {analytics.projectBreakdown.map(project => (
                 <div key={project.projectId} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">

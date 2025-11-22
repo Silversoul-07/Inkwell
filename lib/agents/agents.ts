@@ -1,46 +1,42 @@
-import { dbTools, ContextBuilder } from "./database";
-import {
-  createProvider,
-  getProviderConfig,
-  AIProvider,
-  ProviderName,
-} from "./providers";
+import { dbTools, ContextBuilder } from './database'
+import { createProvider, getProviderConfig, AIProvider, ProviderName } from './providers'
 
 export interface AgentOptions {
-  provider?: ProviderName;
-  model?: string;
+  provider?: ProviderName
+  model?: string
 }
 
-export class BaseAgent {
-  protected provider: AIProvider;
-  protected role: string;
+//Future agents can extend this base class
+class BaseAgent {
+  protected provider: AIProvider
+  protected role: string
 
   constructor(
     apiKey: string | undefined,
     role: string,
     systemPrompt: string,
-    options: AgentOptions = {},
+    options: AgentOptions = {}
   ) {
-    const config = getProviderConfig();
+    const config = getProviderConfig()
     this.provider = createProvider(
       options.provider || config.provider,
       apiKey || config.apiKey,
       options.model || config.model,
-      systemPrompt,
-    );
-    this.role = role;
+      systemPrompt
+    )
+    this.role = role
   }
 
   async chat(message: string, context: unknown = null): Promise<string> {
-    let fullMessage = message;
+    let fullMessage = message
     if (context) {
-      fullMessage = `Context:\n${JSON.stringify(context, null, 2)}\n\nTask: ${message}`;
+      fullMessage = `Context:\n${JSON.stringify(context, null, 2)}\n\nTask: ${message}`
     }
-    return await this.provider.chat(fullMessage);
+    return await this.provider.chat(fullMessage)
   }
 
   clearHistory(): void {
-    this.provider.clearHistory();
+    this.provider.clearHistory()
   }
 }
 
@@ -64,32 +60,29 @@ When creating lorebook entries, output ONLY a JSON array:
   "keys": ["related", "keywords"],
   "priority": 5,
   "contextStrategy": "full"
-}]`;
+}]`
 
-    super(apiKey, "world_builder", systemPrompt);
+    super(apiKey, 'world_builder', systemPrompt)
   }
 
   async buildWorld(
     projectId: string,
     userPrompt: string,
-    category?: string | null,
+    category?: string | null
   ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
-    const context = await contextBuilder.buildWorldContext(
-      userPrompt,
-      category,
-    );
+    const contextBuilder = new ContextBuilder(projectId)
+    const context = await contextBuilder.buildWorldContext(userPrompt, category)
 
     const prompt = `Based on the user's request and existing world context, create new world-building elements.
 
 User Request: ${userPrompt}
-${category ? `Focus Category: ${category}` : ""}
+${category ? `Focus Category: ${category}` : ''}
 
 EXISTING WORLD CONTEXT:
-${context.summary || "No existing world elements"}
+${context.summary || 'No existing world elements'}
 
 Relevant Existing Lore (${context.lore.length} entries):
-${context.lore.map((l) => `- [${l.category}] ${l.key}: ${l.value ? l.value.substring(0, 100) : "Reference only"}`).join("\n")}
+${context.lore.map(l => `- [${l.category}] ${l.key}: ${l.value ? l.value.substring(0, 100) : 'Reference only'}`).join('\n')}
 
 TASK:
 1. Analyze the request and existing context for consistency
@@ -107,18 +100,14 @@ For each NEW lorebook entry, provide in this JSON format:
   "contextStrategy": "full"
 }
 
-Provide 2-5 new lorebook entries as a JSON array.`;
+Provide 2-5 new lorebook entries as a JSON array.`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 
-  async expandLore(
-    projectId: string,
-    topic: string,
-    depth = "detailed",
-  ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
-    const context = await contextBuilder.buildWorldContext(topic);
+  async expandLore(projectId: string, topic: string, depth = 'detailed'): Promise<string> {
+    const contextBuilder = new ContextBuilder(projectId)
+    const context = await contextBuilder.buildWorldContext(topic)
 
     const prompt = `Expand on the topic: "${topic}"
 
@@ -127,22 +116,20 @@ Depth level: ${depth}
 EXISTING CONTEXT:
 ${
   context.lore.length > 0
-    ? context.lore
-        .map((l) => `- [${l.category}] ${l.key}: ${l.value}`)
-        .join("\n")
-    : "No existing lore found for this topic"
+    ? context.lore.map(l => `- [${l.category}] ${l.key}: ${l.value}`).join('\n')
+    : 'No existing lore found for this topic'
 }
 
 TASK:
-Provide ${depth === "detailed" ? "comprehensive, multi-layered" : "focused, essential"} expansion that:
+Provide ${depth === 'detailed' ? 'comprehensive, multi-layered' : 'focused, essential'} expansion that:
 1. Builds upon existing lore elements
 2. Adds new dimensions and depth
 3. Creates interesting story possibilities
 4. Maintains consistency with existing world rules
 
-Create 1-3 new lorebook entries that expand this topic, formatted as JSON array.`;
+Create 1-3 new lorebook entries that expand this topic, formatted as JSON array.`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 }
 
@@ -162,41 +149,38 @@ When creating characters, output ONLY a JSON object:
   "background": "detailed background story (3-5 sentences)",
   "relationships": {"CharacterName": "relationship description"},
   "goals": "goals and motivations (2-3 sentences)"
-}`;
+}`
 
-    super(apiKey, "character_developer", systemPrompt);
+    super(apiKey, 'character_developer', systemPrompt)
   }
 
   async developCharacter(
     projectId: string,
     characterPrompt: string,
-    existingCharacterId?: string | null,
+    existingCharacterId?: string | null
   ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
-    const context = await contextBuilder.buildCharacterContext(
-      characterPrompt,
-      existingCharacterId,
-    );
+    const contextBuilder = new ContextBuilder(projectId)
+    const context = await contextBuilder.buildCharacterContext(characterPrompt, existingCharacterId)
 
-    let prompt: string;
+    let prompt: string
     if (existingCharacterId && context.mainCharacter) {
       prompt = `Develop and expand the existing character based on user request.
 
 CURRENT CHARACTER:
 Name: ${context.mainCharacter.name}
-Role: ${context.mainCharacter.role || "Not defined"}
-Age: ${context.mainCharacter.age || "Not defined"}
-Description: ${context.mainCharacter.description || "Not defined"}
-Traits: ${context.mainCharacter.traits?.join(", ") || "None"}
-Background: ${context.mainCharacter.background || "Not defined"}
-Goals: ${context.mainCharacter.goals || "Not defined"}
+Role: ${context.mainCharacter.role || 'Not defined'}
+Age: ${context.mainCharacter.age || 'Not defined'}
+Description: ${context.mainCharacter.description || 'Not defined'}
+Traits: ${context.mainCharacter.traits?.join(', ') || 'None'}
+Background: ${context.mainCharacter.background || 'Not defined'}
+Goals: ${context.mainCharacter.goals || 'Not defined'}
 Existing Relationships: ${JSON.stringify(context.mainCharacter.relationships || {})}
 
 OTHER CHARACTERS IN WORLD:
-${context.otherCharacters.map((c) => `- ${c.name} (${c.role || "Unknown role"})`).join("\n")}
+${context.otherCharacters.map(c => `- ${c.name} (${c.role || 'Unknown role'})`).join('\n')}
 
 RELEVANT WORLD LORE:
-${context.relevantLore.map((l) => `- [${l.category}] ${l.key}`).join("\n")}
+${context.relevantLore.map(l => `- [${l.category}] ${l.key}`).join('\n')}
 
 USER REQUEST: ${characterPrompt}
 
@@ -208,17 +192,17 @@ Provide detailed improvements or expansions to this character:
 4. Clear goals and motivations
 5. Character arc possibilities
 
-Output as JSON with fields: name, age, role, description, traits (array), background, relationships (object), goals`;
+Output as JSON with fields: name, age, role, description, traits (array), background, relationships (object), goals`
     } else {
       prompt = `Create a NEW character based on user request.
 
 USER REQUEST: ${characterPrompt}
 
 EXISTING CHARACTERS (for avoiding duplicates and creating relationships):
-${context.otherCharacters.map((c) => `- ${c.name} (${c.role || "Unknown role"}, Age: ${c.age || "Unknown"})`).join("\n")}
+${context.otherCharacters.map(c => `- ${c.name} (${c.role || 'Unknown role'}, Age: ${c.age || 'Unknown'})`).join('\n')}
 
 WORLD CONTEXT:
-${context.relevantLore.map((l) => `- [${l.category}] ${l.key}: ${l.value.substring(0, 100)}`).join("\n")}
+${context.relevantLore.map(l => `- [${l.category}] ${l.key}: ${l.value.substring(0, 100)}`).join('\n')}
 
 TASK:
 Create a unique, compelling character that:
@@ -238,58 +222,56 @@ Provide complete character data in JSON format:
   "background": "detailed background story (3-5 sentences)",
   "relationships": {"CharacterName": "relationship description"},
   "goals": "goals and motivations (2-3 sentences)"
-}`;
+}`
     }
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 
   async analyzeCharacterDynamics(
     projectId: string,
-    characterIds?: string[] | null,
+    characterIds?: string[] | null
   ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
+    const contextBuilder = new ContextBuilder(projectId)
 
-    const allCharsResult = await dbTools.getCharacters(projectId);
+    const allCharsResult = await dbTools.getCharacters(projectId)
     if (!allCharsResult.success) {
-      return "No characters found for analysis.";
+      return 'No characters found for analysis.'
     }
 
-    let characters = allCharsResult.characters;
+    let characters = allCharsResult.characters
     if (characterIds) {
-      characters = characters.filter((c) => characterIds.includes(c.id));
+      characters = characters.filter(c => characterIds.includes(c.id))
     }
 
     if (characters.length === 0) {
-      return "No characters available for dynamics analysis.";
+      return 'No characters available for dynamics analysis.'
     }
 
-    const parsedCharacters = characters.map((c) => ({
+    const parsedCharacters = characters.map(c => ({
       name: c.name,
       role: c.role,
       age: c.age,
       traits: contextBuilder.parseJSON<string[]>(c.traits),
       goals: c.goals,
-      relationships: contextBuilder.parseJSON<Record<string, string>>(
-        c.relationships,
-      ),
+      relationships: contextBuilder.parseJSON<Record<string, string>>(c.relationships),
       background: c.background?.substring(0, 200),
-    }));
+    }))
 
     const prompt = `Analyze the dynamics and relationships between these characters:
 
 CHARACTERS:
 ${parsedCharacters
   .map(
-    (c) => `
+    c => `
 Name: ${c.name}
-Role: ${c.role || "Unknown"}
-Traits: ${c.traits?.join(", ") || "None"}
-Goals: ${c.goals || "None"}
+Role: ${c.role || 'Unknown'}
+Traits: ${c.traits?.join(', ') || 'None'}
+Goals: ${c.goals || 'None'}
 Current Relationships: ${JSON.stringify(c.relationships || {})}
-`,
+`
   )
-  .join("\n---\n")}
+  .join('\n---\n')}
 
 TASK:
 Provide comprehensive analysis of:
@@ -300,53 +282,50 @@ Provide comprehensive analysis of:
 5. Story arc possibilities based on character dynamics
 6. How character goals might clash or align
 
-Focus on dramatic potential and story opportunities.`;
+Focus on dramatic potential and story opportunities.`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 
-  async suggestRelationships(
-    projectId: string,
-    characterId: string,
-  ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
+  async suggestRelationships(projectId: string, characterId: string): Promise<string> {
+    const contextBuilder = new ContextBuilder(projectId)
 
-    const charResult = await dbTools.getCharacter(characterId);
+    const charResult = await dbTools.getCharacter(characterId)
     if (!charResult.success) {
-      return "Character not found.";
+      return 'Character not found.'
     }
 
     const mainChar = {
       ...charResult.character,
       traits: contextBuilder.parseJSON<string[]>(charResult.character.traits),
       relationships: contextBuilder.parseJSON<Record<string, string>>(
-        charResult.character.relationships,
+        charResult.character.relationships
       ),
-    };
+    }
 
-    const allCharsResult = await dbTools.getCharacters(projectId);
+    const allCharsResult = await dbTools.getCharacters(projectId)
     const otherChars = allCharsResult.success
       ? allCharsResult.characters
-          .filter((c) => c.id !== characterId)
-          .map((c) => ({
+          .filter(c => c.id !== characterId)
+          .map(c => ({
             name: c.name,
             role: c.role,
             traits: contextBuilder.parseJSON<string[]>(c.traits),
           }))
-      : [];
+      : []
 
     const prompt = `Suggest meaningful relationships for this character with others in the story.
 
 TARGET CHARACTER:
 Name: ${mainChar.name}
 Role: ${mainChar.role}
-Traits: ${mainChar.traits?.join(", ")}
+Traits: ${mainChar.traits?.join(', ')}
 Goals: ${mainChar.goals}
 Background: ${mainChar.background}
 Existing Relationships: ${JSON.stringify(mainChar.relationships || {})}
 
 OTHER CHARACTERS:
-${otherChars.map((c) => `- ${c.name} (${c.role}): ${c.traits?.join(", ")}`).join("\n")}
+${otherChars.map(c => `- ${c.name} (${c.role}): ${c.traits?.join(', ')}`).join('\n')}
 
 TASK:
 For 3-5 of the other characters, suggest:
@@ -361,9 +340,9 @@ Format as JSON array:
   "relationshipType": "type",
   "description": "detailed description",
   "storyPotential": "how this serves the narrative"
-}]`;
+}]`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 }
 
@@ -385,18 +364,18 @@ Output story outlines in structured markdown format:
 ## ACT 3 - Resolution
 - Scene/beat descriptions
 
-Include character arcs, plot points, and pacing notes.`;
+Include character arcs, plot points, and pacing notes.`
 
-    super(apiKey, "story_planner", systemPrompt);
+    super(apiKey, 'story_planner', systemPrompt)
   }
 
   async createOutline(
     projectId: string,
     storyPrompt: string,
-    structure = "three-act",
+    structure = 'three-act'
   ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
-    const context = await contextBuilder.buildStoryContext(storyPrompt);
+    const contextBuilder = new ContextBuilder(projectId)
+    const context = await contextBuilder.buildStoryContext(storyPrompt)
 
     const prompt = `Create a story outline using ${structure} structure.
 
@@ -405,15 +384,13 @@ STORY CONCEPT: ${storyPrompt}
 AVAILABLE CHARACTERS:
 ${context.characterSummaries
   .map(
-    (c) =>
-      `- ${c.name} (${c.role}): Goals - ${c.goals || "None"}, Key Traits - ${c.traits?.join(", ") || "None"}`,
+    c =>
+      `- ${c.name} (${c.role}): Goals - ${c.goals || 'None'}, Key Traits - ${c.traits?.join(', ') || 'None'}`
   )
-  .join("\n")}
+  .join('\n')}
 
 WORLD ELEMENTS:
-${context.worldSummaries
-  .map((w) => `- [${w.category}] ${w.key}: ${w.summary}`)
-  .join("\n")}
+${context.worldSummaries.map(w => `- [${w.category}] ${w.key}: ${w.summary}`).join('\n')}
 
 TASK:
 Create a detailed ${structure} story outline that:
@@ -425,7 +402,7 @@ Create a detailed ${structure} story outline that:
 6. Suggests chapter/scene breakdowns
 
 ${
-  structure === "three-act"
+  structure === 'three-act'
     ? `
 Structure Guidelines:
 ACT 1 (Setup - 25%): Introduce characters, world, establish stakes
@@ -445,21 +422,21 @@ ACT 3 (Resolution - 25%): Climax and resolution
 - Resolution of character arcs
 - Denouement / New normal
 `
-    : ""
+    : ''
 }
 
-Format as a structured outline with clear sections and bullet points.`;
+Format as a structured outline with clear sections and bullet points.`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 
   async developPlotPoint(
     projectId: string,
     plotDescription: string,
-    position = "middle",
+    position = 'middle'
   ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
-    const context = await contextBuilder.buildStoryContext(plotDescription);
+    const contextBuilder = new ContextBuilder(projectId)
+    const context = await contextBuilder.buildStoryContext(plotDescription)
 
     const prompt = `Develop this plot point in detail.
 
@@ -468,14 +445,14 @@ POSITION IN STORY: ${position}
 
 AVAILABLE CHARACTERS:
 ${context.characterSummaries
-  .map((c) => `- ${c.name} (${c.role}): ${c.goals || "No defined goals"}`)
-  .join("\n")}
+  .map(c => `- ${c.name} (${c.role}): ${c.goals || 'No defined goals'}`)
+  .join('\n')}
 
 RELEVANT WORLD ELEMENTS:
 ${context.worldSummaries
   .slice(0, 5)
-  .map((w) => `- [${w.category}] ${w.key}`)
-  .join("\n")}
+  .map(w => `- [${w.category}] ${w.key}`)
+  .join('\n')}
 
 TASK:
 Develop this plot point with:
@@ -488,9 +465,9 @@ Develop this plot point with:
 7. Setup for future plot points or payoffs
 8. Pacing considerations (fast/slow moments)
 
-Provide a detailed scene breakdown with specific beats.`;
+Provide a detailed scene breakdown with specific beats.`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 
   async analyzePacing(_projectId: string, outline: string): Promise<string> {
@@ -514,30 +491,27 @@ Provide specific recommendations with:
 - What's working well
 - What needs adjustment
 - Concrete suggestions for improvement
-- Estimated reading time for each section`;
+- Estimated reading time for each section`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 
-  async suggestScenes(
-    projectId: string,
-    chapterDescription: string,
-  ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
-    const context = await contextBuilder.buildStoryContext(chapterDescription);
+  async suggestScenes(projectId: string, chapterDescription: string): Promise<string> {
+    const contextBuilder = new ContextBuilder(projectId)
+    const context = await contextBuilder.buildStoryContext(chapterDescription)
 
     const prompt = `Suggest scenes for this chapter/section.
 
 CHAPTER/SECTION DESCRIPTION: ${chapterDescription}
 
 AVAILABLE CHARACTERS:
-${context.characterSummaries.map((c) => `- ${c.name} (${c.role})`).join("\n")}
+${context.characterSummaries.map(c => `- ${c.name} (${c.role})`).join('\n')}
 
 WORLD ELEMENTS:
 ${context.worldSummaries
   .slice(0, 8)
-  .map((w) => `- [${w.category}] ${w.key}`)
-  .join("\n")}
+  .map(w => `- [${w.category}] ${w.key}`)
+  .join('\n')}
 
 TASK:
 Suggest 3-5 scenes for this chapter that:
@@ -557,9 +531,9 @@ For each scene provide:
   "keyBeats": ["beat1", "beat2", "beat3"]
 }
 
-Format as JSON array of scenes.`;
+Format as JSON array of scenes.`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 }
 
@@ -573,21 +547,18 @@ Rules:
 - Follow user instructions precisely
 - Maintain character voices and personalities
 - Respect established world rules
-- Keep similar length unless instructed otherwise`;
+- Keep similar length unless instructed otherwise`
 
-    super(apiKey, "editor", systemPrompt);
+    super(apiKey, 'editor', systemPrompt)
   }
 
   async editParagraph(
     projectId: string,
     selectedText: string,
-    userInstruction: string,
+    userInstruction: string
   ): Promise<string> {
-    const contextBuilder = new ContextBuilder(projectId);
-    const context = await contextBuilder.buildEditContext(
-      selectedText,
-      userInstruction,
-    );
+    const contextBuilder = new ContextBuilder(projectId)
+    const context = await contextBuilder.buildEditContext(selectedText, userInstruction)
 
     const prompt = `Edit the selected text according to the user's instruction.
 
@@ -604,25 +575,25 @@ ${
 CHARACTERS IN THIS SCENE:
 ${context.mentionedCharacters
   .map(
-    (c) => `
+    c => `
 - ${c.name} (${c.role})
-  Traits: ${c.traits?.join(", ")}
+  Traits: ${c.traits?.join(', ')}
   Goals: ${c.goals}
   Description: ${c.description}
-`,
-  )
-  .join("\n")}
 `
-    : ""
+  )
+  .join('\n')}
+`
+    : ''
 }
 
 ${
   context.mentionedLore.length > 0
     ? `
 RELEVANT WORLD ELEMENTS:
-${context.mentionedLore.map((l) => `- [${l.category}] ${l.key}: ${l.value}`).join("\n")}
+${context.mentionedLore.map(l => `- [${l.category}] ${l.key}: ${l.value}`).join('\n')}
 `
-    : ""
+    : ''
 }
 
 TASK:
@@ -635,96 +606,90 @@ Requirements:
 - Focus only on what the user requested
 - Output ONLY the revised text
 
-REVISED TEXT:`;
+REVISED TEXT:`
 
-    return await this.chat(prompt);
+    return await this.chat(prompt)
   }
 
-  async improveDialogue(
-    projectId: string,
-    selectedText: string,
-  ): Promise<string> {
+  async improveDialogue(projectId: string, selectedText: string): Promise<string> {
     return await this.editParagraph(
       projectId,
       selectedText,
-      "Improve the dialogue to make it more natural, distinctive, and character-appropriate. Add subtext and emotional depth.",
-    );
+      'Improve the dialogue to make it more natural, distinctive, and character-appropriate. Add subtext and emotional depth.'
+    )
   }
 
-  async enhanceDescription(
-    projectId: string,
-    selectedText: string,
-  ): Promise<string> {
+  async enhanceDescription(projectId: string, selectedText: string): Promise<string> {
     return await this.editParagraph(
       projectId,
       selectedText,
-      "Enhance the descriptive elements with more vivid, sensory details while maintaining pacing. Show, don't tell.",
-    );
+      "Enhance the descriptive elements with more vivid, sensory details while maintaining pacing. Show, don't tell."
+    )
   }
 
   async addTension(projectId: string, selectedText: string): Promise<string> {
     return await this.editParagraph(
       projectId,
       selectedText,
-      "Increase dramatic tension and emotional stakes. Add urgency and conflict.",
-    );
+      'Increase dramatic tension and emotional stakes. Add urgency and conflict.'
+    )
   }
 
   async condenseText(projectId: string, selectedText: string): Promise<string> {
     return await this.editParagraph(
       projectId,
       selectedText,
-      "Condense this text to be more concise and punchy while keeping the essential meaning and impact.",
-    );
+      'Condense this text to be more concise and punchy while keeping the essential meaning and impact.'
+    )
   }
 
   async expandText(projectId: string, selectedText: string): Promise<string> {
     return await this.editParagraph(
       projectId,
       selectedText,
-      "Expand this text with more detail, emotion, and depth. Add breathing room and development.",
-    );
+      'Expand this text with more detail, emotion, and depth. Add breathing room and development.'
+    )
   }
 }
 
 export class AgentCoordinator {
-  private _worldBuilder: WorldBuilderAgent | null = null;
-  private _characterDev: CharacterDeveloperAgent | null = null;
-  private _storyPlanner: StoryPlannerAgent | null = null;
-  private _editor: EditingAgent | null = null;
-  private apiKey?: string;
+  private _worldBuilder: WorldBuilderAgent | null = null
+  private _characterDev: CharacterDeveloperAgent | null = null
+  private _storyPlanner: StoryPlannerAgent | null = null
+  private _editor: EditingAgent | null = null
+  private apiKey?: string
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey;
+    this.apiKey = apiKey
   }
 
   // Lazy initialization getters
   get worldBuilder(): WorldBuilderAgent {
     if (!this._worldBuilder) {
-      this._worldBuilder = new WorldBuilderAgent(this.apiKey);
+      this._worldBuilder = new WorldBuilderAgent(this.apiKey)
     }
-    return this._worldBuilder;
+    return this._worldBuilder
   }
 
   get characterDev(): CharacterDeveloperAgent {
     if (!this._characterDev) {
-      this._characterDev = new CharacterDeveloperAgent(this.apiKey);
+      this._characterDev = new CharacterDeveloperAgent(this.apiKey)
     }
-    return this._characterDev;
+    return this._characterDev
   }
 
   get storyPlanner(): StoryPlannerAgent {
     if (!this._storyPlanner) {
-      this._storyPlanner = new StoryPlannerAgent(this.apiKey);
+      this._storyPlanner = new StoryPlannerAgent(this.apiKey)
     }
-    return this._storyPlanner;
+    return this._storyPlanner
   }
 
   get editor(): EditingAgent {
     if (!this._editor) {
-      this._editor = new EditingAgent(this.apiKey);
+      this._editor = new EditingAgent(this.apiKey)
     }
-    return this._editor;
+    return this._editor
   }
 
   async processTask(
@@ -732,102 +697,83 @@ export class AgentCoordinator {
     task: string,
     taskType: string,
     options: {
-      category?: string;
-      characterId?: string;
-      structure?: string;
-      selectedText?: string;
-    } = {},
+      category?: string
+      characterId?: string
+      structure?: string
+      selectedText?: string
+    } = {}
   ): Promise<
     | string
     | {
-        worldBuilding: string | null;
-        characters: string | null;
-        storyOutline: string | null;
+        worldBuilding: string | null
+        characters: string | null
+        storyOutline: string | null
       }
   > {
     switch (taskType) {
-      case "world_building":
-        return await this.worldBuilder.buildWorld(
-          projectId,
-          task,
-          options.category,
-        );
+      case 'world_building':
+        return await this.worldBuilder.buildWorld(projectId, task, options.category)
 
-      case "character_development":
-        return await this.characterDev.developCharacter(
-          projectId,
-          task,
-          options.characterId,
-        );
+      case 'character_development':
+        return await this.characterDev.developCharacter(projectId, task, options.characterId)
 
-      case "story_planning":
-        return await this.storyPlanner.createOutline(
-          projectId,
-          task,
-          options.structure,
-        );
+      case 'story_planning':
+        return await this.storyPlanner.createOutline(projectId, task, options.structure)
 
-      case "editing":
-        return await this.editor.editParagraph(
-          projectId,
-          options.selectedText || "",
-          task,
-        );
+      case 'editing':
+        return await this.editor.editParagraph(projectId, options.selectedText || '', task)
 
-      case "full_project":
-        return await this.coordinateFullProject(projectId, task);
+      case 'full_project':
+        return await this.coordinateFullProject(projectId, task)
 
       default:
-        throw new Error(`Unknown task type: ${taskType}`);
+        throw new Error(`Unknown task type: ${taskType}`)
     }
   }
 
   async coordinateFullProject(
     projectId: string,
-    projectDescription: string,
+    projectDescription: string
   ): Promise<{
-    worldBuilding: string | null;
-    characters: string | null;
-    storyOutline: string | null;
+    worldBuilding: string | null
+    characters: string | null
+    storyOutline: string | null
   }> {
     const results: {
-      worldBuilding: string | null;
-      characters: string | null;
-      storyOutline: string | null;
+      worldBuilding: string | null
+      characters: string | null
+      storyOutline: string | null
     } = {
       worldBuilding: null,
       characters: null,
       storyOutline: null,
-    };
+    }
 
     // Step 1: World Building
-    console.log("Building world...");
+    console.log('Building world...')
     results.worldBuilding = await this.worldBuilder.buildWorld(
       projectId,
-      `Create a comprehensive world for: ${projectDescription}`,
-    );
+      `Create a comprehensive world for: ${projectDescription}`
+    )
 
     // Step 2: Character Development
-    console.log("Developing characters...");
+    console.log('Developing characters...')
     results.characters = await this.characterDev.developCharacter(
       projectId,
-      `Create main characters for: ${projectDescription}`,
-    );
+      `Create main characters for: ${projectDescription}`
+    )
 
     // Step 3: Story Planning
-    console.log("Planning story...");
-    results.storyOutline = await this.storyPlanner.createOutline(
-      projectId,
-      projectDescription,
-    );
+    console.log('Planning story...')
+    results.storyOutline = await this.storyPlanner.createOutline(projectId, projectDescription)
 
-    return results;
+    return results
   }
 
   clearAllHistory(): void {
-    this.worldBuilder.clearHistory();
-    this.characterDev.clearHistory();
-    this.storyPlanner.clearHistory();
-    this.editor.clearHistory();
+    this.worldBuilder.clearHistory()
+    this.characterDev.clearHistory()
+    this.storyPlanner.clearHistory()
+    this.editor.clearHistory()
   }
 }
