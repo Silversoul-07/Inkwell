@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { EditorSidebarNew } from './editor-sidebar'
 import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
 import { EditorToolbar } from './editor-toolbar'
@@ -73,6 +73,7 @@ interface EditorViewProps {
 
 export function EditorView({ project, settings }: EditorViewProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [editorMode, setEditorMode] = useState<EditorMode>('writing')
   const [contextPanelOpen, setContextPanelOpen] = useState(false)
@@ -92,8 +93,28 @@ export function EditorView({ project, settings }: EditorViewProps) {
 
   const selectedChapter = project.chapters.find(c => c.scenes.some(s => s.id === selectedSceneId))
 
+  // Initialize mode from URL on mount
+  useEffect(() => {
+    const modeParam = searchParams.get('mode')
+    if (modeParam === 'ai' || modeParam === 'ai-storm') {
+      setEditorMode('ai-storm')
+    } else if (modeParam === 'writing' || modeParam === 'writer') {
+      setEditorMode('writing')
+    }
+    // Default is 'writing' if no param or invalid param
+  }, [searchParams])
+
   const handleRefresh = useCallback(() => {
     router.refresh()
+  }, [router])
+
+  // Handle mode change with URL update
+  const handleModeChange = useCallback((mode: EditorMode) => {
+    setEditorMode(mode)
+    const modeParam = mode === 'ai-storm' ? 'ai' : 'writing'
+    const url = new URL(window.location.href)
+    url.searchParams.set('mode', modeParam)
+    router.push(url.pathname + url.search, { scroll: false })
   }, [router])
 
   const handleSelectScene = useCallback((sceneId: string) => {
@@ -125,7 +146,7 @@ export function EditorView({ project, settings }: EditorViewProps) {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           editorMode={editorMode}
-          setEditorMode={setEditorMode}
+          setEditorMode={handleModeChange}
           contextPanelOpen={contextPanelOpen}
           setContextPanelOpen={setContextPanelOpen}
           zenMode={zenMode}
