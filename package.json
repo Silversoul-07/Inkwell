@@ -43,7 +43,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
-    "inquirer": "^12.0.0",
+    "inquirer": "^13.0.1",
     "lucide-react": "^0.344.0",
     "next": "^16.0.2-canary.21",
     "next-auth": "^4.24.5",
