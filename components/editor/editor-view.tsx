@@ -11,6 +11,8 @@ import { SettingsDialog } from '@/components/dialogs/settings-dialog'
 import { ContentViewer } from './content-viewer'
 import { SceneContextPanel } from './scene-context-panel'
 import { AIContextIndicator } from './ai-context-indicator'
+import { ChapterNavigation } from './chapter-navigation'
+import { ChapterViewer } from './chapter-viewer'
 
 interface Scene {
   id: string
@@ -69,9 +71,10 @@ type EditorMode = 'writing' | 'ai-storm'
 interface EditorViewProps {
   project: Project
   settings: Settings | null
+  isReadOnly?: boolean
 }
 
-export function EditorView({ project, settings }: EditorViewProps) {
+export function EditorView({ project, settings, isReadOnly = false }: EditorViewProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -86,12 +89,15 @@ export function EditorView({ project, settings }: EditorViewProps) {
   const [selectedSceneId, setSelectedSceneId] = useState<string>(
     project.chapters[0]?.scenes[0]?.id || ''
   )
+  const [selectedChapterId, setSelectedChapterId] = useState<string>(project.chapters[0]?.id || '')
   const [viewType, setViewType] = useState<ViewType>('scene')
   const [viewContent, setViewContent] = useState<Character | LorebookEntry | null>(null)
 
   const selectedScene = project.chapters.flatMap(c => c.scenes).find(s => s.id === selectedSceneId)
 
-  const selectedChapter = project.chapters.find(c => c.scenes.some(s => s.id === selectedSceneId))
+  const selectedChapter = isReadOnly
+    ? project.chapters.find(c => c.id === selectedChapterId)
+    : project.chapters.find(c => c.scenes.some(s => s.id === selectedSceneId))
 
   // Initialize mode from URL on mount
   useEffect(() => {
@@ -138,6 +144,29 @@ export function EditorView({ project, settings }: EditorViewProps) {
     setViewContent(null)
   }, [])
 
+  // Read-only mode - Simple chapter reader
+  if (isReadOnly) {
+    return (
+      <div className="h-screen flex overflow-hidden bg-background">
+        <ChapterNavigation
+          chapters={project.chapters}
+          selectedChapterId={selectedChapterId}
+          onSelectChapter={setSelectedChapterId}
+        />
+        <div className="flex-1 overflow-hidden">
+          {selectedChapter ? (
+            <ChapterViewer chapter={selectedChapter} settings={settings} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              No chapter selected
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Normal editor mode
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       {!zenMode && (

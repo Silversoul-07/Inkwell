@@ -6,10 +6,13 @@ import { EditorView } from '@/components/editor/editor-view'
 
 export default async function EditorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>
+  searchParams: Promise<{ mode?: string }>
 }) {
   const { projectId } = await params
+  const { mode } = await searchParams
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -43,5 +46,7 @@ export default async function EditorPage({
     },
   })
 
-  return <EditorView project={project} settings={settings} />
+  const isReadOnly = mode === 'readonly'
+
+  return <EditorView project={project} settings={settings} isReadOnly={isReadOnly} />
 }
