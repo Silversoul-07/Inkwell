@@ -193,6 +193,26 @@ model Character {
   relationships String?  // JSON for relationships with other characters
   goals         String?  // Goals and motivations
 
+  // Visual & Media
+  avatar        String?  // Character portrait/avatar URL or base64
+  images        String?  // JSON array of additional character images
+
+  // Enhanced Details
+  aliases       String?  // JSON array of alternate names/nicknames
+  occupation    String?  // Current occupation
+  appearance    String?  // Detailed physical appearance
+  voice         String?  // Voice description, speech patterns
+  equipment     String?  // Items, weapons, or equipment they carry
+  abilities     String?  // Special abilities or skills
+  fears         String?  // Fears and weaknesses
+  secrets       String?  // Hidden information about the character
+  notes         String?  // Additional notes
+
+  // Organization
+  tags          String?  // JSON array of tags for filtering
+  color         String?  // Color code for visual organization
+  isMainCharacter Boolean @default(false)
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -220,10 +240,29 @@ model LorebookEntry {
   regexPattern     String?                    // Optional regex trigger
   contextStrategy  String   @default("full")  // "full", "summary", "reference"
 
+  // Visual & Media
+  thumbnail        String?  // Entry thumbnail image URL or base64
+  images           String?  // JSON array of related images
+
+  // Enhanced Details
+  subcategory      String?  // More specific categorization
+  relatedEntries   String?  // JSON array of related entry IDs
+  tags             String?  // JSON array of tags for filtering
+  aliases          String?  // JSON array of alternate names for this entry
+  color            String?  // Color code for visual organization
+
+  // Additional Context
+  summary          String?  // Brief summary for quick reference
+  spoilerLevel     Int      @default(0)  // 0=no spoiler, 1-3=spoiler severity
+  timeframe        String?  // When this lore is relevant (e.g., "Ancient Era", "Current")
+  isCanon          Boolean  @default(true)  // Mark non-canon entries
+  isArchived       Boolean  @default(false) // Archive old/unused entries
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([projectId, category])
+  @@index([projectId, isArchived])
 }
 
 model WritingSession {
