@@ -39,9 +39,7 @@ export function matchLorebookEntries(
   const { maxEntries = 10, tokenBudget = 2000 } = options
 
   // Filter to only auto-trigger entries
-  const autoEntries = entries.filter(
-    (entry) => entry.triggerMode === 'auto' && entry.searchable
-  )
+  const autoEntries = entries.filter(entry => entry.triggerMode === 'auto' && entry.searchable)
 
   // Find matches
   const triggered: TriggeredEntry[] = []
@@ -142,10 +140,8 @@ export function matchLorebookEntries(
 export function formatTriggeredEntries(triggered: TriggeredEntry[]): string {
   if (triggered.length === 0) return ''
 
-  const sections = triggered.map((item) => {
-    const header = `[${item.entry.key}]${
-      item.entry.category ? ` (${item.entry.category})` : ''
-    }`
+  const sections = triggered.map(item => {
+    const header = `[${item.entry.key}]${item.entry.category ? ` (${item.entry.category})` : ''}`
     return `${header}\n${item.entry.value}`
   })
 
@@ -155,10 +151,7 @@ export function formatTriggeredEntries(triggered: TriggeredEntry[]): string {
 /**
  * Update usage statistics for triggered entries
  */
-export async function recordLorebookUsage(
-  entryIds: string[],
-  prisma: any
-): Promise<void> {
+export async function recordLorebookUsage(entryIds: string[], prisma: any): Promise<void> {
   const now = new Date()
 
   await prisma.lorebookEntry.updateMany({
@@ -178,33 +171,4 @@ function estimateTokens(text: string): number {
   const wordBasedEstimate = text.trim().split(/\s+/).length * 1.3
   const charBasedEstimate = text.length / 4
   return Math.ceil((wordBasedEstimate + charBasedEstimate) / 2)
-}
-
-/**
- * Get smart suggestions for keywords based on existing entry
- */
-export function suggestKeywords(entry: LorebookEntry): string[] {
-  const suggestions: string[] = []
-  const value = entry.value.toLowerCase()
-
-  // Extract capitalized words (potential proper nouns)
-  const capitalizedWords = entry.value.match(/\b[A-Z][a-z]+\b/g) || []
-  suggestions.push(
-    ...capitalizedWords.filter((word) => word.length > 3).slice(0, 5)
-  )
-
-  // Extract quoted phrases
-  const quotedPhrases = entry.value.match(/"([^"]+)"/g) || []
-  suggestions.push(...quotedPhrases.map((q) => q.replace(/"/g, '')).slice(0, 3))
-
-  // Category-based suggestions
-  if (entry.category) {
-    const categoryWords = entry.category.toLowerCase().split(/[\s-_]+/)
-    suggestions.push(...categoryWords)
-  }
-
-  // Deduplicate and filter
-  return [...new Set(suggestions)]
-    .filter((s) => s.length > 2)
-    .slice(0, 10)
 }

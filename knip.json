@@ -1,10 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": ["components/ui/**", "hooks/**"],
   "ignoreExportsUsedInFile": {
     "interface": true,
     "type": true
   },
-  "tags": [
-    "-lintignore"
-  ]
+  "tags": ["-lintignore"]
 }

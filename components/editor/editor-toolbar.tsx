@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState } from 'react'
+import Link from 'next/link'
 import {
   Home,
   PanelLeft,
@@ -12,18 +12,15 @@ import {
   BookOpen,
   FolderOpen,
   ChevronDown,
-  Sparkles,
-  Bug,
   Timer,
   Download,
   Upload,
   PanelRight,
-  Info,
   Zap,
   PenLine,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ThemeSelector } from "@/components/ui/theme-selector";
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ThemeSelector } from '@/components/ui/theme-selector'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,34 +28,32 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { ExportDialog } from "./export-dialog";
-import { ImportDialog } from "./import-dialog";
+} from '@/components/ui/dropdown-menu'
+import { Separator } from '@/components/ui/separator'
+import { ExportDialog } from './export-dialog'
+import { ImportDialog } from './import-dialog'
 
 interface Project {
-  id: string;
-  title: string;
+  id: string
+  title: string
 }
 
-type EditorMode = "writing" | "ai-storm";
+type EditorMode = 'writing' | 'ai-storm'
 
 interface EditorToolbarProps {
-  project: Project;
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-  editorMode: EditorMode;
-  setEditorMode: (mode: EditorMode) => void;
-  contextPanelOpen: boolean;
-  setContextPanelOpen: (open: boolean) => void;
-  debugSidebarOpen: boolean;
-  setDebugSidebarOpen: (open: boolean) => void;
-  zenMode: boolean;
-  setZenMode: (zen: boolean) => void;
-  pomodoroOpen: boolean;
-  setPomodoroOpen: (open: boolean) => void;
-  settingsDialogOpen: boolean;
-  setSettingsDialogOpen: (open: boolean) => void;
+  project: Project
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
+  editorMode: EditorMode
+  setEditorMode: (mode: EditorMode) => void
+  contextPanelOpen: boolean
+  setContextPanelOpen: (open: boolean) => void
+  zenMode: boolean
+  setZenMode: (zen: boolean) => void
+  pomodoroOpen: boolean
+  setPomodoroOpen: (open: boolean) => void
+  settingsDialogOpen: boolean
+  setSettingsDialogOpen: (open: boolean) => void
 }
 
 export function EditorToolbar({
@@ -69,8 +64,6 @@ export function EditorToolbar({
   setEditorMode,
   contextPanelOpen,
   setContextPanelOpen,
-  debugSidebarOpen,
-  setDebugSidebarOpen,
   zenMode,
   setZenMode,
   pomodoroOpen,
@@ -78,8 +71,8 @@ export function EditorToolbar({
   settingsDialogOpen,
   setSettingsDialogOpen,
 }: EditorToolbarProps) {
-  const [exportOpen, setExportOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   return (
     <>
@@ -87,18 +80,13 @@ export function EditorToolbar({
         {/* Left Section - Navigation & Project */}
         <div className="flex items-center gap-2">
           <Link href="/dashboard">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              title="Back to Dashboard"
-            >
+            <Button variant="ghost" size="icon" className="h-9 w-9" title="Back to Dashboard">
               <Home className="h-4 w-4" />
             </Button>
           </Link>
 
           <Button
-            variant={sidebarOpen ? "secondary" : "ghost"}
+            variant={sidebarOpen ? 'secondary' : 'ghost'}
             size="icon"
             className="h-9 w-9"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -121,28 +109,19 @@ export function EditorToolbar({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link
-                  href={`/analytics/${project.id}`}
-                  className="cursor-pointer"
-                >
+                <Link href={`/analytics/${project.id}`} className="cursor-pointer">
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Analytics
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link
-                  href={`/characters/${project.id}`}
-                  className="cursor-pointer"
-                >
+                <Link href={`/characters/${project.id}`} className="cursor-pointer">
                   <Users className="h-4 w-4 mr-2" />
                   Characters
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link
-                  href={`/lorebook/${project.id}`}
-                  className="cursor-pointer"
-                >
+                <Link href={`/lorebook/${project.id}`} className="cursor-pointer">
                   <BookOpen className="h-4 w-4 mr-2" />
                   Lorebook
                 </Link>
@@ -169,12 +148,8 @@ export function EditorToolbar({
             {/* Mode Selector Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-2 min-w-[140px]"
-                >
-                  {editorMode === "writing" ? (
+                <Button variant="outline" size="sm" className="h-8 gap-2 min-w-[140px]">
+                  {editorMode === 'writing' ? (
                     <>
                       <PenLine className="h-3.5 w-3.5" />
                       <span className="text-xs font-medium">Writing Mode</span>
@@ -194,8 +169,8 @@ export function EditorToolbar({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setEditorMode("writing")}
-                  className={editorMode === "writing" ? "bg-accent" : ""}
+                  onClick={() => setEditorMode('writing')}
+                  className={editorMode === 'writing' ? 'bg-accent' : ''}
                 >
                   <PenLine className="h-4 w-4 mr-2" />
                   <div className="flex flex-col gap-0.5">
@@ -206,8 +181,8 @@ export function EditorToolbar({
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setEditorMode("ai-storm")}
-                  className={editorMode === "ai-storm" ? "bg-accent" : ""}
+                  onClick={() => setEditorMode('ai-storm')}
+                  className={editorMode === 'ai-storm' ? 'bg-accent' : ''}
                 >
                   <Zap className="h-4 w-4 mr-2" />
                   <div className="flex flex-col gap-0.5">
@@ -226,29 +201,18 @@ export function EditorToolbar({
         <div className="flex items-center gap-1.5">
           {/* Context Panel Toggle - different function based on mode */}
           <Button
-            variant={contextPanelOpen ? "secondary" : "ghost"}
+            variant={contextPanelOpen ? 'secondary' : 'ghost'}
             size="icon"
             className="h-9 w-9"
             onClick={() => setContextPanelOpen(!contextPanelOpen)}
-            title={editorMode === "writing" ? "Scene Context" : "AI Context"}
+            title={editorMode === 'writing' ? 'Scene Context' : 'AI Context'}
           >
             <PanelRight className="h-4 w-4" />
           </Button>
 
-          {/* Debug */}
-          <Button
-            variant={debugSidebarOpen ? "secondary" : "ghost"}
-            size="icon"
-            className="h-9 w-9"
-            onClick={() => setDebugSidebarOpen(!debugSidebarOpen)}
-            title="Debug"
-          >
-            <Bug className="h-4 w-4" />
-          </Button>
-
           {/* Pomodoro */}
           <Button
-            variant={pomodoroOpen ? "secondary" : "ghost"}
+            variant={pomodoroOpen ? 'secondary' : 'ghost'}
             size="icon"
             className="h-9 w-9"
             onClick={() => setPomodoroOpen(!pomodoroOpen)}
@@ -259,7 +223,7 @@ export function EditorToolbar({
 
           {/* Zen Mode */}
           <Button
-            variant={zenMode ? "secondary" : "ghost"}
+            variant={zenMode ? 'secondary' : 'ghost'}
             size="icon"
             className="h-9 w-9"
             onClick={() => setZenMode(!zenMode)}
@@ -285,16 +249,8 @@ export function EditorToolbar({
       </div>
 
       {/* Dialogs */}
-      <ExportDialog
-        projectId={project.id}
-        open={exportOpen}
-        onOpenChange={setExportOpen}
-      />
-      <ImportDialog
-        projectId={project.id}
-        open={importOpen}
-        onOpenChange={setImportOpen}
-      />
+      <ExportDialog projectId={project.id} open={exportOpen} onOpenChange={setExportOpen} />
+      <ImportDialog projectId={project.id} open={importOpen} onOpenChange={setImportOpen} />
     </>
-  );
+  )
 }
