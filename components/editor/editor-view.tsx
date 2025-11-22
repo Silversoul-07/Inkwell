@@ -178,14 +178,21 @@ export function EditorView({ project, settings }: EditorViewProps) {
           )}
 
           {/* AI Storm Mode - Show AI Canvas */}
-          {editorMode === 'ai-storm' && selectedScene && (
+          {editorMode === 'ai-storm' && selectedScene && selectedChapter && (
             <div className="w-full h-full flex flex-col bg-background">
               <AICanvas
                 sceneContext={sceneContext || selectedScene.content}
                 selectedText={selectedText}
                 projectId={project.id}
+                sceneInfo={{
+                  id: selectedScene.id,
+                  title: selectedScene.title,
+                  content: selectedScene.content,
+                  chapterId: selectedChapter.id,
+                }}
                 onReplaceSelection={() => {}}
                 onInsertText={() => {}}
+                onSceneUpdated={handleRefresh}
               />
             </div>
           )}
