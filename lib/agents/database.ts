@@ -446,7 +446,8 @@ export const dbTools = {
   },
 }
 
-export class AgentState {
+//Future state management for agents
+class AgentState {
   projectId: string | null = null
   currentTask: string | null = null
   worldContext: unknown[] = []

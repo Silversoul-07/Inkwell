@@ -5,13 +5,7 @@ import { Timer, Play, Pause, RotateCcw, X, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -56,7 +50,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
 
     if (isRunning && !isPaused && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => {
+        setTimeLeft(prev => {
           if (prev <= 1) {
             handleTimerComplete()
             return 0
@@ -69,7 +63,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [isRunning, isPaused, timeLeft])
+  }, [isRunning, isPaused, timeLeft]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Format time display
   const formatTime = (seconds: number) => {
@@ -151,7 +145,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
 
     // Switch session type
     if (sessionType === 'work') {
-      setCompletedPomodoros((prev) => prev + 1)
+      setCompletedPomodoros(prev => prev + 1)
       const nextCount = completedPomodoros + 1
 
       if (nextCount % settings.longBreakInterval === 0) {
@@ -249,9 +243,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Pomodoro Settings</DialogTitle>
-                  <DialogDescription>
-                    Customize your pomodoro timer intervals
-                  </DialogDescription>
+                  <DialogDescription>Customize your pomodoro timer intervals</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -259,7 +251,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
                     <Input
                       type="number"
                       value={settings.workDuration}
-                      onChange={(e) =>
+                      onChange={e =>
                         setSettings({
                           ...settings,
                           workDuration: parseInt(e.target.value) || 25,
@@ -272,7 +264,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
                     <Input
                       type="number"
                       value={settings.breakDuration}
-                      onChange={(e) =>
+                      onChange={e =>
                         setSettings({
                           ...settings,
                           breakDuration: parseInt(e.target.value) || 5,
@@ -285,7 +277,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
                     <Input
                       type="number"
                       value={settings.longBreakDuration}
-                      onChange={(e) =>
+                      onChange={e =>
                         setSettings({
                           ...settings,
                           longBreakDuration: parseInt(e.target.value) || 15,
@@ -313,9 +305,7 @@ export function PomodoroTimer({ projectId, onSessionComplete }: PomodoroTimerPro
       <CardContent className="space-y-4">
         {/* Timer Display */}
         <div className="text-center">
-          <div className="text-6xl font-bold font-mono tabular-nums">
-            {formatTime(timeLeft)}
-          </div>
+          <div className="text-6xl font-bold font-mono tabular-nums">{formatTime(timeLeft)}</div>
           <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-1000"
