@@ -17,18 +17,12 @@ export async function POST(request: NextRequest) {
     const { type, targetWords, projectId, endDate } = body
 
     if (!type || !targetWords) {
-      return NextResponse.json(
-        { error: 'type and targetWords are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'type and targetWords are required' }, { status: 400 })
     }
 
     // Validate type
     if (!['daily', 'weekly', 'project'].includes(type)) {
-      return NextResponse.json(
-        { error: 'type must be daily, weekly, or project' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'type must be daily, weekly, or project' }, { status: 400 })
     }
 
     // If project goal, verify project ownership
@@ -58,10 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(goal, { status: 201 })
   } catch (error) {
     console.error('Writing goal creation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -102,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate progress for each goal
     const goalsWithProgress = await Promise.all(
-      goals.map(async (goal) => {
+      goals.map(async (goal: any) => {
         let wordsWritten = 0
 
         // Calculate based on goal type
@@ -120,7 +111,7 @@ export async function GET(request: NextRequest) {
             },
           })
 
-          wordsWritten = sessions.reduce((sum, s) => sum + s.wordsWritten, 0)
+          wordsWritten = sessions.reduce((sum: number, s: any) => sum + s.wordsWritten, 0)
         } else if (goal.type === 'weekly') {
           const today = new Date()
           const weekStart = new Date(today)
@@ -135,7 +126,7 @@ export async function GET(request: NextRequest) {
             },
           })
 
-          wordsWritten = sessions.reduce((sum, s) => sum + s.wordsWritten, 0)
+          wordsWritten = sessions.reduce((sum: number, s: any) => sum + s.wordsWritten, 0)
         } else if (goal.type === 'project' && goal.projectId) {
           const project = await prisma.project.findUnique({
             where: { id: goal.projectId },
@@ -150,16 +141,17 @@ export async function GET(request: NextRequest) {
 
           if (project) {
             wordsWritten = project.chapters.reduce(
-              (sum, chapter) =>
-                sum + chapter.scenes.reduce((s, scene) => s + scene.wordCount, 0),
+              (sum: number, chapter: any) =>
+                sum + chapter.scenes.reduce((s: number, scene: any) => s + scene.wordCount, 0),
               0
             )
           }
         }
 
-        const progress = goal.targetWords > 0
-          ? Math.min(Math.round((wordsWritten / goal.targetWords) * 100), 100)
-          : 0
+        const progress =
+          goal.targetWords > 0
+            ? Math.min(Math.round((wordsWritten / goal.targetWords) * 100), 100)
+            : 0
 
         return {
           ...goal,
@@ -172,9 +164,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(goalsWithProgress)
   } catch (error) {
     console.error('Writing goals fetch error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

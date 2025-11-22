@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate statistics
-    const totalWords = sessions.reduce((sum, s) => sum + s.wordsWritten, 0)
-    const totalDuration = sessions.reduce((sum, s) => sum + s.duration, 0)
+    const totalWords = sessions.reduce((sum: number, s: any) => sum + s.wordsWritten, 0)
+    const totalDuration = sessions.reduce((sum: number, s: any) => sum + s.duration, 0)
     const sessionCount = sessions.length
 
     // Calculate streak
@@ -49,11 +49,17 @@ export async function GET(request: NextRequest) {
     today.setHours(0, 0, 0, 0)
 
     // Get all unique dates with sessions
-    const sessionDates = [...new Set(sessions.map((s) => {
-      const date = new Date(s.date)
-      date.setHours(0, 0, 0, 0)
-      return date.getTime()
-    }))].sort((a, b) => b - a)
+    const sessionDates = (
+      [
+        ...new Set(
+          sessions.map((s: any) => {
+            const date = new Date(s.date)
+            date.setHours(0, 0, 0, 0)
+            return date.getTime()
+          })
+        ),
+      ] as number[]
+    ).sort((a: number, b: number) => b - a)
 
     // Calculate current streak
     for (let i = 0; i < 365; i++) {
@@ -73,7 +79,8 @@ export async function GET(request: NextRequest) {
       if (i === 0) {
         tempStreak = 1
       } else {
-        const dayDiff = (sessionDates[i - 1] - sessionDates[i]) / (1000 * 60 * 60 * 24)
+        const dayDiff =
+          ((sessionDates[i - 1] as number) - (sessionDates[i] as number)) / (1000 * 60 * 60 * 24)
         if (dayDiff <= 1) {
           tempStreak++
         } else {
@@ -89,7 +96,7 @@ export async function GET(request: NextRequest) {
     const avgDurationPerSession = sessionCount > 0 ? Math.round(totalDuration / sessionCount) : 0
 
     // Group by date for chart data
-    const dailyStats = sessions.reduce((acc: any, session) => {
+    const dailyStats = sessions.reduce((acc: any, session: any) => {
       const date = new Date(session.date).toISOString().split('T')[0]
       if (!acc[date]) {
         acc[date] = { date, words: 0, duration: 0, sessions: 0 }
@@ -120,14 +127,14 @@ export async function GET(request: NextRequest) {
         },
       })
 
-      const projectIds = projectSessions.map((p) => p.projectId)
+      const projectIds = projectSessions.map((p: any) => p.projectId)
       const projects = await prisma.project.findMany({
         where: { id: { in: projectIds } },
         select: { id: true, title: true },
       })
 
-      projectBreakdown = projectSessions.map((ps) => {
-        const project = projects.find((p) => p.id === ps.projectId)
+      projectBreakdown = projectSessions.map((ps: any) => {
+        const project = projects.find((p: any) => p.id === ps.projectId)
         return {
           projectId: ps.projectId,
           projectTitle: project?.title || 'Unknown',
@@ -151,9 +158,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Analytics fetch error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
