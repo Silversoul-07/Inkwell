@@ -20,13 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -100,10 +94,6 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
     'Other',
   ]
 
-  useEffect(() => {
-    loadEntries()
-  }, [projectId, sortBy, categoryFilter])
-
   const loadEntries = async () => {
     try {
       let url = `/api/lorebook?projectId=${projectId}&sortBy=${sortBy}`
@@ -123,6 +113,10 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
     }
   }
 
+  useEffect(() => {
+    loadEntries()
+  }, [projectId, sortBy, categoryFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const resetForm = () => {
     setFormData({
       key: '',
@@ -141,7 +135,10 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
     try {
       // Convert keys string to JSON array
       const keysArray = formData.keys
-        ? formData.keys.split(',').map((k) => k.trim()).filter((k) => k)
+        ? formData.keys
+            .split(',')
+            .map(k => k.trim())
+            .filter(k => k)
         : []
 
       const response = await fetch('/api/lorebook', {
@@ -202,7 +199,10 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
     try {
       // Convert keys string to JSON array
       const keysArray = formData.keys
-        ? formData.keys.split(',').map((k) => k.trim()).filter((k) => k)
+        ? formData.keys
+            .split(',')
+            .map(k => k.trim())
+            .filter(k => k)
         : []
 
       const response = await fetch(`/api/lorebook/${selectedEntry.id}`, {
@@ -249,7 +249,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
     }
   }
 
-  const filteredEntries = entries.filter((entry) => {
+  const filteredEntries = entries.filter(entry => {
     const query = searchQuery.toLowerCase()
     return (
       entry.key.toLowerCase().includes(query) ||
@@ -273,12 +273,10 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <Input
           id="key"
           value={formData.key}
-          onChange={(e) => setFormData((prev) => ({ ...prev, key: e.target.value }))}
+          onChange={e => setFormData(prev => ({ ...prev, key: e.target.value }))}
           placeholder="Main trigger word or phrase"
         />
-        <p className="text-xs text-muted-foreground">
-          The main keyword that triggers this entry
-        </p>
+        <p className="text-xs text-muted-foreground">The main keyword that triggers this entry</p>
       </div>
 
       <div className="space-y-2">
@@ -286,7 +284,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <Input
           id="keys"
           value={formData.keys}
-          onChange={(e) => setFormData((prev) => ({ ...prev, keys: e.target.value }))}
+          onChange={e => setFormData(prev => ({ ...prev, keys: e.target.value }))}
           placeholder="keyword1, keyword2, keyword3"
         />
         <p className="text-xs text-muted-foreground">
@@ -299,7 +297,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <Textarea
           id="value"
           value={formData.value}
-          onChange={(e) => setFormData((prev) => ({ ...prev, value: e.target.value }))}
+          onChange={e => setFormData(prev => ({ ...prev, value: e.target.value }))}
           placeholder="The information about this entry..."
           rows={6}
         />
@@ -310,13 +308,13 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           <Label htmlFor="category">Category</Label>
           <Select
             value={formData.category}
-            onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
+            onValueChange={value => setFormData(prev => ({ ...prev, category: value }))}
           >
             <SelectTrigger id="category">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((cat) => (
+              {categories.map(cat => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
                 </SelectItem>
@@ -329,7 +327,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           <Label htmlFor="triggerMode">Trigger Mode</Label>
           <Select
             value={formData.triggerMode}
-            onValueChange={(value) => setFormData((prev) => ({ ...prev, triggerMode: value }))}
+            onValueChange={value => setFormData(prev => ({ ...prev, triggerMode: value }))}
           >
             <SelectTrigger id="triggerMode">
               <SelectValue />
@@ -353,7 +351,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           max={10}
           step={1}
           value={[formData.priority]}
-          onValueChange={([value]) => setFormData((prev) => ({ ...prev, priority: value }))}
+          onValueChange={([value]) => setFormData(prev => ({ ...prev, priority: value }))}
         />
         <p className="text-xs text-muted-foreground">
           Higher priority entries are included first when context is limited
@@ -365,7 +363,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <Input
           id="regexPattern"
           value={formData.regexPattern}
-          onChange={(e) => setFormData((prev) => ({ ...prev, regexPattern: e.target.value }))}
+          onChange={e => setFormData(prev => ({ ...prev, regexPattern: e.target.value }))}
           placeholder="Optional regex pattern for matching"
           className="font-mono text-sm"
         />
@@ -377,16 +375,12 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <Label htmlFor="searchable">Searchable</Label>
-          <p className="text-xs text-muted-foreground">
-            Enable smart triggering for this entry
-          </p>
+          <p className="text-xs text-muted-foreground">Enable smart triggering for this entry</p>
         </div>
         <Switch
           id="searchable"
           checked={formData.searchable}
-          onCheckedChange={(checked) =>
-            setFormData((prev) => ({ ...prev, searchable: checked }))
-          }
+          onCheckedChange={checked => setFormData(prev => ({ ...prev, searchable: checked }))}
         />
       </div>
     </div>
@@ -438,7 +432,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           <Input
             placeholder="Search lorebook..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -449,7 +443,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((cat) => (
+            {categories.map(cat => (
               <SelectItem key={cat} value={cat}>
                 {cat}
               </SelectItem>
@@ -483,16 +477,14 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         </Card>
       ) : (
         <div className="space-y-3">
-          {filteredEntries.map((entry) => (
+          {filteredEntries.map(entry => (
             <Card key={entry.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <CardTitle className="text-lg">{entry.key}</CardTitle>
-                      {entry.category && (
-                        <Badge variant="outline">{entry.category}</Badge>
-                      )}
+                      {entry.category && <Badge variant="outline">{entry.category}</Badge>}
                       {entry.triggerMode === 'auto' && entry.searchable && (
                         <Badge variant="secondary" className="flex items-center gap-1">
                           <Sparkles className="h-3 w-3" />
@@ -536,15 +528,11 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {entry.value}
-                </p>
+                <p className="text-sm text-muted-foreground line-clamp-2">{entry.value}</p>
                 <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
                   <span>Used {entry.useCount} times</span>
                   {entry.lastUsed && (
-                    <span>
-                      Last used {new Date(entry.lastUsed).toLocaleDateString()}
-                    </span>
+                    <span>Last used {new Date(entry.lastUsed).toLocaleDateString()}</span>
                   )}
                 </div>
               </CardContent>
@@ -558,9 +546,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Lorebook Entry</DialogTitle>
-            <DialogDescription>
-              Update lorebook entry details
-            </DialogDescription>
+            <DialogDescription>Update lorebook entry details</DialogDescription>
           </DialogHeader>
           {renderLorebookForm()}
           <div className="flex justify-end gap-2 pt-4">
@@ -574,10 +560,7 @@ export function LorebookManager({ projectId }: LorebookManagerProps) {
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleUpdate}
-              disabled={!formData.key || !formData.value}
-            >
+            <Button onClick={handleUpdate} disabled={!formData.key || !formData.value}>
               Save Changes
             </Button>
           </div>

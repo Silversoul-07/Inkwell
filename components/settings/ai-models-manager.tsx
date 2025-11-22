@@ -62,10 +62,6 @@ export function AIModelsManager() {
   })
   const [isSaving, setIsSaving] = useState(false)
 
-  useEffect(() => {
-    loadModels()
-  }, [])
-
   const loadModels = async () => {
     try {
       const response = await fetch('/api/ai-models')
@@ -90,6 +86,10 @@ export function AIModelsManager() {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadModels()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleOpenDialog = (model?: AIModel) => {
     if (model) {
@@ -126,9 +126,7 @@ export function AIModelsManager() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const url = editingModel
-        ? `/api/ai-models/${editingModel.id}`
-        : '/api/ai-models'
+      const url = editingModel ? `/api/ai-models/${editingModel.id}` : '/api/ai-models'
 
       const method = editingModel ? 'PATCH' : 'POST'
 
@@ -264,7 +262,7 @@ export function AIModelsManager() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {models.map((model) => (
+          {models.map(model => (
             <div
               key={model.id}
               className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -315,11 +313,7 @@ export function AIModelsManager() {
                       <Star className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenDialog(model)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(model)}>
                     <Edit2 className="h-4 w-4" />
                   </Button>
                   <Button
@@ -341,12 +335,8 @@ export function AIModelsManager() {
       <Dialog open={showDialog} onOpenChange={handleCloseDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>
-              {editingModel ? 'Edit AI Model' : 'Add AI Model'}
-            </DialogTitle>
-            <DialogDescription>
-              Configure an AI model for writing assistance
-            </DialogDescription>
+            <DialogTitle>{editingModel ? 'Edit AI Model' : 'Add AI Model'}</DialogTitle>
+            <DialogDescription>Configure an AI model for writing assistance</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -355,9 +345,7 @@ export function AIModelsManager() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Claude Sonnet 3.5"
               />
             </div>
@@ -366,9 +354,7 @@ export function AIModelsManager() {
               <Label htmlFor="provider">Provider</Label>
               <Select
                 value={formData.provider}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, provider: value })
-                }
+                onValueChange={value => setFormData({ ...formData, provider: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -388,9 +374,7 @@ export function AIModelsManager() {
               <Input
                 id="model"
                 value={formData.model}
-                onChange={(e) =>
-                  setFormData({ ...formData, model: e.target.value })
-                }
+                onChange={e => setFormData({ ...formData, model: e.target.value })}
                 placeholder="e.g., claude-3-5-sonnet-20241022"
               />
             </div>
@@ -402,9 +386,7 @@ export function AIModelsManager() {
                   id="apiKey"
                   type={showApiKey ? 'text' : 'password'}
                   value={formData.apiKey}
-                  onChange={(e) =>
-                    setFormData({ ...formData, apiKey: e.target.value })
-                  }
+                  onChange={e => setFormData({ ...formData, apiKey: e.target.value })}
                   placeholder="sk-ant-..."
                 />
                 <Button
@@ -414,11 +396,7 @@ export function AIModelsManager() {
                   className="absolute right-0 top-0 h-full px-3"
                   onClick={() => setShowApiKey(!showApiKey)}
                 >
-                  {showApiKey ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -428,9 +406,7 @@ export function AIModelsManager() {
               <Input
                 id="baseUrl"
                 value={formData.baseUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, baseUrl: e.target.value })
-                }
+                onChange={e => setFormData({ ...formData, baseUrl: e.target.value })}
                 placeholder="https://api.anthropic.com"
               />
             </div>
@@ -438,16 +414,12 @@ export function AIModelsManager() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="default">Set as Default</Label>
-                <p className="text-xs text-muted-foreground">
-                  Use this model by default
-                </p>
+                <p className="text-xs text-muted-foreground">Use this model by default</p>
               </div>
               <Switch
                 id="default"
                 checked={formData.isDefault}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isDefault: checked })
-                }
+                onCheckedChange={checked => setFormData({ ...formData, isDefault: checked })}
               />
             </div>
           </div>

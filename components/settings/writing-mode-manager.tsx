@@ -16,13 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 interface WritingMode {
@@ -55,10 +49,6 @@ export function WritingModeManager() {
     preferredActions: [] as string[],
   })
 
-  useEffect(() => {
-    loadModes()
-  }, [])
-
   const loadModes = async () => {
     try {
       const response = await fetch('/api/writing-modes')
@@ -83,6 +73,10 @@ export function WritingModeManager() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadModes()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {
     try {
@@ -205,9 +199,7 @@ export function WritingModeManager() {
       maxTokens: mode.maxTokens,
       systemPrompt: mode.systemPrompt || '',
       continuePrompt: mode.continuePrompt || '',
-      preferredActions: mode.preferredActions
-        ? JSON.parse(mode.preferredActions)
-        : [],
+      preferredActions: mode.preferredActions ? JSON.parse(mode.preferredActions) : [],
     })
   }
 
@@ -234,11 +226,7 @@ export function WritingModeManager() {
                 Create a custom writing mode with specific AI settings
               </DialogDescription>
             </DialogHeader>
-            <ModeForm
-              formData={formData}
-              setFormData={setFormData}
-              onSave={handleCreate}
-            />
+            <ModeForm formData={formData} setFormData={setFormData} onSave={handleCreate} />
           </DialogContent>
         </Dialog>
       </div>
@@ -248,7 +236,7 @@ export function WritingModeManager() {
         <div className="text-center py-8">Loading modes...</div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {modes.map((mode) => (
+          {modes.map(mode => (
             <Card key={mode.id} className="relative">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -256,30 +244,18 @@ export function WritingModeManager() {
                     <div className="flex items-center gap-2">
                       <Zap className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg">{mode.name}</CardTitle>
-                      {mode.isBuiltin && (
-                        <Badge variant="secondary">Built-in</Badge>
-                      )}
+                      {mode.isBuiltin && <Badge variant="secondary">Built-in</Badge>}
                     </div>
                     {mode.description && (
-                      <CardDescription className="mt-1">
-                        {mode.description}
-                      </CardDescription>
+                      <CardDescription className="mt-1">{mode.description}</CardDescription>
                     )}
                   </div>
                   {!mode.isBuiltin && (
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => startEdit(mode)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => startEdit(mode)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(mode.id)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(mode.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -300,9 +276,7 @@ export function WritingModeManager() {
                 {mode.systemPrompt && (
                   <div className="bg-muted p-3 rounded-md text-sm">
                     <div className="font-medium mb-1">System Prompt:</div>
-                    <div className="text-muted-foreground line-clamp-2">
-                      {mode.systemPrompt}
-                    </div>
+                    <div className="text-muted-foreground line-clamp-2">{mode.systemPrompt}</div>
                   </div>
                 )}
                 {mode.preferredActions && (
@@ -326,9 +300,7 @@ export function WritingModeManager() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Writing Mode</DialogTitle>
-              <DialogDescription>
-                Update your custom writing mode settings
-              </DialogDescription>
+              <DialogDescription>Update your custom writing mode settings</DialogDescription>
             </DialogHeader>
             <ModeForm
               formData={formData}
@@ -350,7 +322,7 @@ function ModeForm({ formData, setFormData, onSave }: any) {
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={e => setFormData({ ...formData, name: e.target.value })}
           placeholder="My Custom Mode"
         />
       </div>
@@ -360,26 +332,20 @@ function ModeForm({ formData, setFormData, onSave }: any) {
         <Input
           id="description"
           value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
+          onChange={e => setFormData({ ...formData, description: e.target.value })}
           placeholder="What does this mode do?"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="temperature">
-          Temperature: {formData.temperature.toFixed(2)}
-        </Label>
+        <Label htmlFor="temperature">Temperature: {formData.temperature.toFixed(2)}</Label>
         <Slider
           id="temperature"
           min={0}
           max={1}
           step={0.05}
           value={[formData.temperature]}
-          onValueChange={([value]) =>
-            setFormData({ ...formData, temperature: value })
-          }
+          onValueChange={([value]) => setFormData({ ...formData, temperature: value })}
         />
         <p className="text-xs text-muted-foreground">
           Lower = more focused, Higher = more creative
@@ -394,13 +360,9 @@ function ModeForm({ formData, setFormData, onSave }: any) {
           max={2000}
           step={50}
           value={[formData.maxTokens]}
-          onValueChange={([value]) =>
-            setFormData({ ...formData, maxTokens: value })
-          }
+          onValueChange={([value]) => setFormData({ ...formData, maxTokens: value })}
         />
-        <p className="text-xs text-muted-foreground">
-          Maximum length of AI response
-        </p>
+        <p className="text-xs text-muted-foreground">Maximum length of AI response</p>
       </div>
 
       <div className="space-y-2">
@@ -408,9 +370,7 @@ function ModeForm({ formData, setFormData, onSave }: any) {
         <Textarea
           id="systemPrompt"
           value={formData.systemPrompt}
-          onChange={(e) =>
-            setFormData({ ...formData, systemPrompt: e.target.value })
-          }
+          onChange={e => setFormData({ ...formData, systemPrompt: e.target.value })}
           placeholder="Additional instructions for this mode..."
           rows={4}
         />
@@ -421,9 +381,7 @@ function ModeForm({ formData, setFormData, onSave }: any) {
         <Textarea
           id="continuePrompt"
           value={formData.continuePrompt}
-          onChange={(e) =>
-            setFormData({ ...formData, continuePrompt: e.target.value })
-          }
+          onChange={e => setFormData({ ...formData, continuePrompt: e.target.value })}
           placeholder="Custom prompt for continue action..."
           rows={3}
         />

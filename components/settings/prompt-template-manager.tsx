@@ -22,13 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 interface PromptTemplate {
@@ -82,10 +76,6 @@ export function PromptTemplateManager() {
     isDefault: false,
   })
 
-  useEffect(() => {
-    loadTemplates()
-  }, [selectedAction])
-
   const loadTemplates = async () => {
     try {
       const params = new URLSearchParams()
@@ -115,6 +105,10 @@ export function PromptTemplateManager() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadTemplates()
+  }, [selectedAction]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {
     try {
@@ -370,12 +364,7 @@ export function PromptTemplateManager() {
             <label>
               <Upload className="h-4 w-4 mr-2" />
               Import
-              <input
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={handleImport}
-              />
+              <input type="file" accept=".json" className="hidden" onChange={handleImport} />
             </label>
           </Button>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -413,7 +402,7 @@ export function PromptTemplateManager() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Actions</SelectItem>
-            {ACTION_TYPES.map((type) => (
+            {ACTION_TYPES.map(type => (
               <SelectItem key={type.value} value={type.value}>
                 {type.label}
               </SelectItem>
@@ -427,25 +416,19 @@ export function PromptTemplateManager() {
         <div className="text-center py-8">Loading templates...</div>
       ) : (
         <div className="grid gap-4">
-          {filteredTemplates.map((template) => (
+          {filteredTemplates.map(template => (
             <Card key={template.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">{template.name}</CardTitle>
-                      {template.isDefault && (
-                        <Badge variant="default">Default</Badge>
-                      )}
-                      {template.isBuiltin && (
-                        <Badge variant="secondary">Built-in</Badge>
-                      )}
+                      {template.isDefault && <Badge variant="default">Default</Badge>}
+                      {template.isBuiltin && <Badge variant="secondary">Built-in</Badge>}
                       <Badge variant="outline">{template.action}</Badge>
                     </div>
                     {template.description && (
-                      <CardDescription className="mt-1">
-                        {template.description}
-                      </CardDescription>
+                      <CardDescription className="mt-1">{template.description}</CardDescription>
                     )}
                   </div>
                   <div className="flex gap-1">
@@ -461,11 +444,7 @@ export function PromptTemplateManager() {
                     )}
                     {!template.isBuiltin && (
                       <>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => startEdit(template)}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => startEdit(template)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
                         <Button
@@ -481,9 +460,7 @@ export function PromptTemplateManager() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-muted p-3 rounded-md font-mono text-sm">
-                  {template.template}
-                </div>
+                <div className="bg-muted p-3 rounded-md font-mono text-sm">{template.template}</div>
                 {template.variables && JSON.parse(template.variables).length > 0 && (
                   <div className="mt-2 flex gap-1 flex-wrap">
                     {JSON.parse(template.variables).map((v: string) => (
@@ -505,9 +482,7 @@ export function PromptTemplateManager() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Template</DialogTitle>
-              <DialogDescription>
-                Update your custom prompt template
-              </DialogDescription>
+              <DialogDescription>Update your custom prompt template</DialogDescription>
             </DialogHeader>
             <TemplateForm
               formData={formData}
@@ -524,14 +499,7 @@ export function PromptTemplateManager() {
   )
 }
 
-function TemplateForm({
-  formData,
-  setFormData,
-  onSave,
-  onTest,
-  testResult,
-  insertVariable,
-}: any) {
+function TemplateForm({ formData, setFormData, onSave, onTest, testResult, insertVariable }: any) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -539,7 +507,7 @@ function TemplateForm({
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={e => setFormData({ ...formData, name: e.target.value })}
           placeholder="My Custom Template"
         />
       </div>
@@ -549,9 +517,7 @@ function TemplateForm({
         <Input
           id="description"
           value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
+          onChange={e => setFormData({ ...formData, description: e.target.value })}
           placeholder="What does this template do?"
         />
       </div>
@@ -560,13 +526,13 @@ function TemplateForm({
         <Label htmlFor="action">Action Type</Label>
         <Select
           value={formData.action}
-          onValueChange={(value) => setFormData({ ...formData, action: value })}
+          onValueChange={value => setFormData({ ...formData, action: value })}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {ACTION_TYPES.map((type) => (
+            {ACTION_TYPES.map(type => (
               <SelectItem key={type.value} value={type.value}>
                 {type.label}
               </SelectItem>
@@ -580,9 +546,7 @@ function TemplateForm({
         <Textarea
           id="template"
           value={formData.template}
-          onChange={(e) =>
-            setFormData({ ...formData, template: e.target.value })
-          }
+          onChange={e => setFormData({ ...formData, template: e.target.value })}
           placeholder="Write your prompt here. Use {{variable}} for dynamic content."
           rows={6}
           className="font-mono"
@@ -592,7 +556,7 @@ function TemplateForm({
       <div className="space-y-2">
         <Label>Available Variables</Label>
         <div className="flex flex-wrap gap-2">
-          {AVAILABLE_VARIABLES.map((v) => (
+          {AVAILABLE_VARIABLES.map(v => (
             <Button
               key={v.name}
               variant="outline"
@@ -611,9 +575,7 @@ function TemplateForm({
           type="checkbox"
           id="isDefault"
           checked={formData.isDefault}
-          onChange={(e) =>
-            setFormData({ ...formData, isDefault: e.target.checked })
-          }
+          onChange={e => setFormData({ ...formData, isDefault: e.target.checked })}
           className="rounded"
         />
         <Label htmlFor="isDefault" className="font-normal">
@@ -624,9 +586,7 @@ function TemplateForm({
       {testResult && (
         <div className="space-y-2">
           <Label>Test Result</Label>
-          <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
-            {testResult}
-          </div>
+          <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">{testResult}</div>
         </div>
       )}
 

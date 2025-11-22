@@ -78,11 +78,20 @@ export function ChapterNavigation({
                   }}
                 >
                   <div className="flex items-start gap-2 w-full">
-                    <button
-                      className="mt-0.5 hover:bg-accent rounded p-0.5"
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="mt-0.5 hover:bg-accent rounded p-0.5 cursor-pointer"
                       onClick={e => {
                         e.stopPropagation()
                         toggleChapter(chapter.id)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.stopPropagation()
+                          e.preventDefault()
+                          toggleChapter(chapter.id)
+                        }
                       }}
                     >
                       {isExpanded ? (
@@ -90,7 +99,7 @@ export function ChapterNavigation({
                       ) : (
                         <ChevronRight className="h-4 w-4" />
                       )}
-                    </button>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{chapter.title}</div>
                       <div className="text-xs text-muted-foreground">
