@@ -1,8 +1,8 @@
-"use client";
+'use client'
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   Loader2,
   X,
@@ -14,45 +14,43 @@ import {
   Heading2,
   Strikethrough,
   Code,
-} from "lucide-react";
-import { AlternativesDialog } from "./alternatives-dialog";
-import { EditorContextMenu } from "./editor-context-menu";
-import { Button } from "@/components/ui/button";
-import {
-  processTemplate,
-  buildEditorVariables,
-} from "@/lib/template-processor";
-import { EditorBottomToolbar } from "./editor-bottom-toolbar";
-import { cn } from "@/lib/utils";
+} from 'lucide-react'
+import { AlternativesDialog } from './alternatives-dialog'
+import { EditorContextMenu } from './editor-context-menu'
+import { VersionHistory } from './version-history'
+import { Button } from '@/components/ui/button'
+import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
+import { EditorBottomToolbar } from './editor-bottom-toolbar'
+import { cn } from '@/lib/utils'
 
 interface Scene {
-  id: string;
-  title: string | null;
-  content: string;
-  wordCount: number;
+  id: string
+  title: string | null
+  content: string
+  wordCount: number
 }
 
 interface Settings {
-  editorFont?: string;
-  editorFontSize?: number;
-  editorLineHeight?: number;
-  editorWidth?: number;
-  autoSaveInterval?: number;
+  editorFont?: string
+  editorFontSize?: number
+  editorLineHeight?: number
+  editorWidth?: number
+  autoSaveInterval?: number
 }
 
 interface TiptapEditorNovelAIProps {
-  scene: Scene;
-  projectId: string;
-  settings: Settings | null;
-  zenMode: boolean;
-  onExitZen: () => void;
-  chapterTitle?: string;
-  sceneTitle?: string;
+  scene: Scene
+  projectId: string
+  settings: Settings | null
+  zenMode: boolean
+  onExitZen: () => void
+  chapterTitle?: string
+  sceneTitle?: string
   projectMetadata?: {
-    genre?: string;
-    pov?: string;
-    tense?: string;
-  };
+    genre?: string
+    pov?: string
+    tense?: string
+  }
 }
 
 export function TiptapEditorNovelAI({
@@ -65,65 +63,56 @@ export function TiptapEditorNovelAI({
   sceneTitle,
   projectMetadata,
 }: TiptapEditorNovelAIProps) {
-  const [wordCount, setWordCount] = useState(scene.wordCount);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [hasSelection, setHasSelection] = useState(false);
-  const [selectedText, setSelectedText] = useState("");
+  const [wordCount, setWordCount] = useState(scene.wordCount)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [hasSelection, setHasSelection] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
   const [aiGeneratedRange, setAiGeneratedRange] = useState<{
-    from: number;
-    to: number;
-  } | null>(null);
-  const [showAlternatives, setShowAlternatives] = useState(false);
-  const [alternatives, setAlternatives] = useState<string[]>([]);
+    from: number
+    to: number
+  } | null>(null)
+  const [showAlternatives, setShowAlternatives] = useState(false)
+  const [alternatives, setAlternatives] = useState<string[]>([])
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
 
   // Template-based prompt generation
-  const [useCustomTemplates, setUseCustomTemplates] = useState(true);
-  const [selectedTemplates, setSelectedTemplates] = useState<
-    Record<string, any>
-  >({});
+  const [useCustomTemplates, setUseCustomTemplates] = useState(true)
+  const [selectedTemplates, setSelectedTemplates] = useState<Record<string, any>>({})
 
   // Writing mode state
-  const [activeWritingMode, setActiveWritingMode] = useState<any>(null);
-  const [characterCount, setCharacterCount] = useState(0);
-  const editorRef = useRef<HTMLDivElement>(null);
+  const [activeWritingMode, setActiveWritingMode] = useState<any>(null)
+  const [characterCount, setCharacterCount] = useState(0)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   // Load templates on mount
   useEffect(() => {
     const loadTemplates = async () => {
       try {
         // Load default templates for each action
-        const actions = [
-          "continue",
-          "rephrase",
-          "expand",
-          "shorten",
-          "grammar",
-        ];
-        const templates: Record<string, any> = {};
+        const actions = ['continue', 'rephrase', 'expand', 'shorten', 'grammar']
+        const templates: Record<string, any> = {}
 
         for (const action of actions) {
-          const response = await fetch(
-            `/api/prompt-templates?action=${action}`,
-          );
+          const response = await fetch(`/api/prompt-templates?action=${action}`)
           if (response.ok) {
-            const data = await response.json();
-            const defaultTemplate = data.find((t: any) => t.isDefault);
+            const data = await response.json()
+            const defaultTemplate = data.find((t: any) => t.isDefault)
             if (defaultTemplate) {
-              templates[action] = defaultTemplate;
+              templates[action] = defaultTemplate
             }
           }
         }
 
-        setSelectedTemplates(templates);
+        setSelectedTemplates(templates)
       } catch (error) {
-        console.error("Failed to load templates:", error);
+        console.error('Failed to load templates:', error)
       }
-    };
+    }
 
-    loadTemplates();
-  }, []);
+    loadTemplates()
+  }, [])
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -131,100 +120,124 @@ export function TiptapEditorNovelAI({
     content: scene.content,
     editorProps: {
       attributes: {
-        class: "prose prose-lg focus:outline-none min-h-full",
-        "data-placeholder": "Begin your story here...",
+        class: 'prose prose-lg focus:outline-none min-h-full',
+        'data-placeholder': 'Begin your story here...',
       },
     },
     onUpdate: ({ editor }) => {
-      const text = editor.getText();
-      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-      const chars = text.length;
-      setWordCount(words);
-      setCharacterCount(chars);
+      const text = editor.getText()
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0
+      const chars = text.length
+      setWordCount(words)
+      setCharacterCount(chars)
     },
     onSelectionUpdate: ({ editor }) => {
-      const { from, to } = editor.state.selection;
-      const hasText = from !== to;
-      setHasSelection(hasText);
+      const { from, to } = editor.state.selection
+      const hasText = from !== to
+      setHasSelection(hasText)
       if (hasText) {
-        const text = editor.state.doc.textBetween(from, to, " ");
-        setSelectedText(text);
+        const text = editor.state.doc.textBetween(from, to, ' ')
+        setSelectedText(text)
       } else {
-        setSelectedText("");
+        setSelectedText('')
       }
     },
-  });
+  })
 
   // Build context variables for templates
   const buildPromptVariables = useCallback(
     (action: string, customText?: string) => {
       return buildEditorVariables({
-        selection: selectedText || customText || "",
-        sceneContext: editor?.getText().slice(-4000) || "",
-        genre: projectMetadata?.genre || "",
-        pov: projectMetadata?.pov || "",
-        tense: projectMetadata?.tense || "",
-      });
+        selection: selectedText || customText || '',
+        sceneContext: editor?.getText().slice(-4000) || '',
+        genre: projectMetadata?.genre || '',
+        pov: projectMetadata?.pov || '',
+        tense: projectMetadata?.tense || '',
+      })
     },
-    [selectedText, editor, projectMetadata],
-  );
+    [selectedText, editor, projectMetadata]
+  )
 
-  // Auto-save functionality
+  // Auto-save functionality with versioning
   const saveContent = useCallback(async () => {
-    if (!editor) return;
+    if (!editor) return
 
-    const content = editor.getHTML();
-    const text = editor.getText();
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const content = editor.getHTML()
+    const text = editor.getText()
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0
 
-    setIsSaving(true);
+    setIsSaving(true)
     try {
-      await fetch(`/api/scenes/${scene.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+      // Update the scene content (for backward compatibility)
+      const sceneResponse = await fetch(`/api/scenes/${scene.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, wordCount: words }),
-      });
-      setLastSaved(new Date());
+      })
+
+      if (!sceneResponse.ok) {
+        throw new Error('Failed to save scene')
+      }
+
+      // Create a new version for history tracking
+      const versionResponse = await fetch('/api/versions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sceneId: scene.id,
+          content,
+          branchName: 'Auto-save',
+          isActive: true,
+        }),
+      })
+
+      if (!versionResponse.ok) {
+        console.error('Failed to create version, but scene was saved')
+      }
+
+      setLastSaved(new Date())
     } catch (error) {
-      console.error("Error saving content:", error);
+      console.error('Error saving content:', error)
+      // Show user-facing error notification
+      alert('Failed to save your work. Please check your connection and try again.')
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  }, [editor, scene.id]);
+  }, [editor, scene.id])
 
   // Auto-save effect
   useEffect(() => {
-    const interval = settings?.autoSaveInterval || 30;
-    const timer = setInterval(saveContent, interval * 1000);
-    return () => clearInterval(timer);
-  }, [saveContent, settings]);
+    const interval = settings?.autoSaveInterval || 30
+    const timer = setInterval(saveContent, interval * 1000)
+    return () => clearInterval(timer)
+  }, [saveContent, settings])
 
   // Save on unmount
   useEffect(() => {
     return () => {
-      saveContent();
-    };
-  }, [saveContent]);
+      saveContent()
+    }
+  }, [saveContent])
 
   // Zen mode keyboard shortcut (Escape to exit)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && zenMode) {
-        onExitZen();
+      if (e.key === 'Escape' && zenMode) {
+        onExitZen()
       }
-    };
+    }
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [zenMode, onExitZen]);
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [zenMode, onExitZen])
 
   // AI Generation helper
   const generateAI = useCallback(
     async (prompt: string, replaceSelection: boolean = false) => {
-      if (!editor) return;
+      if (!editor) return
 
-      setIsGenerating(true);
-      const context = editor.getText().slice(-4000); // Last 4000 chars as context
+      setIsGenerating(true)
+      const context = editor.getText().slice(-4000) // Last 4000 chars as context
 
       // Build request with writing mode settings
       const requestBody: any = {
@@ -234,81 +247,75 @@ export function TiptapEditorNovelAI({
         includeUserInstructions: true,
         includeLorebook: true,
         includeCharacters: false, // TODO: Add character selection
-      };
+      }
 
       // Apply writing mode settings if active
       if (activeWritingMode) {
         if (activeWritingMode.temperature !== undefined) {
-          requestBody.temperature = activeWritingMode.temperature;
+          requestBody.temperature = activeWritingMode.temperature
         }
         if (activeWritingMode.maxTokens !== undefined) {
-          requestBody.maxTokens = activeWritingMode.maxTokens;
+          requestBody.maxTokens = activeWritingMode.maxTokens
         }
         if (activeWritingMode.systemPrompt) {
-          requestBody.systemPrompt = activeWritingMode.systemPrompt;
+          requestBody.systemPrompt = activeWritingMode.systemPrompt
         }
       }
 
       try {
-        const response = await fetch("/api/ai/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
-        });
+        })
 
         if (!response.ok) {
-          throw new Error("AI generation failed");
+          throw new Error('AI generation failed')
         }
 
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let generatedText = "";
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let generatedText = ''
 
-        if (!reader) return;
+        if (!reader) return
 
-        const insertPos = replaceSelection
-          ? editor.state.selection.from
-          : editor.state.selection.to;
+        const insertPos = replaceSelection ? editor.state.selection.from : editor.state.selection.to
 
         while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          const { done, value } = await reader.read()
+          if (done) break
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+          const chunk = decoder.decode(value)
+          const lines = chunk.split('\n').filter(line => line.trim() !== '')
 
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") continue;
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              if (data === '[DONE]') continue
 
               try {
-                const parsed = JSON.parse(data);
+                const parsed = JSON.parse(data)
                 if (parsed.error) {
-                  throw new Error(parsed.error);
+                  throw new Error(parsed.error)
                 }
                 if (parsed.chunk) {
-                  generatedText += parsed.chunk;
+                  generatedText += parsed.chunk
 
                   // Update editor with streaming text
                   if (replaceSelection) {
-                    const { from, to } = editor.state.selection;
+                    const { from, to } = editor.state.selection
                     editor
                       .chain()
                       .focus()
                       .deleteRange({ from, to })
                       .insertContentAt(from, generatedText)
-                      .run();
+                      .run()
                   } else {
-                    editor
-                      .chain()
-                      .focus()
-                      .insertContentAt(insertPos, generatedText)
-                      .run();
+                    editor.chain().focus().insertContentAt(insertPos, generatedText).run()
                   }
                 }
               } catch (e) {
-                console.error("Parse error:", e);
+                console.error('Parse error:', e)
               }
             }
           }
@@ -319,133 +326,133 @@ export function TiptapEditorNovelAI({
           setAiGeneratedRange({
             from: insertPos,
             to: insertPos + generatedText.length,
-          });
+          })
         }
       } catch (error: any) {
-        console.error("AI generation error:", error);
-        alert(error.message || "Failed to generate AI content");
+        console.error('AI generation error:', error)
+        alert(error.message || 'Failed to generate AI content')
       } finally {
-        setIsGenerating(false);
+        setIsGenerating(false)
       }
     },
-    [editor, activeWritingMode, projectId],
-  );
+    [editor, activeWritingMode, projectId]
+  )
 
   // Build prompt using template or fallback to default
   const buildPrompt = useCallback(
     (action: string, fallbackPrompt: string, customText?: string) => {
       if (useCustomTemplates && selectedTemplates[action]?.template) {
-        const variables = buildPromptVariables(action, customText);
-        return processTemplate(selectedTemplates[action].template, variables);
+        const variables = buildPromptVariables(action, customText)
+        return processTemplate(selectedTemplates[action].template, variables)
       }
-      return fallbackPrompt;
+      return fallbackPrompt
     },
-    [useCustomTemplates, selectedTemplates, buildPromptVariables],
-  );
+    [useCustomTemplates, selectedTemplates, buildPromptVariables]
+  )
 
   // AI Actions
   const handleContinue = () => {
     // Use mode's continuePrompt if available, otherwise use template or fallback
     let fallbackPrompt =
-      "Continue writing this story naturally, maintaining the same tone and style.";
+      'Continue writing this story naturally, maintaining the same tone and style.'
     if (activeWritingMode?.continuePrompt) {
-      fallbackPrompt = activeWritingMode.continuePrompt;
+      fallbackPrompt = activeWritingMode.continuePrompt
     }
 
-    const prompt = buildPrompt("continue", fallbackPrompt);
-    generateAI(prompt);
-  };
+    const prompt = buildPrompt('continue', fallbackPrompt)
+    generateAI(prompt)
+  }
 
   const handleRephrase = () => {
-    if (!editor) return;
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    const selectedText = editor.state.doc.textBetween(from, to, ' ')
     const prompt = buildPrompt(
-      "rephrase",
+      'rephrase',
       `Rephrase this text while keeping the same meaning: "${selectedText}"`,
-      selectedText,
-    );
-    generateAI(prompt, true);
-  };
+      selectedText
+    )
+    generateAI(prompt, true)
+  }
 
   const handleExpand = () => {
-    if (!editor) return;
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    const selectedText = editor.state.doc.textBetween(from, to, ' ')
     const prompt = buildPrompt(
-      "expand",
+      'expand',
       `Expand on this text with more detail and description: "${selectedText}"`,
-      selectedText,
-    );
-    generateAI(prompt, true);
-  };
+      selectedText
+    )
+    generateAI(prompt, true)
+  }
 
   const handleShorten = () => {
-    if (!editor) return;
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    const selectedText = editor.state.doc.textBetween(from, to, ' ')
     const prompt = buildPrompt(
-      "shorten",
+      'shorten',
       `Make this text more concise while keeping the key points: "${selectedText}"`,
-      selectedText,
-    );
-    generateAI(prompt, true);
-  };
+      selectedText
+    )
+    generateAI(prompt, true)
+  }
 
   const handleFixGrammar = () => {
-    if (!editor) return;
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    const selectedText = editor.state.doc.textBetween(from, to, ' ')
     const prompt = buildPrompt(
-      "grammar",
+      'grammar',
       `Fix any grammar, spelling, or punctuation errors in this text: "${selectedText}"`,
-      selectedText,
-    );
-    generateAI(prompt, true);
-  };
+      selectedText
+    )
+    generateAI(prompt, true)
+  }
 
   const handleGenerateAlternatives = async () => {
-    if (!editor) return;
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    const selectedText = editor.state.doc.textBetween(from, to, ' ')
 
-    setIsGenerating(true);
-    const alts: string[] = [];
+    setIsGenerating(true)
+    const alts: string[] = []
 
     try {
       // Generate 3 alternatives
       for (let i = 0; i < 3; i++) {
-        const response = await fetch("/api/ai/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             prompt: `Rewrite this text in a different way (variation ${i + 1}): "${selectedText}"`,
             context: editor.getText().slice(-2000),
           }),
-        });
+        })
 
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let altText = "";
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let altText = ''
 
-        if (!reader) continue;
+        if (!reader) continue
 
         while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          const { done, value } = await reader.read()
+          if (done) break
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+          const chunk = decoder.decode(value)
+          const lines = chunk.split('\n').filter(line => line.trim() !== '')
 
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") continue;
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              if (data === '[DONE]') continue
 
               try {
-                const parsed = JSON.parse(data);
+                const parsed = JSON.parse(data)
                 if (parsed.chunk) {
-                  altText += parsed.chunk;
+                  altText += parsed.chunk
                 }
               } catch (e) {
                 // Skip
@@ -455,114 +462,99 @@ export function TiptapEditorNovelAI({
         }
 
         if (altText) {
-          alts.push(altText);
+          alts.push(altText)
         }
       }
 
-      setAlternatives(alts);
-      setShowAlternatives(true);
+      setAlternatives(alts)
+      setShowAlternatives(true)
     } catch (error) {
-      console.error("Error generating alternatives:", error);
-      alert("Failed to generate alternatives");
+      console.error('Error generating alternatives:', error)
+      alert('Failed to generate alternatives')
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
   const handleSelectAlternative = (alternative: string) => {
-    if (!editor) return;
-    const { from, to } = editor.state.selection;
-    editor
-      .chain()
-      .focus()
-      .deleteRange({ from, to })
-      .insertContentAt(from, alternative)
-      .run();
-    setShowAlternatives(false);
-  };
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, alternative).run()
+    setShowAlternatives(false)
+  }
 
   const handleUndo = () => {
-    (editor as any)?.chain().focus().undo().run();
-  };
+    ;(editor as any)?.chain().focus().undo().run()
+  }
 
   const handleRedo = () => {
-    (editor as any)?.chain().focus().redo().run();
-  };
+    ;(editor as any)?.chain().focus().redo().run()
+  }
 
   const handleInsertText = (text: string) => {
-    if (!editor) return;
-    const pos = editor.state.selection.to;
-    editor.chain().focus().insertContentAt(pos, `\n\n${text}`).run();
-  };
+    if (!editor) return
+    const pos = editor.state.selection.to
+    editor.chain().focus().insertContentAt(pos, `\n\n${text}`).run()
+  }
 
   const handleReplaceSelection = (text: string) => {
-    if (!editor) return;
-    const { from, to } = editor.state.selection;
-    editor
-      .chain()
-      .focus()
-      .deleteRange({ from, to })
-      .insertContentAt(from, text)
-      .run();
-  };
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, text).run()
+  }
 
   const dismissAIHighlight = () => {
-    setAiGeneratedRange(null);
-  };
+    setAiGeneratedRange(null)
+  }
 
-  const fontSize = settings?.editorFontSize || 18;
-  const lineHeight = settings?.editorLineHeight || 1.8;
-  const maxWidth = settings?.editorWidth || 56; // Wider default for desktop
+  const fontSize = settings?.editorFontSize || 18
+  const lineHeight = settings?.editorLineHeight || 1.8
+  const maxWidth = settings?.editorWidth || 56 // Wider default for desktop
 
-  const canUndo = (editor as any)?.can().undo() || false;
-  const canRedo = (editor as any)?.can().redo() || false;
+  const canUndo = (editor as any)?.can().undo() || false
+  const canRedo = (editor as any)?.can().redo() || false
 
   const formatItems = [
     {
       icon: Bold,
-      label: "Bold",
+      label: 'Bold',
       action: () => (editor as any)?.chain().focus().toggleBold().run(),
-      active: (editor as any)?.isActive("bold"),
+      active: (editor as any)?.isActive('bold'),
     },
     {
       icon: Italic,
-      label: "Italic",
+      label: 'Italic',
       action: () => (editor as any)?.chain().focus().toggleItalic().run(),
-      active: (editor as any)?.isActive("italic"),
+      active: (editor as any)?.isActive('italic'),
     },
     {
       icon: Heading1,
-      label: "Heading 1",
-      action: () =>
-        (editor as any)?.chain().focus().toggleHeading({ level: 1 }).run(),
-      active: (editor as any)?.isActive("heading", { level: 1 }),
+      label: 'Heading 1',
+      action: () => (editor as any)?.chain().focus().toggleHeading({ level: 1 }).run(),
+      active: (editor as any)?.isActive('heading', { level: 1 }),
     },
     {
       icon: Heading2,
-      label: "Heading 2",
-      action: () =>
-        (editor as any)?.chain().focus().toggleHeading({ level: 2 }).run(),
-      active: (editor as any)?.isActive("heading", { level: 2 }),
+      label: 'Heading 2',
+      action: () => (editor as any)?.chain().focus().toggleHeading({ level: 2 }).run(),
+      active: (editor as any)?.isActive('heading', { level: 2 }),
     },
     {
       icon: List,
-      label: "Bullet List",
+      label: 'Bullet List',
       action: () => (editor as any)?.chain().focus().toggleBulletList().run(),
-      active: (editor as any)?.isActive("bulletList"),
+      active: (editor as any)?.isActive('bulletList'),
     },
     {
       icon: ListOrdered,
-      label: "Numbered List",
+      label: 'Numbered List',
       action: () => (editor as any)?.chain().focus().toggleOrderedList().run(),
-      active: (editor as any)?.isActive("orderedList"),
+      active: (editor as any)?.isActive('orderedList'),
     },
-  ];
+  ]
 
   return (
-    <div
-      ref={editorRef}
-      className={`h-full flex flex-col relative ${zenMode ? "" : ""}`}
-    >
+    <div ref={editorRef} className={`h-full flex flex-col relative ${zenMode ? '' : ''}`}>
       <EditorContextMenu
         hasSelection={hasSelection}
         isGenerating={isGenerating}
@@ -573,7 +565,7 @@ export function TiptapEditorNovelAI({
         onShorten={handleShorten}
         formatItems={formatItems}
       >
-        <div className={`flex-1 flex flex-col ${zenMode ? "p-8" : "p-6"}`}>
+        <div className={`flex-1 flex flex-col ${zenMode ? 'p-8' : 'p-6'}`}>
           {/* Editor */}
           <div
             className="flex-1 overflow-auto"
@@ -601,13 +593,25 @@ export function TiptapEditorNovelAI({
         alternatives={alternatives}
         onSelect={handleSelectAlternative}
       />
+
+      {/* Version History Dialog */}
+      <VersionHistory
+        open={showVersionHistory}
+        onOpenChange={setShowVersionHistory}
+        sceneId={scene.id}
+        onRestore={() => {
+          // Refresh will be triggered by the version history component
+        }}
+      />
+
       <EditorBottomToolbar
         wordCount={wordCount}
         characterCount={characterCount}
         lastSaved={lastSaved}
         chapterTitle={chapterTitle}
         sceneTitle={sceneTitle}
+        onShowVersionHistory={() => setShowVersionHistory(true)}
       />
     </div>
-  );
+  )
 }

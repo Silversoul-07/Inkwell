@@ -22,13 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 
@@ -67,10 +61,6 @@ export function UserInstructionsManager({
     isEnabled: true,
   })
 
-  useEffect(() => {
-    loadInstructions()
-  }, [scope, projectId, characterId])
-
   const loadInstructions = async () => {
     try {
       const params = new URLSearchParams()
@@ -100,6 +90,10 @@ export function UserInstructionsManager({
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadInstructions()
+  }, [scope, projectId, characterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {
     try {
@@ -239,7 +233,7 @@ export function UserInstructionsManager({
   }
 
   const handleChangePriority = async (id: string, delta: number) => {
-    const instruction = instructions.find((i) => i.id === id)
+    const instruction = instructions.find(i => i.id === id)
     if (!instruction) return
 
     const newPriority = Math.max(0, Math.min(10, instruction.priority + delta))
@@ -303,9 +297,9 @@ export function UserInstructionsManager({
   }
 
   const getCombinedInstructions = () => {
-    const enabled = instructions.filter((i) => i.isEnabled)
+    const enabled = instructions.filter(i => i.isEnabled)
     const sorted = enabled.sort((a, b) => b.priority - a.priority)
-    return sorted.map((i) => i.instructions).join('\n\n')
+    return sorted.map(i => i.instructions).join('\n\n')
   }
 
   return (
@@ -316,11 +310,7 @@ export function UserInstructionsManager({
           <p className="text-sm text-muted-foreground">{getScopeDescription()}</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPreviewCombined(!previewCombined)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setPreviewCombined(!previewCombined)}>
             <Eye className="h-4 w-4 mr-2" />
             {previewCombined ? 'Hide' : 'Preview'} Combined
           </Button>
@@ -333,7 +323,11 @@ export function UserInstructionsManager({
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add {scope === 'global' ? 'Global' : scope === 'project' ? 'Project' : 'Character'} Instruction</DialogTitle>
+                <DialogTitle>
+                  Add{' '}
+                  {scope === 'global' ? 'Global' : scope === 'project' ? 'Project' : 'Character'}{' '}
+                  Instruction
+                </DialogTitle>
                 <DialogDescription>
                   Create a new instruction that influences AI behavior
                 </DialogDescription>
@@ -383,11 +377,8 @@ export function UserInstructionsManager({
         </Card>
       ) : (
         <div className="space-y-3">
-          {instructions.map((instruction) => (
-            <Card
-              key={instruction.id}
-              className={!instruction.isEnabled ? 'opacity-60' : ''}
-            >
+          {instructions.map(instruction => (
+            <Card key={instruction.id} className={!instruction.isEnabled ? 'opacity-60' : ''}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex flex-col gap-1 pt-1">
@@ -418,22 +409,14 @@ export function UserInstructionsManager({
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">Priority: {instruction.priority}</Badge>
-                        {!instruction.isEnabled && (
-                          <Badge variant="secondary">Disabled</Badge>
-                        )}
+                        {!instruction.isEnabled && <Badge variant="secondary">Disabled</Badge>}
                       </div>
                       <div className="flex items-center gap-1">
                         <Switch
                           checked={instruction.isEnabled}
-                          onCheckedChange={(checked) =>
-                            handleToggleEnabled(instruction.id, checked)
-                          }
+                          onCheckedChange={checked => handleToggleEnabled(instruction.id, checked)}
                         />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => startEdit(instruction)}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => startEdit(instruction)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
                         <Button
@@ -461,16 +444,11 @@ export function UserInstructionsManager({
 
       {/* Edit Dialog */}
       {editingInstruction && (
-        <Dialog
-          open={!!editingInstruction}
-          onOpenChange={() => setEditingInstruction(null)}
-        >
+        <Dialog open={!!editingInstruction} onOpenChange={() => setEditingInstruction(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Edit Instruction</DialogTitle>
-              <DialogDescription>
-                Update your instruction
-              </DialogDescription>
+              <DialogDescription>Update your instruction</DialogDescription>
             </DialogHeader>
             <InstructionForm
               formData={formData}
@@ -492,9 +470,7 @@ function InstructionForm({ formData, setFormData, onSave }: any) {
         <Textarea
           id="instructions"
           value={formData.instructions}
-          onChange={(e) =>
-            setFormData({ ...formData, instructions: e.target.value })
-          }
+          onChange={e => setFormData({ ...formData, instructions: e.target.value })}
           placeholder="Write your instructions here... e.g., 'Write in active voice. Avoid adverbs. Show don't tell.'"
           rows={8}
           className="font-mono"
@@ -512,9 +488,7 @@ function InstructionForm({ formData, setFormData, onSave }: any) {
           min="0"
           max="10"
           value={formData.priority}
-          onChange={(e) =>
-            setFormData({ ...formData, priority: parseInt(e.target.value) })
-          }
+          onChange={e => setFormData({ ...formData, priority: parseInt(e.target.value) })}
           className="w-full"
         />
         <p className="text-xs text-muted-foreground">
@@ -526,9 +500,7 @@ function InstructionForm({ formData, setFormData, onSave }: any) {
         <Switch
           id="isEnabled"
           checked={formData.isEnabled}
-          onCheckedChange={(checked) =>
-            setFormData({ ...formData, isEnabled: checked })
-          }
+          onCheckedChange={checked => setFormData({ ...formData, isEnabled: checked })}
         />
         <Label htmlFor="isEnabled" className="font-normal">
           Enabled
