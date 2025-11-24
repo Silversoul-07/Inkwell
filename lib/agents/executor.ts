@@ -12,6 +12,7 @@ interface ExecuteAgentParams {
   userMessage: string
   agentType: AgentType | 'flexible'
   modelId?: string
+  sceneContext?: { id: string; title: string | null; content: string; chapterId: string }
 }
 
 interface AgentResponse {
@@ -25,7 +26,7 @@ interface AgentResponse {
 const conversationCache = new Map<string, Array<{ role: string; content: string }>>()
 
 export async function executeAgent(params: ExecuteAgentParams): Promise<AgentResponse> {
-  const { conversationId, userId, projectId, userMessage, agentType, modelId } = params
+  const { conversationId, userId, projectId, userMessage, agentType, modelId, sceneContext } = params
 
   // Get API config from database (throws if not configured)
   const config = await getProviderConfigFromDB(userId, modelId)
@@ -41,7 +42,7 @@ export async function executeAgent(params: ExecuteAgentParams): Promise<AgentRes
     const messages = await prisma.agentMessage.findMany({
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
-      take: 20, // Limit context
+      take: 30, // Increased from 20 to preserve more context
     })
     history = messages.map((m: any) => ({ role: m.role, content: m.content }))
   }
@@ -56,8 +57,13 @@ export async function executeAgent(params: ExecuteAgentParams): Promise<AgentRes
 
   try {
     if (agentType === 'flexible') {
-      // Use the new flexible agent with conversation history
-      response = await (agent as FlexibleAgent).chat(effectiveProjectId, userMessage, history)
+      // Use the new flexible agent with conversation history and scene context
+      response = await (agent as FlexibleAgent).chat(
+        effectiveProjectId,
+        userMessage,
+        history,
+        sceneContext
+      )
     } else {
       // Legacy agents with old behavior
       switch (agentType) {
@@ -119,7 +125,7 @@ export async function executeAgent(params: ExecuteAgentParams): Promise<AgentRes
   // Update cache
   history.push({ role: 'user', content: userMessage })
   history.push({ role: 'assistant', content: response })
-  conversationCache.set(conversationId, history.slice(-20)) // Keep last 20
+  conversationCache.set(conversationId, history.slice(-30)) // Keep last 30 to preserve more context
 
   return {
     content: response,

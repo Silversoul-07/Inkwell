@@ -1,19 +1,11 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  Plus,
-  Book,
-  FileText,
-  BarChart3,
-  Users,
-  BookOpen,
-  Trash2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { CreateProjectDialog } from "./create-project-dialog";
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Plus, Book, FileText, BarChart3, Users, BookOpen, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { CreateProjectDialog } from './create-project-dialog'
 import {
   Dialog,
   DialogContent,
@@ -21,88 +13,89 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
+import { useReadOnlyMode } from '@/hooks/use-readonly-mode'
 
 interface Project {
-  id: string;
-  title: string;
-  description: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  title: string
+  description: string | null
+  createdAt: Date
+  updatedAt: Date
   chapters: Array<{
-    id: string;
+    id: string
     scenes: Array<{
-      id: string;
-      wordCount: number;
-    }>;
-  }>;
+      id: string
+      wordCount: number
+    }>
+  }>
 }
 
 interface ProjectListProps {
-  projects: Project[];
+  projects: Project[]
 }
 
 export function ProjectList({ projects }: ProjectListProps) {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
+  const { isReadOnly } = useReadOnlyMode()
 
   const getTotalWords = (project: Project) => {
     return project.chapters.reduce(
-      (total, chapter) =>
-        total + chapter.scenes.reduce((sum, scene) => sum + scene.wordCount, 0),
-      0,
-    );
-  };
+      (total, chapter) => total + chapter.scenes.reduce((sum, scene) => sum + scene.wordCount, 0),
+      0
+    )
+  }
 
   const handleDeleteClick = (project: Project, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setProjectToDelete(project);
-    setDeleteDialogOpen(true);
-  };
+    e.preventDefault()
+    e.stopPropagation()
+    setProjectToDelete(project)
+    setDeleteDialogOpen(true)
+  }
 
   const handleDeleteConfirm = async () => {
-    if (!projectToDelete) return;
+    if (!projectToDelete) return
 
-    setIsDeleting(true);
+    setIsDeleting(true)
     try {
       const response = await fetch(`/api/projects/${projectToDelete.id}`, {
-        method: "DELETE",
-      });
+        method: 'DELETE',
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to delete project");
+        throw new Error('Failed to delete project')
       }
 
       toast({
-        title: "Project deleted",
+        title: 'Project deleted',
         description: `"${projectToDelete.title}" has been deleted successfully.`,
-      });
+      })
 
-      setDeleteDialogOpen(false);
-      setProjectToDelete(null);
-      router.refresh();
+      setDeleteDialogOpen(false)
+      setProjectToDelete(null)
+      router.refresh()
     } catch (error) {
-      console.error("Error deleting project:", error);
+      console.error('Error deleting project:', error)
       toast({
-        title: "Error",
-        description: "Failed to delete project. Please try again.",
-        variant: "destructive",
-      });
+        title: 'Error',
+        description: 'Failed to delete project. Please try again.',
+        variant: 'destructive',
+      })
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
-  };
+  }
 
   const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-    setProjectToDelete(null);
-  };
+    setDeleteDialogOpen(false)
+    setProjectToDelete(null)
+  }
 
   return (
     <div className="space-y-6">
@@ -132,9 +125,7 @@ export function ProjectList({ projects }: ProjectListProps) {
         <div className="text-center py-12 bg-card border border-border rounded-lg">
           <Book className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Create your first project to start writing
-          </p>
+          <p className="text-muted-foreground mb-4">Create your first project to start writing</p>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Create Project
@@ -142,12 +133,15 @@ export function ProjectList({ projects }: ProjectListProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
+          {projects.map(project => (
             <div
               key={project.id}
               className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow flex flex-col"
             >
-              <Link href={`/editor/${project.id}`} className="block mb-4">
+              <Link
+                href={`/editor/${project.id}${isReadOnly ? '?mode=readonly' : ''}`}
+                className="block mb-4"
+              >
                 <h3 className="text-xl font-semibold mb-2 hover:text-primary transition-colors">
                   {project.title}
                 </h3>
@@ -175,32 +169,17 @@ export function ProjectList({ projects }: ProjectListProps) {
 
               <div className="grid grid-cols-4 gap-2 mt-auto pt-4 border-t border-border">
                 <Link href={`/analytics/${project.id}`}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    title="Analytics"
-                  >
+                  <Button variant="outline" size="sm" className="w-full" title="Analytics">
                     <BarChart3 className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href={`/characters/${project.id}`}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    title="Characters"
-                  >
+                  <Button variant="outline" size="sm" className="w-full" title="Characters">
                     <Users className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href={`/lorebook/${project.id}`}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    title="Lorebook"
-                  >
+                  <Button variant="outline" size="sm" className="w-full" title="Lorebook">
                     <BookOpen className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -209,7 +188,7 @@ export function ProjectList({ projects }: ProjectListProps) {
                   size="sm"
                   className="w-full hover:bg-destructive hover:text-destructive-foreground"
                   title="Delete Project"
-                  onClick={(e) => handleDeleteClick(project, e)}
+                  onClick={e => handleDeleteClick(project, e)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -219,39 +198,27 @@ export function ProjectList({ projects }: ProjectListProps) {
         </div>
       )}
 
-      <CreateProjectDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-      />
+      <CreateProjectDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Project</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {projectToDelete?.title}? This
-              action cannot be undone. All chapters, scenes, and associated data
-              will be permanently deleted.
+              Are you sure you want to delete {projectToDelete?.title}? This action cannot be
+              undone. All chapters, scenes, and associated data will be permanently deleted.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleDeleteCancel}
-              disabled={isDeleting}
-            >
+            <Button variant="outline" onClick={handleDeleteCancel} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete Project"}
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete Project'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

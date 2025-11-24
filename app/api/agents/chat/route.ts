@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { conversationId, projectId, message, agentType, modelId } = body
+    const { conversationId, projectId, message, agentType, modelId, sceneContext } = body
 
     if (!conversationId || !message || !agentType) {
       return NextResponse.json(
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       userMessage: message,
       agentType: agentType as AgentType,
       modelId,
+      sceneContext,
     })
 
     // Return response in expected format for client
