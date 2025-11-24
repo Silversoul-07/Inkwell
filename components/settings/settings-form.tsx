@@ -115,82 +115,124 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
+      <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <h3 className="text-lg font-semibold">Editor Appearance</h3>
 
-          <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-            <h3 className="text-lg font-semibold">Editor Appearance</h3>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="editorFont">Font</Label>
+            <select
+              id="editorFont"
+              value={editorFont}
+              onChange={e => setEditorFont(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              disabled={loading}
+            >
+              <option value="serif">Serif (Merriweather)</option>
+              <option value="sans">Sans-serif (Inter)</option>
+              <option value="mono">Monospace (JetBrains Mono)</option>
+            </select>
+          </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="editorFont">Font</Label>
-                <select
-                  id="editorFont"
-                  value={editorFont}
-                  onChange={(e) => setEditorFont(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  disabled={loading}
-                >
-                  <option value="serif">Serif (Merriweather)</option>
-                  <option value="sans">Sans-serif (Inter)</option>
-                  <option value="mono">Monospace (JetBrains Mono)</option>
-                </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editorFontSize">Font Size (px)</Label>
+              <Input
+                id="editorFontSize"
+                type="number"
+                min="12"
+                max="32"
+                value={editorFontSize}
+                onChange={e => setEditorFontSize(parseInt(e.target.value))}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editorLineHeight">Line Height</Label>
+              <Input
+                id="editorLineHeight"
+                type="number"
+                step="0.1"
+                min="1"
+                max="3"
+                value={editorLineHeight}
+                onChange={e => setEditorLineHeight(parseFloat(e.target.value))}
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="editorWidth">Editor Width (rem)</Label>
+            <Input
+              id="editorWidth"
+              type="number"
+              min="30"
+              max="80"
+              value={editorWidth}
+              onChange={e => setEditorWidth(parseInt(e.target.value))}
+              disabled={loading}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold">Auto-save & Versioning</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Your work is automatically saved and versioned for easy recovery
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="autoSaveInterval">Auto-save Interval</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                id="autoSaveInterval"
+                type="number"
+                min="10"
+                max="300"
+                value={autoSaveInterval}
+                onChange={e => setAutoSaveInterval(parseInt(e.target.value))}
+                disabled={loading}
+                className="w-24"
+              />
+              <span className="text-sm text-muted-foreground">seconds</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              How often your work is automatically saved. Each save creates a version snapshot that
+              you can restore later.
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium">Version History Enabled</p>
+                <p className="text-xs text-muted-foreground">
+                  All auto-saves are stored as versions. Click the &quot;Version History&quot;
+                  button in the editor to view, compare, and restore previous versions of your
+                  scenes.
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="editorFontSize">Font Size (px)</Label>
-                  <Input
-                    id="editorFontSize"
-                    type="number"
-                    min="12"
-                    max="32"
-                    value={editorFontSize}
-                    onChange={(e) => setEditorFontSize(parseInt(e.target.value))}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="editorLineHeight">Line Height</Label>
-                  <Input
-                    id="editorLineHeight"
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    max="3"
-                    value={editorLineHeight}
-                    onChange={(e) => setEditorLineHeight(parseFloat(e.target.value))}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="editorWidth">Editor Width (rem)</Label>
-                <Input
-                  id="editorWidth"
-                  type="number"
-                  min="30"
-                  max="80"
-                  value={editorWidth}
-                  onChange={(e) => setEditorWidth(parseInt(e.target.value))}
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="autoSaveInterval">Auto-save Interval (seconds)</Label>
-                <Input
-                  id="autoSaveInterval"
-                  type="number"
-                  min="10"
-                  max="300"
-                  value={autoSaveInterval}
-                  onChange={(e) => setAutoSaveInterval(parseInt(e.target.value))}
-                  disabled={loading}
-                />
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium">Recommended Settings</p>
+                <p className="text-xs text-muted-foreground">
+                  30-60 seconds for active writing, 120-180 seconds for longer reading/editing
+                  sessions
+                </p>
               </div>
             </div>
           </div>
+        </div>
+      </div>
       <div className="mt-6 flex justify-end">
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
