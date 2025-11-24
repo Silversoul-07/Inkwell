@@ -13,6 +13,7 @@ import {
   User,
   BookOpen,
   X,
+  FileText,
 } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ai/markdown-renderer";
 import {
@@ -41,25 +42,36 @@ interface Message {
 }
 
 interface DetectedEntity {
-  type: "character" | "lorebook";
+  type: "character" | "lorebook" | "scene";
   data: any;
   saved?: boolean;
+}
+
+interface SceneInfo {
+  id: string;
+  title: string | null;
+  content: string;
+  chapterId: string;
 }
 
 interface AICanvasProps {
   sceneContext: string;
   selectedText: string;
   projectId?: string;
+  sceneInfo?: SceneInfo;
   onReplaceSelection?: (text: string) => void;
   onInsertText?: (text: string) => void;
+  onSceneUpdated?: () => void;
 }
 
 export function AICanvas({
   sceneContext,
   selectedText,
   projectId,
+  sceneInfo,
   onReplaceSelection,
   onInsertText,
+  onSceneUpdated,
 }: AICanvasProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -181,7 +193,11 @@ export function AICanvas({
       try {
         const parsed = JSON.parse(match[1]);
 
-        if (parsed.type === "character" || parsed.type === "lorebook") {
+        if (
+          parsed.type === "character" ||
+          parsed.type === "lorebook" ||
+          parsed.type === "scene"
+        ) {
           entities.push({
             type: parsed.type,
             data: parsed.data,
@@ -194,6 +210,11 @@ export function AICanvas({
     }
 
     return entities;
+  };
+
+  // Helper to strip JSON blocks from markdown for display
+  const stripJsonBlocks = (content: string): string => {
+    return content.replace(/```json\s*\n[\s\S]*?\n```/g, "").trim();
   };
 
   const sendMessage = async () => {
@@ -227,6 +248,7 @@ export function AICanvas({
           message: input,
           projectId,
           modelId: selectedModel,
+          sceneContext: sceneInfo,
         }),
       });
 
@@ -344,6 +366,62 @@ export function AICanvas({
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || "Failed to save lorebook entry");
           }
+        } else if (entity.type === "scene") {
+          // Save scene (create or update)
+          const action = item.action || "create";
+          const wordCount = item.content
+            ? item.content.split(/\s+/).filter((w: string) => w.length > 0)
+                .length
+            : 0;
+
+          if (action === "update" && sceneInfo) {
+            // Update existing scene
+            const response = await fetch(`/api/scenes/${sceneInfo.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: item.title || sceneInfo.title,
+                content: item.content || "",
+                wordCount,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || "Failed to update scene");
+            }
+
+            // Notify parent component
+            if (onSceneUpdated) {
+              onSceneUpdated();
+            }
+          } else if (action === "create" && sceneInfo) {
+            // Create new scene in current chapter
+            const response = await fetch("/api/scenes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chapterId: sceneInfo.chapterId,
+                title: item.title || "New Scene",
+                content: item.content || "",
+                wordCount,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || "Failed to create scene");
+            }
+
+            // Notify parent component
+            if (onSceneUpdated) {
+              onSceneUpdated();
+            }
+          } else {
+            throw new Error(
+              "Cannot save scene: missing scene context or invalid action",
+            );
+          }
         }
       }
 
@@ -361,7 +439,11 @@ export function AICanvas({
 
       const entityCount = dataArray.length;
       const entityName =
-        entity.type === "character" ? "character" : "lorebook entry";
+        entity.type === "character"
+          ? "character"
+          : entity.type === "lorebook"
+            ? "lorebook entry"
+            : "scene";
       const pluralSuffix = entityCount > 1 ? "s" : "";
 
       toast({
@@ -421,11 +503,17 @@ export function AICanvas({
             <div className="flex items-center gap-2">
               {entity.type === "character" ? (
                 <User className="h-4 w-4 text-primary" />
-              ) : (
+              ) : entity.type === "lorebook" ? (
                 <BookOpen className="h-4 w-4 text-primary" />
+              ) : (
+                <FileText className="h-4 w-4 text-primary" />
               )}
               <CardTitle className="text-sm">
-                {entity.type === "character" ? "Character" : "Lorebook Entry"}
+                {entity.type === "character"
+                  ? "Character"
+                  : entity.type === "lorebook"
+                    ? "Lorebook Entry"
+                    : "Scene"}
                 {dataArray.length > 1 && ` (${dataArray.length})`}
               </CardTitle>
             </div>
@@ -485,7 +573,7 @@ export function AICanvas({
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : entity.type === "lorebook" ? (
                 <div className="space-y-1.5 text-sm">
                   <div className="font-semibold text-foreground">
                     {item.key || "Unnamed"}
@@ -501,6 +589,22 @@ export function AICanvas({
                     </div>
                   )}
                 </div>
+              ) : (
+                <div className="space-y-1.5 text-sm">
+                  <div className="font-semibold text-foreground">
+                    {item.title || "Untitled Scene"}
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {item.action === "update" ? "Update Scene" : "New Scene"}
+                  </Badge>
+                  {item.content && (
+                    <div className="text-muted-foreground text-xs mt-2 max-h-32 overflow-y-auto">
+                      {item.content.length > 200
+                        ? item.content.substring(0, 200) + "..."
+                        : item.content}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           ))}
@@ -511,9 +615,9 @@ export function AICanvas({
 
   return (
     <div className="w-full h-full flex flex-col bg-background">
-      {/* Header with clear button */}
-      {messages.length > 0 && (
-        <div className="border-b border-border px-6 py-3 flex items-center justify-between">
+      {/* Header with scene indicator and clear button */}
+      <div className="border-b border-border px-6 py-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">AI Storm</span>
@@ -521,17 +625,30 @@ export function AICanvas({
               Flexible Mode
             </Badge>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearConversation}
-            className="h-8 text-xs"
-          >
-            <Trash2 className="h-3 w-3 mr-1" />
-            Clear Chat
-          </Button>
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearConversation}
+              className="h-8 text-xs"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Clear Chat
+            </Button>
+          )}
         </div>
-      )}
+        {sceneInfo && (
+          <div className="mt-2 flex items-center gap-2">
+            <FileText className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              Selected scene:{" "}
+              <span className="font-medium text-foreground">
+                {sceneInfo.title || "Untitled Scene"}
+              </span>
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-auto p-6">
@@ -623,7 +740,7 @@ export function AICanvas({
                     {message.content}
                   </p>
                 ) : message.status !== "generating" ? (
-                  <MarkdownRenderer content={message.content} />
+                  <MarkdownRenderer content={stripJsonBlocks(message.content)} />
                 ) : null}
               </div>
 

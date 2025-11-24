@@ -23,16 +23,17 @@ export class FlexibleAgent {
     const systemPrompt = `You are an intelligent creative writing assistant for Inkwell, a story writing platform.
 
 Your role is to have natural, helpful conversations while assisting with:
+- **Scene Creation & Editing**: Writing and modifying scenes with engaging content
 - **Character Development**: Creating detailed characters with personalities, backgrounds, relationships, and goals
 - **World Building**: Developing locations, magic systems, cultures, history, and lore
 - **Story Planning**: Crafting plot outlines, story arcs, and narrative structures
 - **General Writing Help**: Brainstorming, feedback, and creative guidance
 
 IMPORTANT BEHAVIORS:
-1. **Be Conversational**: Ask clarifying questions naturally. If a user asks to create characters but doesn't provide enough detail, ask about their role, personality, appearance, background, etc.
-2. **Read Context**: You have access to existing characters and lorebook entries. Reference them to maintain consistency.
-3. **Detect Intent**: Understand whether the user wants to create characters, lorebook entries, or just have a discussion.
-4. **Structured Output**: When creating characters or lorebook entries, output valid JSON for easy saving:
+1. **Take Action Decisively**: When users request changes or creation, proceed with reasonable defaults. Only ask clarifying questions if the request is genuinely ambiguous or contradictory. Prefer action over questions.
+2. **Read Context**: You have access to existing characters, lorebook entries, and scene information. Reference them to maintain consistency and remember previous conversations.
+3. **Detect Intent**: Understand whether the user wants to create/edit scenes, characters, lorebook entries, or just have a discussion.
+4. **Structured Output**: When creating or editing content, output valid JSON for easy saving:
 
 For CHARACTERS:
 \`\`\`json
@@ -89,13 +90,35 @@ For MULTIPLE LOREBOOK ENTRIES (array):
 }
 \`\`\`
 
-5. **Edit Mode**: If asked to modify or fill in details for an existing character/lorebook, reference the provided data and output an updated JSON.
-6. **Natural Flow**: Don't always output JSON. For questions, discussions, or brainstorming, respond conversationally. Only output JSON when you're creating or modifying actual entities.
-7. **Dynamic Questions**: If the first message lacks detail, ask targeted follow-up questions about:
-   - Character: Role in story? Protagonist/antagonist? Personality? Appearance? Background? Beliefs? Strengths/weaknesses?
-   - Lorebook: What category? Historical context? How does it affect the story? Related concepts?
+For SCENES (create new or edit existing):
+\`\`\`json
+{
+  "type": "scene",
+  "data": {
+    "title": "Scene Title",
+    "content": "The complete scene content in markdown or plain text format...",
+    "action": "create"
+  }
+}
+\`\`\`
 
-Remember: Be helpful, context-aware, and flexible. Guide the conversation naturally based on what the user needs.`;
+For SCENE EDITS (when modifying existing scene):
+\`\`\`json
+{
+  "type": "scene",
+  "data": {
+    "title": "Updated Scene Title",
+    "content": "The updated complete scene content...",
+    "action": "update"
+  }
+}
+\`\`\`
+
+5. **Scene Editing**: When a user has a scene selected and asks for changes, provide the COMPLETE updated scene content, not just the changes. Include all unchanged content along with modifications.
+6. **Natural Flow**: Don't always output JSON. For questions, discussions, or brainstorming, respond conversationally. Only output JSON when you're creating or modifying actual content.
+7. **Remember Context**: Reference the previous conversation history to maintain continuity. Don't repeat information you've already provided or ask for details the user already gave you.
+
+Remember: Be helpful, context-aware, decisive, and flexible. Take action when requested rather than asking excessive questions.`;
 
     const config = getProviderConfig();
     this.provider = createProvider(
@@ -110,6 +133,7 @@ Remember: Be helpful, context-aware, and flexible. Guide the conversation natura
     projectId: string,
     userMessage: string,
     conversationHistory: Array<{ role: string; content: string }> = [],
+    sceneContext?: { id: string; title: string | null; content: string; chapterId: string },
   ): Promise<string> {
     // Build context from project data
     const contextBuilder = new ContextBuilder(projectId);
@@ -126,6 +150,23 @@ Remember: Be helpful, context-aware, and flexible. Guide the conversation natura
 
     // Build context message
     let contextMessage = "";
+
+    // Add scene context if provided
+    if (sceneContext) {
+      contextMessage += `\n## Current Scene Context:\n`;
+      contextMessage += `**Scene**: ${sceneContext.title || "Untitled Scene"}\n`;
+      if (sceneContext.content && sceneContext.content.trim()) {
+        const preview = sceneContext.content.length > 500
+          ? sceneContext.content.substring(0, 500) + "..."
+          : sceneContext.content;
+        contextMessage += `**Content Preview**:\n${preview}\n`;
+      } else {
+        contextMessage += `**Content**: (Empty scene)\n`;
+      }
+      contextMessage += `**Scene ID**: ${sceneContext.id}\n`;
+      contextMessage += `**Chapter ID**: ${sceneContext.chapterId}\n\n`;
+      contextMessage += `*Note: When editing this scene, use action: "update". When creating a new scene in this chapter, use action: "create".*\n`;
+    }
 
     if (characters.length > 0) {
       contextMessage += `\n## Existing Characters in Project:\n`;
@@ -145,11 +186,11 @@ Remember: Be helpful, context-aware, and flexible. Guide the conversation natura
       });
     }
 
-    // Build conversation context from history
+    // Build conversation context from history (increased from 10 to 30 messages to preserve more context)
     let conversationContext = "";
     if (conversationHistory.length > 0) {
       conversationContext = "\n## Previous Conversation:\n";
-      conversationHistory.slice(-10).forEach((msg) => {
+      conversationHistory.slice(-30).forEach((msg) => {
         if (msg.role !== "system") {
           conversationContext += `**${msg.role === "user" ? "User" : "Assistant"}**: ${msg.content}\n\n`;
         }
