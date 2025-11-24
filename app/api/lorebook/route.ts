@@ -22,6 +22,18 @@ export async function POST(request: NextRequest) {
       searchable = true,
       regexPattern,
       contextStrategy = 'full',
+      thumbnail,
+      images,
+      subcategory,
+      relatedEntries,
+      tags,
+      aliases,
+      color,
+      summary,
+      spoilerLevel = 0,
+      timeframe,
+      isCanon = true,
+      isArchived = false,
     } = body
 
     const project = await prisma.project.findUnique({
@@ -44,6 +56,18 @@ export async function POST(request: NextRequest) {
         searchable,
         regexPattern,
         contextStrategy,
+        thumbnail,
+        images,
+        subcategory,
+        relatedEntries,
+        tags,
+        aliases,
+        color,
+        summary,
+        spoilerLevel,
+        timeframe,
+        isCanon,
+        isArchived,
       },
     })
 
@@ -78,7 +102,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    const where: any = { projectId }
+    const where: any = { projectId, isArchived: false }
     if (category) {
       where.category = category
     }
