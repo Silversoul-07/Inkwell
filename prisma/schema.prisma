@@ -133,50 +133,13 @@ model Chapter {
 
   title     String
   order     Int
-  content   String?  @default("")  // For chapters without scenes
-  wordCount Int?     @default(0)   // For chapters without scenes
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  scenes    Scene[]
-
-  @@index([projectId, order])
-}
-
-model Scene {
-  id        String   @id @default(uuid())
-  chapterId String
-  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-
-  title     String?
   content   String   @default("")
   wordCount Int      @default(0)
-  order     Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  versions  Version[]
-
-  @@index([chapterId, order])
-}
-
-model Version {
-  id         String   @id @default(uuid())
-  sceneId    String
-  scene      Scene    @relation(fields: [sceneId], references: [id], onDelete: Cascade)
-
-  content    String
-  branchName String?
-  parentId   String?  // For version tree
-  isActive   Boolean  @default(false)
-  wordCount  Int      @default(0)
-
-  createdAt  DateTime @default(now())
-
-  @@index([sceneId])
-  @@index([parentId])
+  @@index([projectId, order])
 }
 
 model Character {

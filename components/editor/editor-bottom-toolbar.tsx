@@ -1,6 +1,5 @@
 'use client'
 
-import { History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface EditorBottomToolbarProps {
@@ -9,8 +8,6 @@ interface EditorBottomToolbarProps {
   writingTime?: number
   lastSaved?: Date | null
   chapterTitle?: string
-  sceneTitle?: string
-  onShowVersionHistory?: () => void
 }
 
 export function EditorBottomToolbar({
@@ -19,8 +16,6 @@ export function EditorBottomToolbar({
   writingTime = 0,
   lastSaved,
   chapterTitle,
-  sceneTitle,
-  onShowVersionHistory,
 }: EditorBottomToolbarProps) {
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
@@ -60,19 +55,12 @@ export function EditorBottomToolbar({
           </div>
         </div>
 
-        {/* Right: Auto save and Version History */}
+        {/* Right: Auto save */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5"></div>
           <span className="text-green-500">● Auto Save</span>
           <div className="flex items-center gap-1.5">
             <span>Last saved: {formatLastSaved(lastSaved)}</span>
           </div>
-          {onShowVersionHistory && (
-            <Button variant="ghost" size="sm" onClick={onShowVersionHistory} className="h-7 px-2">
-              <History className="w-3 h-3 mr-1" />
-              Version History
-            </Button>
-          )}
         </div>
       </div>
     </div>

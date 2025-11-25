@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { EditorSidebarNew } from './editor-sidebar'
 import { TiptapEditorNovelAI } from './tiptap-editor-novelai'
@@ -9,24 +9,16 @@ import { AICanvas } from './ai-canvas'
 import { PomodoroTimer } from './pomodoro-timer'
 import { SettingsDialog } from '@/components/dialogs/settings-dialog'
 import { ContentViewer } from './content-viewer'
-import { SceneContextPanel } from './scene-context-panel'
 import { AIContextIndicator } from './ai-context-indicator'
 import { ChapterNavigation } from './chapter-navigation'
 import { ChapterViewer } from './chapter-viewer'
-
-interface Scene {
-  id: string
-  title: string | null
-  content: string
-  wordCount: number
-  order: number
-}
 
 interface Chapter {
   id: string
   title: string
   order: number
-  scenes: Scene[]
+  content: string | null
+  wordCount: number | null
 }
 
 interface Project {
@@ -65,7 +57,7 @@ interface LorebookEntry {
   useCount: number
 }
 
-type ViewType = 'scene' | 'character' | 'lorebook'
+type ViewType = 'chapter' | 'character' | 'lorebook'
 type EditorMode = 'writing' | 'ai-storm'
 
 interface EditorViewProps {
@@ -77,55 +69,52 @@ interface EditorViewProps {
 export function EditorView({ project, settings, isReadOnly = false }: EditorViewProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // Derive initial mode from URL instead of setting state in effect
+  const getInitialMode = (): EditorMode => {
+    const modeParam = searchParams.get('mode')
+    if (modeParam === 'ai' || modeParam === 'ai-storm') {
+      return 'ai-storm'
+    } else if (modeParam === 'writing' || modeParam === 'writer') {
+      return 'writing'
+    }
+    return 'writing' // default
+  }
+
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [editorMode, setEditorMode] = useState<EditorMode>('writing')
+  const [editorMode, setEditorMode] = useState<EditorMode>(getInitialMode())
   const [contextPanelOpen, setContextPanelOpen] = useState(false)
   const [pomodoroOpen, setPomodoroOpen] = useState(false)
   const [zenMode, setZenMode] = useState(false)
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
-  const [sceneContext, setSceneContext] = useState('')
+  const [chapterContext, setChapterContext] = useState('')
   const [selectedText, setSelectedText] = useState('')
 
-  const [selectedSceneId, setSelectedSceneId] = useState<string>(
-    project.chapters[0]?.scenes[0]?.id || ''
-  )
   const [selectedChapterId, setSelectedChapterId] = useState<string>(project.chapters[0]?.id || '')
-  const [viewType, setViewType] = useState<ViewType>('scene')
+  const [viewType, setViewType] = useState<ViewType>('chapter')
   const [viewContent, setViewContent] = useState<Character | LorebookEntry | null>(null)
 
-  const selectedScene = project.chapters.flatMap(c => c.scenes).find(s => s.id === selectedSceneId)
-
-  const selectedChapter = isReadOnly
-    ? project.chapters.find(c => c.id === selectedChapterId)
-    : project.chapters.find(c => c.scenes.some(s => s.id === selectedSceneId))
-
-  // Initialize mode from URL on mount
-  useEffect(() => {
-    const modeParam = searchParams.get('mode')
-    if (modeParam === 'ai' || modeParam === 'ai-storm') {
-      setEditorMode('ai-storm')
-    } else if (modeParam === 'writing' || modeParam === 'writer') {
-      setEditorMode('writing')
-    }
-    // Default is 'writing' if no param or invalid param
-  }, [searchParams])
+  const selectedChapter = project.chapters.find(c => c.id === selectedChapterId)
 
   const handleRefresh = useCallback(() => {
     router.refresh()
   }, [router])
 
   // Handle mode change with URL update
-  const handleModeChange = useCallback((mode: EditorMode) => {
-    setEditorMode(mode)
-    const modeParam = mode === 'ai-storm' ? 'ai' : 'writing'
-    const url = new URL(window.location.href)
-    url.searchParams.set('mode', modeParam)
-    router.push(url.pathname + url.search, { scroll: false })
-  }, [router])
+  const handleModeChange = useCallback(
+    (mode: EditorMode) => {
+      setEditorMode(mode)
+      const modeParam = mode === 'ai-storm' ? 'ai' : 'writing'
+      const url = new URL(window.location.href)
+      url.searchParams.set('mode', modeParam)
+      router.push(url.pathname + url.search, { scroll: false })
+    },
+    [router]
+  )
 
-  const handleSelectScene = useCallback((sceneId: string) => {
-    setSelectedSceneId(sceneId)
-    setViewType('scene')
+  const handleSelectScene = useCallback((chapterId: string) => {
+    setSelectedChapterId(chapterId)
+    setViewType('chapter')
     setViewContent(null)
   }, [])
 
@@ -140,7 +129,7 @@ export function EditorView({ project, settings, isReadOnly = false }: EditorView
   }, [])
 
   const handleBackToScene = useCallback(() => {
-    setViewType('scene')
+    setViewType('chapter')
     setViewContent(null)
   }, [])
 
@@ -191,36 +180,35 @@ export function EditorView({ project, settings, isReadOnly = false }: EditorView
         {!zenMode && sidebarOpen && (
           <EditorSidebarNew
             project={project}
-            selectedSceneId={selectedSceneId}
-            onSelectScene={handleSelectScene}
+            selectedChapterId={selectedChapterId}
+            onSelectChapter={handleSelectScene}
             onRefresh={handleRefresh}
             onViewCharacter={handleViewCharacter}
             onViewLorebook={handleViewLorebook}
-            selectedViewType={viewType}
-            selectedViewId={viewContent?.id || selectedSceneId}
+            selectedViewType={viewType !== 'chapter' ? viewType : undefined}
+            selectedViewId={viewContent?.id}
           />
         )}
 
         <div className="flex-1 min-w-0 overflow-auto relative">
           {/* Writing Mode - Show Editor */}
-          {editorMode === 'writing' && viewType === 'scene' && selectedScene && (
+          {editorMode === 'writing' && viewType === 'chapter' && selectedChapter && (
             <TiptapEditorNovelAI
-              key={selectedScene.id}
-              scene={selectedScene}
+              key={selectedChapter.id}
+              chapter={selectedChapter}
               projectId={project.id}
               settings={settings}
               zenMode={zenMode}
               onExitZen={() => setZenMode(false)}
-              chapterTitle={selectedChapter?.title}
-              sceneTitle={selectedScene.title || undefined}
+              chapterTitle={selectedChapter.title}
             />
           )}
 
           {/* Writing Mode - Character/Lorebook View */}
-          {editorMode === 'writing' && viewType !== 'scene' && viewContent && (
+          {editorMode === 'writing' && viewType !== 'chapter' && viewContent && (
             <ContentViewer
               key={viewContent.id}
-              type={viewType}
+              type={viewType as 'character' | 'lorebook'}
               content={viewContent}
               projectId={project.id}
               onBack={handleBackToScene}
@@ -228,16 +216,16 @@ export function EditorView({ project, settings, isReadOnly = false }: EditorView
           )}
 
           {/* AI Storm Mode - Show AI Canvas */}
-          {editorMode === 'ai-storm' && selectedScene && selectedChapter && (
+          {editorMode === 'ai-storm' && selectedChapter && (
             <div className="w-full h-full flex flex-col bg-background">
               <AICanvas
-                sceneContext={sceneContext || selectedScene.content}
+                sceneContext={chapterContext || selectedChapter.content || ''}
                 selectedText={selectedText}
                 projectId={project.id}
                 sceneInfo={{
-                  id: selectedScene.id,
-                  title: selectedScene.title,
-                  content: selectedScene.content,
+                  id: selectedChapter.id,
+                  title: selectedChapter.title,
+                  content: selectedChapter.content || '',
                   chapterId: selectedChapter.id,
                 }}
                 onReplaceSelection={() => {}}
@@ -248,15 +236,7 @@ export function EditorView({ project, settings, isReadOnly = false }: EditorView
           )}
         </div>
 
-        {/* Scene Context Panel - Writing Mode only */}
-        {!zenMode && editorMode === 'writing' && contextPanelOpen && selectedScene && (
-          <SceneContextPanel
-            sceneContent={selectedScene.content}
-            projectId={project.id}
-            onViewCharacter={handleViewCharacter}
-            onViewLorebook={handleViewLorebook}
-          />
-        )}
+        {/* Context panel removed - no longer needed for chapters */}
 
         {/* Optional: Additional side panel for AI Storm mode if needed */}
         {/* Removed duplicate AI Canvas from side panel since it's now in main area */}

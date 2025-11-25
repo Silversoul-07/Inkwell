@@ -21,11 +21,7 @@ export async function GET(request: NextRequest) {
     const project = await prisma.project.findUnique({
       where: { id: projectId, userId: session.user.id },
       include: {
-        chapters: {
-          include: {
-            scenes: true,
-          },
-        },
+        chapters: true,
         writingSessions: {
           orderBy: { date: 'desc' },
           take: 30, // Last 30 sessions
@@ -39,8 +35,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate statistics
     const totalWords = project.chapters.reduce(
-      (total: number, chapter: any) =>
-        total + chapter.scenes.reduce((sum: number, scene: any) => sum + scene.wordCount, 0),
+      (total: number, chapter: any) => total + (chapter.wordCount || 0),
       0
     )
 
@@ -124,19 +119,16 @@ export async function GET(request: NextRequest) {
     longestStreak = Math.max(longestStreak, tempStreak)
 
     // Average words per session
-    const avgWordsPerSession =
-      totalSessions > 0 ? Math.round(totalWordsWritten / totalSessions) : 0
+    const avgWordsPerSession = totalSessions > 0 ? Math.round(totalWordsWritten / totalSessions) : 0
 
     // Average session duration
-    const avgSessionDuration =
-      totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0
+    const avgSessionDuration = totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0
 
     // Chapter pacing (words per chapter)
     const chapterPacing = project.chapters.map((chapter: any) => ({
       id: chapter.id,
       title: chapter.title,
-      wordCount: chapter.scenes.reduce((sum: number, scene: any) => sum + scene.wordCount, 0),
-      sceneCount: chapter.scenes.length,
+      wordCount: chapter.wordCount || 0,
     }))
 
     return NextResponse.json({

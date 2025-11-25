@@ -17,7 +17,6 @@ import {
 } from 'lucide-react'
 import { AlternativesDialog } from './alternatives-dialog'
 import { EditorContextMenu } from './editor-context-menu'
-import { VersionHistory } from './version-history'
 import { Button } from '@/components/ui/button'
 import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 import { EditorBottomToolbar } from './editor-bottom-toolbar'
@@ -25,9 +24,9 @@ import { cn } from '@/lib/utils'
 
 interface Scene {
   id: string
-  title: string | null
-  content: string
-  wordCount: number
+  title: string
+  content: string | null
+  wordCount: number | null
 }
 
 interface Settings {
@@ -39,13 +38,12 @@ interface Settings {
 }
 
 interface TiptapEditorNovelAIProps {
-  scene: Scene
+  chapter: Scene
   projectId: string
   settings: Settings | null
   zenMode: boolean
   onExitZen: () => void
   chapterTitle?: string
-  sceneTitle?: string
   projectMetadata?: {
     genre?: string
     pov?: string
@@ -54,16 +52,15 @@ interface TiptapEditorNovelAIProps {
 }
 
 export function TiptapEditorNovelAI({
-  scene,
+  chapter,
   projectId,
   settings,
   zenMode,
   onExitZen,
   chapterTitle,
-  sceneTitle,
   projectMetadata,
 }: TiptapEditorNovelAIProps) {
-  const [wordCount, setWordCount] = useState(scene.wordCount)
+  const [wordCount, setWordCount] = useState(chapter.wordCount || 0)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -75,7 +72,6 @@ export function TiptapEditorNovelAI({
   } | null>(null)
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [alternatives, setAlternatives] = useState<string[]>([])
-  const [showVersionHistory, setShowVersionHistory] = useState(false)
 
   // Template-based prompt generation
   const [useCustomTemplates, setUseCustomTemplates] = useState(true)
@@ -117,7 +113,7 @@ export function TiptapEditorNovelAI({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [StarterKit as any],
-    content: scene.content,
+    content: chapter.content,
     editorProps: {
       attributes: {
         class: 'prose prose-lg focus:outline-none min-h-full',
@@ -168,31 +164,15 @@ export function TiptapEditorNovelAI({
 
     setIsSaving(true)
     try {
-      // Update the scene content (for backward compatibility)
-      const sceneResponse = await fetch(`/api/scenes/${scene.id}`, {
+      // Update the chapter content
+      const chapterResponse = await fetch(`/api/chapters/${chapter.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, wordCount: words }),
       })
 
-      if (!sceneResponse.ok) {
-        throw new Error('Failed to save scene')
-      }
-
-      // Create a new version for history tracking
-      const versionResponse = await fetch('/api/versions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sceneId: scene.id,
-          content,
-          branchName: 'Auto-save',
-          isActive: true,
-        }),
-      })
-
-      if (!versionResponse.ok) {
-        console.error('Failed to create version, but scene was saved')
+      if (!chapterResponse.ok) {
+        throw new Error('Failed to save chapter')
       }
 
       setLastSaved(new Date())
@@ -203,7 +183,7 @@ export function TiptapEditorNovelAI({
     } finally {
       setIsSaving(false)
     }
-  }, [editor, scene.id])
+  }, [editor, chapter.id])
 
   // Auto-save effect
   useEffect(() => {
@@ -594,23 +574,11 @@ export function TiptapEditorNovelAI({
         onSelect={handleSelectAlternative}
       />
 
-      {/* Version History Dialog */}
-      <VersionHistory
-        open={showVersionHistory}
-        onOpenChange={setShowVersionHistory}
-        sceneId={scene.id}
-        onRestore={() => {
-          // Refresh will be triggered by the version history component
-        }}
-      />
-
       <EditorBottomToolbar
         wordCount={wordCount}
         characterCount={characterCount}
         lastSaved={lastSaved}
         chapterTitle={chapterTitle}
-        sceneTitle={sceneTitle}
-        onShowVersionHistory={() => setShowVersionHistory(true)}
       />
     </div>
   )

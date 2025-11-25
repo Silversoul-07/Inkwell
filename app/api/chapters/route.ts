@@ -34,24 +34,18 @@ export async function POST(request: NextRequest) {
     // Calculate next order
     const nextOrder = (project.chapters[0]?.order || 0) + 1
 
-    // Create chapter without any scenes (scenes are now optional)
+    // Create chapter
     const chapter = await prisma.chapter.create({
       data: {
         title: title || `Chapter ${nextOrder}`,
         order: nextOrder,
         projectId,
       },
-      include: {
-        scenes: true,
-      },
     })
 
     return NextResponse.json(chapter)
   } catch (error) {
     console.error('Chapter creation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

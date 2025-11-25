@@ -24,11 +24,7 @@ export default async function DashboardPage() {
       updatedAt: 'desc',
     },
     include: {
-      chapters: {
-        include: {
-          scenes: true,
-        },
-      },
+      chapters: true,
     },
   })
 
