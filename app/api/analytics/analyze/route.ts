@@ -21,26 +21,26 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { text, sceneId, projectId } = body
+    const { text, chapterId, projectId } = body
 
     let contentToAnalyze = text
 
-    // If sceneId provided, fetch scene content
-    if (sceneId && !text) {
-      const scene = await prisma.scene.findFirst({
-        where: { id: sceneId },
-        include: { chapter: { include: { project: true } } },
+    // If chapterId provided, fetch chapter content
+    if (chapterId && !text) {
+      const chapter = await prisma.chapter.findFirst({
+        where: { id: chapterId },
+        include: { project: true },
       })
 
-      if (!scene || scene.chapter.project.userId !== session.user.id) {
-        return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
+      if (!chapter || chapter.project.userId !== session.user.id) {
+        return NextResponse.json({ error: 'Chapter not found' }, { status: 404 })
       }
 
-      contentToAnalyze = scene.content
+      contentToAnalyze = chapter.content
     }
 
     // If projectId provided, analyze entire project
-    if (projectId && !text && !sceneId) {
+    if (projectId && !text && !chapterId) {
       const project = await prisma.project.findFirst({
         where: {
           id: projectId,
@@ -48,9 +48,6 @@ export async function POST(request: NextRequest) {
         },
         include: {
           chapters: {
-            include: {
-              scenes: true,
-            },
             orderBy: { order: 'asc' },
           },
         },
@@ -60,9 +57,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Project not found' }, { status: 404 })
       }
 
-      // Combine all scene content
-      const allScenes = project.chapters.flatMap((ch: any) => ch.scenes)
-      contentToAnalyze = allScenes.map((s: any) => s.content).join('\n\n')
+      // Combine all chapter content
+      const allChapters = project.chapters
+      contentToAnalyze = allChapters.map((ch: any) => ch.content).join('\n\n')
     }
 
     if (!contentToAnalyze) {

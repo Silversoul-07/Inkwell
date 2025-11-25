@@ -1,7 +1,15 @@
-"use client"
+'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, User, Book, MapPin, Sparkles, Image as ImageIcon } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  User,
+  Book,
+  MapPin,
+  Sparkles,
+  Image as ImageIcon,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -78,24 +86,20 @@ export function EnhancedPreviewPanel({
   } | null>(null)
 
   // Detect mentioned characters and lorebook entries
-  const mentionedCharacters = characters.filter((char) => {
+  const mentionedCharacters = characters.filter(char => {
     const aliases = char.aliases ? JSON.parse(char.aliases) : []
     const names = [char.name, ...aliases]
-    return names.some((name) =>
-      new RegExp(`\\b${name}\\b`, 'i').test(sceneContent)
-    )
+    return names.some(name => new RegExp(`\\b${name}\\b`, 'i').test(sceneContent))
   })
 
-  const triggeredLorebook = lorebookEntries.filter((entry) => {
+  const triggeredLorebook = lorebookEntries.filter(entry => {
     const aliases = entry.aliases ? JSON.parse(entry.aliases) : []
     const keywords = [entry.key, ...aliases]
-    return keywords.some((keyword) =>
-      new RegExp(`\\b${keyword}\\b`, 'i').test(sceneContent)
-    )
+    return keywords.some(keyword => new RegExp(`\\b${keyword}\\b`, 'i').test(sceneContent))
   })
 
   const toggleSection = (section: 'characters' | 'lorebook') => {
-    setExpandedSections((prev) => ({
+    setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section],
     }))
@@ -122,15 +126,11 @@ export function EnhancedPreviewPanel({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <h3 className="text-2xl font-bold">{character.name}</h3>
-            {character.isMainCharacter && (
-              <Badge variant="default">Main Character</Badge>
-            )}
+            {character.isMainCharacter && <Badge variant="default">Main Character</Badge>}
           </div>
 
           {aliases.length > 0 && (
-            <div className="text-sm text-muted-foreground">
-              Also known as: {aliases.join(', ')}
-            </div>
+            <div className="text-sm text-muted-foreground">Also known as: {aliases.join(', ')}</div>
           )}
 
           <div className="flex flex-wrap gap-2">
@@ -305,23 +305,19 @@ export function EnhancedPreviewPanel({
             <h3 className="text-2xl font-bold">{entry.key}</h3>
             <div className="flex gap-1">
               {!entry.isCanon && <Badge variant="outline">Non-Canon</Badge>}
-              {entry.spoilerLevel > 0 && (
+              {(entry.spoilerLevel ?? 0) > 0 && (
                 <Badge variant="destructive">Spoiler {entry.spoilerLevel}</Badge>
               )}
             </div>
           </div>
 
           {aliases.length > 0 && (
-            <div className="text-sm text-muted-foreground">
-              Also known as: {aliases.join(', ')}
-            </div>
+            <div className="text-sm text-muted-foreground">Also known as: {aliases.join(', ')}</div>
           )}
 
           <div className="flex flex-wrap gap-2">
             {entry.category && <Badge variant="outline">{entry.category}</Badge>}
-            {entry.subcategory && (
-              <Badge variant="secondary">{entry.subcategory}</Badge>
-            )}
+            {entry.subcategory && <Badge variant="secondary">{entry.subcategory}</Badge>}
             {entry.timeframe && (
               <Badge variant="outline" className="text-xs">
                 {entry.timeframe}
@@ -353,9 +349,7 @@ export function EnhancedPreviewPanel({
 
           <div>
             <h4 className="font-semibold mb-2">Full Description</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {entry.value}
-            </p>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{entry.value}</p>
           </div>
 
           {images.length > 0 && (
@@ -422,7 +416,7 @@ export function EnhancedPreviewPanel({
                       No characters detected
                     </p>
                   ) : (
-                    mentionedCharacters.map((char) => (
+                    mentionedCharacters.map(char => (
                       <button
                         key={char.id}
                         onClick={() => setSelectedItem({ type: 'character', data: char })}
@@ -452,9 +446,7 @@ export function EnhancedPreviewPanel({
                               </div>
                             )}
                           </div>
-                          {char.isMainCharacter && (
-                            <Sparkles className="h-3 w-3 text-yellow-500" />
-                          )}
+                          {char.isMainCharacter && <Sparkles className="h-3 w-3 text-yellow-500" />}
                         </div>
                       </button>
                     ))
@@ -488,12 +480,10 @@ export function EnhancedPreviewPanel({
                       No lorebook entries detected
                     </p>
                   ) : (
-                    triggeredLorebook.map((entry) => (
+                    triggeredLorebook.map(entry => (
                       <button
                         key={entry.id}
-                        onClick={() =>
-                          setSelectedItem({ type: 'lorebook', data: entry })
-                        }
+                        onClick={() => setSelectedItem({ type: 'lorebook', data: entry })}
                         className="w-full text-left px-3 py-2 rounded hover:bg-accent transition-colors"
                       >
                         <div className="flex items-start gap-2">
@@ -507,13 +497,9 @@ export function EnhancedPreviewPanel({
                             <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">
-                              {entry.key}
-                            </div>
+                            <div className="font-medium text-sm truncate">{entry.key}</div>
                             {entry.category && (
-                              <div className="text-xs text-muted-foreground">
-                                {entry.category}
-                              </div>
+                              <div className="text-xs text-muted-foreground">{entry.category}</div>
                             )}
                           </div>
                         </div>
@@ -528,10 +514,7 @@ export function EnhancedPreviewPanel({
       </div>
 
       {/* Preview Dialog */}
-      <Dialog
-        open={selectedItem !== null}
-        onOpenChange={(open) => !open && setSelectedItem(null)}
-      >
+      <Dialog open={selectedItem !== null} onOpenChange={open => !open && setSelectedItem(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -546,7 +529,7 @@ export function EnhancedPreviewPanel({
           <ScrollArea className="max-h-[70vh]">
             {selectedItem?.type === 'character'
               ? renderCharacterPreview(selectedItem.data as Character)
-              : renderLorebookPreview(selectedItem.data as LorebookEntry)}
+              : selectedItem && renderLorebookPreview(selectedItem.data as LorebookEntry)}
           </ScrollArea>
         </DialogContent>
       </Dialog>

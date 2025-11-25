@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Plus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CharacterCard } from './character-card'
-import { CreateCharacterDialog } from './create-character-dialog'
+import { CreateCharacterDialogEnhanced } from './create-character-dialog-enhanced'
 import { CharacterChatDialog } from './character-chat-dialog'
 
 interface Character {
@@ -26,10 +26,7 @@ interface CharacterManagerProps {
   initialCharacters: Character[]
 }
 
-export function CharacterManager({
-  projectId,
-  initialCharacters,
-}: CharacterManagerProps) {
+export function CharacterManager({ projectId, initialCharacters }: CharacterManagerProps) {
   const [characters, setCharacters] = useState<Character[]>(initialCharacters)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
@@ -40,13 +37,11 @@ export function CharacterManager({
   }
 
   const handleCharacterUpdated = (updatedCharacter: Character) => {
-    setCharacters(
-      characters.map((c) => (c.id === updatedCharacter.id ? updatedCharacter : c))
-    )
+    setCharacters(characters.map(c => (c.id === updatedCharacter.id ? updatedCharacter : c)))
   }
 
   const handleCharacterDeleted = (characterId: string) => {
-    setCharacters(characters.filter((c) => c.id !== characterId))
+    setCharacters(characters.filter(c => c.id !== characterId))
   }
 
   const handleSelectForChat = (character: Character) => {
@@ -81,7 +76,7 @@ export function CharacterManager({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {characters.map((character) => (
+          {characters.map(character => (
             <CharacterCard
               key={character.id}
               character={character}
@@ -93,7 +88,7 @@ export function CharacterManager({
         </div>
       )}
 
-      <CreateCharacterDialog
+      <CreateCharacterDialogEnhanced
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         projectId={projectId}

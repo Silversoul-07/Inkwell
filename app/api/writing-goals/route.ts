@@ -131,18 +131,13 @@ export async function GET(request: NextRequest) {
           const project = await prisma.project.findUnique({
             where: { id: goal.projectId },
             include: {
-              chapters: {
-                include: {
-                  scenes: true,
-                },
-              },
+              chapters: true,
             },
           })
 
           if (project) {
             wordsWritten = project.chapters.reduce(
-              (sum: number, chapter: any) =>
-                sum + chapter.scenes.reduce((s: number, scene: any) => s + scene.wordCount, 0),
+              (sum: number, chapter: any) => sum + (chapter.wordCount || 0),
               0
             )
           }

@@ -25,10 +25,7 @@ interface Project {
   updatedAt: Date
   chapters: Array<{
     id: string
-    scenes: Array<{
-      id: string
-      wordCount: number
-    }>
+    wordCount: number | null
   }>
 }
 
@@ -46,10 +43,7 @@ export function ProjectList({ projects }: ProjectListProps) {
   const { isReadOnly } = useReadOnlyMode()
 
   const getTotalWords = (project: Project) => {
-    return project.chapters.reduce(
-      (total, chapter) => total + chapter.scenes.reduce((sum, scene) => sum + scene.wordCount, 0),
-      0
-    )
+    return project.chapters.reduce((total, chapter) => total + (chapter.wordCount || 0), 0)
   }
 
   const handleDeleteClick = (project: Project, e: React.MouseEvent) => {
@@ -206,7 +200,7 @@ export function ProjectList({ projects }: ProjectListProps) {
             <DialogTitle>Delete Project</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete {projectToDelete?.title}? This action cannot be
-              undone. All chapters, scenes, and associated data will be permanently deleted.
+              undone. All chapters and associated data will be permanently deleted.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

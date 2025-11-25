@@ -4,10 +4,9 @@ set -e  # 🎯 Exit immediately if any command fails
 echo "🔧 Running pre-commit checks..."
 
 # Run lint-staged to auto-fix/validate only staged files
-npx lint-staged
+pnpm exec lint-staged
 
-npx tsc --noEmit
-
+pnpm tsc --noEmit
 # echo "🔍 Checking for unused code with Knip..."
 # npx knip --production --cache
 

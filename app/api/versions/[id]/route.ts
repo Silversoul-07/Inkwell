@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { prisma } from '@/lib/prisma'
 
-// PATCH /api/versions/{id} - Update a version (typically to set isActive or branchName)
+// PATCH /api/versions/{id} - Version updates are now handled through chapter updates
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
@@ -11,53 +11,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const body = await request.json()
-    const { isActive, branchName } = body
-
-    // Verify the version belongs to the user's scene
-    const version = await prisma.version.findFirst({
-      where: {
-        id,
-        scene: {
-          chapter: {
-            project: {
-              userId: session.user.id,
-            },
-          },
-        },
-      },
-    })
-
-    if (!version) {
-      return NextResponse.json({ error: 'Version not found' }, { status: 404 })
-    }
-
-    // If setting this version as active, deactivate all others in the scene
-    if (isActive === true) {
-      await prisma.version.updateMany({
-        where: { sceneId: version.sceneId },
-        data: { isActive: false },
-      })
-    }
-
-    // Update the version
-    const updatedVersion = await prisma.version.update({
-      where: { id },
-      data: {
-        ...(isActive !== undefined && { isActive }),
-        ...(branchName !== undefined && { branchName }),
-      },
-    })
-
-    return NextResponse.json({ version: updatedVersion })
+    return NextResponse.json(
+      { error: 'Version updates are now handled through chapter updates' },
+      { status: 400 }
+    )
   } catch (error) {
     console.error('Error updating version:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// DELETE /api/versions/{id} - Delete a version
+// DELETE /api/versions/{id} - Delete a version (chapters cannot be deleted via this route)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -68,39 +32,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-
-    // Verify the version belongs to the user's scene
-    const version = await prisma.version.findFirst({
-      where: {
-        id,
-        scene: {
-          chapter: {
-            project: {
-              userId: session.user.id,
-            },
-          },
-        },
-      },
-    })
-
-    if (!version) {
-      return NextResponse.json({ error: 'Version not found' }, { status: 404 })
-    }
-
-    // Delete the version
-    await prisma.version.delete({
-      where: { id },
-    })
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json(
+      { error: 'Version deletion is not supported; delete the chapter instead' },
+      { status: 400 }
+    )
   } catch (error) {
     console.error('Error deleting version:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// GET /api/versions/{id} - Get a specific version
+// GET /api/versions/{id} - Get a specific chapter (formerly version)
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
@@ -110,35 +52,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params
 
-    // Get the version and verify it belongs to the user
-    const version = await prisma.version.findFirst({
+    // Get the chapter and verify it belongs to the user
+    const chapter = await prisma.chapter.findFirst({
       where: {
         id,
-        scene: {
-          chapter: {
-            project: {
-              userId: session.user.id,
-            },
-          },
+        project: {
+          userId: session.user.id,
         },
-      },
-      select: {
-        id: true,
-        content: true,
-        branchName: true,
-        parentId: true,
-        isActive: true,
-        wordCount: true,
-        createdAt: true,
-        sceneId: true,
       },
     })
 
-    if (!version) {
-      return NextResponse.json({ error: 'Version not found' }, { status: 404 })
+    if (!chapter) {
+      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ version })
+    return NextResponse.json({
+      version: {
+        id: chapter.id,
+        content: chapter.content,
+        wordCount: chapter.wordCount,
+        createdAt: chapter.updatedAt,
+      },
+    })
   } catch (error) {
     console.error('Error fetching version:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

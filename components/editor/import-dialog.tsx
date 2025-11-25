@@ -1,108 +1,95 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Upload } from "lucide-react";
+import { useState } from 'react'
+import { Upload } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface ImportDialogProps {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  projectId: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function ImportDialog({
-  projectId,
-  open,
-  onOpenChange,
-}: ImportDialogProps) {
-  const [importing, setImporting] = useState(false);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importFormat, setImportFormat] = useState<"txt" | "md" | "json">("md");
-  const [importType, setImportType] = useState<
-    "content" | "characters" | "lorebook" | "all"
-  >("content");
-  const [importStatus, setImportStatus] = useState<string>("");
+export function ImportDialog({ projectId, open, onOpenChange }: ImportDialogProps) {
+  const [importing, setImporting] = useState(false)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importFormat, setImportFormat] = useState<'txt' | 'md' | 'json'>('md')
+  const [importType, setImportType] = useState<'content' | 'characters' | 'lorebook' | 'all'>(
+    'content'
+  )
+  const [importStatus, setImportStatus] = useState<string>('')
 
   const handleImport = async () => {
     if (!importFile) {
-      alert("Please select a file to import");
-      return;
+      alert('Please select a file to import')
+      return
     }
 
-    setImporting(true);
-    setImportStatus("Importing...");
+    setImporting(true)
+    setImportStatus('Importing...')
 
     try {
-      const formData = new FormData();
-      formData.append("file", importFile);
-      formData.append("projectId", projectId);
-      formData.append("format", importFormat);
-      formData.append("importType", importType);
+      const formData = new FormData()
+      formData.append('file', importFile)
+      formData.append('projectId', projectId)
+      formData.append('format', importFormat)
+      formData.append('importType', importType)
 
-      const response = await fetch("/api/import", {
-        method: "POST",
+      const response = await fetch('/api/import', {
+        method: 'POST',
         body: formData,
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Import failed");
+        throw new Error('Import failed')
       }
 
-      const result = await response.json();
+      const result = await response.json()
 
-      let message = "Success! Imported ";
-      const parts = [];
-      if (result.chaptersImported > 0)
-        parts.push(`${result.chaptersImported} chapters`);
-      if (result.scenesImported > 0)
-        parts.push(`${result.scenesImported} scenes`);
-      if (result.charactersImported > 0)
-        parts.push(`${result.charactersImported} characters`);
-      if (result.lorebookImported > 0)
-        parts.push(`${result.lorebookImported} lorebook entries`);
+      let message = 'Success! Imported '
+      const parts = []
+      if (result.chaptersImported > 0) parts.push(`${result.chaptersImported} chapters`)
+      if (result.charactersImported > 0) parts.push(`${result.charactersImported} characters`)
+      if (result.lorebookImported > 0) parts.push(`${result.lorebookImported} lorebook entries`)
 
-      message += parts.join(", ") + ".";
-      setImportStatus(message);
+      message += parts.join(', ') + '.'
+      setImportStatus(message)
 
       setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+        window.location.reload()
+      }, 1500)
     } catch (error) {
-      console.error("Import error:", error);
-      setImportStatus(
-        "Failed to import file. Please check the format and try again.",
-      );
+      console.error('Import error:', error)
+      setImportStatus('Failed to import file. Please check the format and try again.')
     } finally {
-      setImporting(false);
+      setImporting(false)
     }
-  };
+  }
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      setImportFile(null);
-      setImportStatus("");
-      setImportType("content");
+      setImportFile(null)
+      setImportStatus('')
+      setImportType('content')
     }
-    onOpenChange(open);
-  };
+    onOpenChange(open)
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle>Import Content</DialogTitle>
-          <DialogDescription>
-            Import chapters, scenes, characters, and lorebook entries
-          </DialogDescription>
+          <DialogDescription>Import chapters, characters, and lorebook entries</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
@@ -110,30 +97,30 @@ export function ImportDialog({
             <Label>Import type</Label>
             <div className="flex flex-wrap gap-2">
               <Button
-                variant={importType === "content" ? "default" : "outline"}
+                variant={importType === 'content' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setImportType("content")}
+                onClick={() => setImportType('content')}
               >
                 Content Only
               </Button>
               <Button
-                variant={importType === "characters" ? "default" : "outline"}
+                variant={importType === 'characters' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setImportType("characters")}
+                onClick={() => setImportType('characters')}
               >
                 Characters
               </Button>
               <Button
-                variant={importType === "lorebook" ? "default" : "outline"}
+                variant={importType === 'lorebook' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setImportType("lorebook")}
+                onClick={() => setImportType('lorebook')}
               >
                 Lorebook
               </Button>
               <Button
-                variant={importType === "all" ? "default" : "outline"}
+                variant={importType === 'all' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setImportType("all")}
+                onClick={() => setImportType('all')}
               >
                 All
               </Button>
@@ -146,7 +133,7 @@ export function ImportDialog({
               id="import-file"
               type="file"
               accept=".txt,.md,.markdown,.json"
-              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+              onChange={e => setImportFile(e.target.files?.[0] || null)}
             />
           </div>
 
@@ -154,23 +141,23 @@ export function ImportDialog({
             <Label>File format</Label>
             <div className="flex gap-2">
               <Button
-                variant={importFormat === "md" ? "default" : "outline"}
+                variant={importFormat === 'md' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setImportFormat("md")}
+                onClick={() => setImportFormat('md')}
               >
                 Markdown
               </Button>
               <Button
-                variant={importFormat === "txt" ? "default" : "outline"}
+                variant={importFormat === 'txt' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setImportFormat("txt")}
+                onClick={() => setImportFormat('txt')}
               >
                 Plain Text
               </Button>
               <Button
-                variant={importFormat === "json" ? "default" : "outline"}
+                variant={importFormat === 'json' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setImportFormat("json")}
+                onClick={() => setImportFormat('json')}
               >
                 JSON
               </Button>
@@ -180,14 +167,8 @@ export function ImportDialog({
           <div className="bg-muted p-3 rounded-md text-sm">
             <p className="font-medium mb-1">Format guidelines:</p>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs">
-              <li>
-                Markdown/Text: Use ## for chapters, ### for scenes (content
-                only)
-              </li>
-              <li>
-                JSON: Use structured format for characters, lorebook, or all
-                data
-              </li>
+              <li>Markdown/Text: Use ## for chapters, ### for scenes (content only)</li>
+              <li>JSON: Use structured format for characters, lorebook, or all data</li>
               <li>Content will be added to your existing project</li>
             </ul>
           </div>
@@ -195,25 +176,21 @@ export function ImportDialog({
           {importStatus && (
             <div
               className={`p-3 rounded-md text-sm ${
-                importStatus.includes("Success")
-                  ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                  : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                importStatus.includes('Success')
+                  ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                  : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
               }`}
             >
               {importStatus}
             </div>
           )}
 
-          <Button
-            onClick={handleImport}
-            disabled={!importFile || importing}
-            className="w-full"
-          >
+          <Button onClick={handleImport} disabled={!importFile || importing} className="w-full">
             <Upload className="h-4 w-4 mr-2" />
-            {importing ? "Importing..." : "Import File"}
+            {importing ? 'Importing...' : 'Import File'}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

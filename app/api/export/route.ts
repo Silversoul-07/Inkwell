@@ -25,11 +25,6 @@ export async function GET(request: NextRequest) {
       include: {
         chapters: {
           orderBy: { order: 'asc' },
-          include: {
-            scenes: {
-              orderBy: { order: 'asc' },
-            },
-          },
         },
         characters: exportType === 'characters' || exportType === 'all',
         lorebookEntries: exportType === 'lorebook' || exportType === 'all',
@@ -51,10 +46,7 @@ export async function GET(request: NextRequest) {
       if (exportType === 'content' || exportType === 'all') {
         jsonData.chapters = project.chapters.map((chapter: any) => ({
           title: chapter.title,
-          scenes: chapter.scenes.map((scene: any) => ({
-            title: scene.title,
-            content: scene.content,
-          })),
+          content: chapter.content,
         }))
       }
 
@@ -98,10 +90,7 @@ export async function GET(request: NextRequest) {
 
       for (const chapter of project.chapters) {
         content += `## ${chapter.title}\n\n`
-        for (const scene of chapter.scenes) {
-          content += `### ${scene.title}\n\n`
-          content += `${scene.content}\n\n`
-        }
+        content += `${chapter.content}\n\n`
       }
 
       mimeType = 'text/markdown'
@@ -122,17 +111,14 @@ export async function GET(request: NextRequest) {
 
       for (const chapter of project.chapters) {
         content += `{\\pard\\b\\fs28 ${chapter.title}\\par}\n`
-        for (const scene of chapter.scenes) {
-          content += `{\\pard\\b\\fs24 ${scene.title}\\par}\n`
-          // Escape RTF special characters
-          const rtfContent = scene.content
-            .replace(/\\/g, '\\\\')
-            .replace(/{/g, '\\{')
-            .replace(/}/g, '\\}')
-            .replace(/\n/g, '\\par\n')
-          content += `{\\pard\\fs24 ${rtfContent}\\par}\n`
-          content += `{\\pard\\par}\n`
-        }
+        // Escape RTF special characters
+        const rtfContent = (chapter.content || '')
+          .replace(/\\/g, '\\\\')
+          .replace(/{/g, '\\{')
+          .replace(/}/g, '\\}')
+          .replace(/\n/g, '\\par\n')
+        content += `{\\pard\\fs24 ${rtfContent}\\par}\n`
+        content += `{\\pard\\par}\n`
       }
 
       content += `}`
@@ -151,10 +137,7 @@ export async function GET(request: NextRequest) {
         content += `\n\n${chapter.title}\n`
         content += '-'.repeat(chapter.title.length) + '\n\n'
 
-        for (const scene of chapter.scenes) {
-          content += `\n${scene.title}\n\n`
-          content += `${scene.content}\n`
-        }
+        content += `${chapter.content || ''}\n`
       }
     }
 

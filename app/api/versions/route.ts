@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { prisma } from '@/lib/prisma'
 
-// GET /api/versions?sceneId={sceneId} - List versions for a scene
+// GET /api/versions?chapterId={chapterId} - List version history for a chapter
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -12,51 +12,45 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const sceneId = searchParams.get('sceneId')
+    const chapterId = searchParams.get('chapterId')
 
-    if (!sceneId) {
-      return NextResponse.json({ error: 'sceneId is required' }, { status: 400 })
+    if (!chapterId) {
+      return NextResponse.json({ error: 'chapterId is required' }, { status: 400 })
     }
 
-    // Verify the scene belongs to the user's project
-    const scene = await prisma.scene.findFirst({
+    // Verify the chapter belongs to the user's project
+    const chapter = await prisma.chapter.findFirst({
       where: {
-        id: sceneId,
-        chapter: {
-          project: {
-            userId: session.user.id,
-          },
+        id: chapterId,
+        project: {
+          userId: session.user.id,
         },
       },
     })
 
-    if (!scene) {
-      return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
+    if (!chapter) {
+      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 })
     }
 
-    // Get all versions for this scene, ordered by creation date (newest first)
-    const versions = await prisma.version.findMany({
-      where: { sceneId },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        content: true,
-        branchName: true,
-        parentId: true,
-        isActive: true,
-        wordCount: true,
-        createdAt: true,
-      },
+    // Version history feature is currently disabled as chapters are now versioned directly
+    // Return the current chapter as the only "version"
+    return NextResponse.json({
+      versions: [
+        {
+          id: chapter.id,
+          content: chapter.content,
+          wordCount: chapter.wordCount,
+          createdAt: chapter.updatedAt,
+        },
+      ],
     })
-
-    return NextResponse.json({ versions })
   } catch (error) {
     console.error('Error fetching versions:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// POST /api/versions - Create a new version
+// POST /api/versions - Chapter versioning is handled through direct chapter updates
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -64,54 +58,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { sceneId, content, branchName, parentId, isActive } = body
-
-    if (!sceneId || content === undefined) {
-      return NextResponse.json({ error: 'sceneId and content are required' }, { status: 400 })
-    }
-
-    // Verify the scene belongs to the user's project
-    const scene = await prisma.scene.findFirst({
-      where: {
-        id: sceneId,
-        chapter: {
-          project: {
-            userId: session.user.id,
-          },
-        },
-      },
-    })
-
-    if (!scene) {
-      return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
-    }
-
-    // Calculate word count
-    const text = content.replace(/<[^>]*>/g, ' ').trim()
-    const wordCount = text ? text.split(/\s+/).length : 0
-
-    // If this version should be active, deactivate all other versions
-    if (isActive) {
-      await prisma.version.updateMany({
-        where: { sceneId },
-        data: { isActive: false },
-      })
-    }
-
-    // Create the new version
-    const version = await prisma.version.create({
-      data: {
-        sceneId,
-        content,
-        branchName: branchName || null,
-        parentId: parentId || null,
-        isActive: isActive ?? false,
-        wordCount,
-      },
-    })
-
-    return NextResponse.json({ version }, { status: 201 })
+    // Version creation is now handled through chapter updates
+    return NextResponse.json(
+      { error: 'Version creation is now handled through chapter updates' },
+      { status: 400 }
+    )
   } catch (error) {
     console.error('Error creating version:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

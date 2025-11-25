@@ -46,11 +46,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
       include: {
         chapters: {
           orderBy: { order: 'asc' },
-          include: {
-            scenes: {
-              orderBy: { order: 'asc' },
-            },
-          },
         },
       },
     })

@@ -28,13 +28,8 @@ export async function POST(request: NextRequest) {
           create: {
             title: 'Chapter 1',
             order: 0,
-            scenes: {
-              create: {
-                order: 0,
-                content: '',
-                wordCount: 0,
-              },
-            },
+            content: '',
+            wordCount: 0,
           },
         },
       },
