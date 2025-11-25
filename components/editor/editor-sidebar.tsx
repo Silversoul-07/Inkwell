@@ -10,13 +10,12 @@ import {
   FileText,
   Users,
   MapPin,
-  Star,
   MoreVertical,
   Trash2,
   Book,
   Filter,
   Edit,
-  ExternalLink,
+  Circle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -110,10 +109,16 @@ export function EditorSidebarNew({
   const [expandedLorebookCategories, setExpandedLorebookCategories] = useState<Set<string>>(
     new Set(['Locations', 'Magic', 'Characters', 'Other'])
   )
-  const [pinnedCharacters, setPinnedCharacters] = useState<Set<string>>(new Set())
   const [isCreating, setIsCreating] = useState(false)
   const [showFilterMenu, setShowFilterMenu] = useState(false)
-  const [hiddenSections, setHiddenSections] = useState<Set<string>>(new Set())
+  const [filterMode, setFilterMode] = useState<'all' | 'chapters' | 'characters' | 'lorebook'>(
+    'all'
+  )
+
+  // Character dialogs
+  const [characterToEdit, setCharacterToEdit] = useState<Character | null>(null)
+  const [editCharacterDialogOpen, setEditCharacterDialogOpen] = useState(false)
+  const [deleteCharacterDialogOpen, setDeleteCharacterDialogOpen] = useState(false)
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
@@ -172,25 +177,15 @@ export function EditorSidebarNew({
     setExpandedLorebookCategories(newExpanded)
   }
 
-  const togglePinCharacter = (characterId: string) => {
-    const newPinned = new Set(pinnedCharacters)
-    if (newPinned.has(characterId)) {
-      newPinned.delete(characterId)
-    } else {
-      newPinned.add(characterId)
-    }
-    setPinnedCharacters(newPinned)
+  const handleFilterChange = (mode: 'all' | 'chapters' | 'characters' | 'lorebook') => {
+    setFilterMode(mode)
+    setShowFilterMenu(false)
   }
 
-  const toggleHiddenSection = (section: string) => {
-    const newHidden = new Set(hiddenSections)
-    if (newHidden.has(section)) {
-      newHidden.delete(section)
-    } else {
-      newHidden.add(section)
-    }
-    setHiddenSections(newHidden)
-  }
+  // Determine which sections to show based on filter mode
+  const showChapters = filterMode === 'all' || filterMode === 'chapters'
+  const showCharacters = filterMode === 'all' || filterMode === 'characters'
+  const showLorebook = filterMode === 'all' || filterMode === 'lorebook'
 
   // Filter chapters based on search
   const filteredChapters = useMemo(() => {
@@ -304,37 +299,31 @@ export function EditorSidebarNew({
                   className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-accent"
                 >
                   <Filter
-                    className={`h-3.5 w-3.5 ${hiddenSections.size > 0 ? 'text-primary' : 'text-muted-foreground'}`}
+                    className={`h-3.5 w-3.5 ${filterMode !== 'all' ? 'text-primary' : 'text-muted-foreground'}`}
                   />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuItem onClick={() => toggleHiddenSection('chapters')}>
+                <DropdownMenuItem onClick={() => handleFilterChange('all')}>
+                  All
+                  {filterMode === 'all' && <span className="ml-auto">✓</span>}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleFilterChange('chapters')}>
                   <FileText className="h-4 w-4 mr-2" />
-                  Chapters
-                  {!hiddenSections.has('chapters') && <span className="ml-auto">✓</span>}
+                  Chapters only
+                  {filterMode === 'chapters' && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toggleHiddenSection('characters')}>
+                <DropdownMenuItem onClick={() => handleFilterChange('characters')}>
                   <Users className="h-4 w-4 mr-2" />
-                  Characters
-                  {!hiddenSections.has('characters') && <span className="ml-auto">✓</span>}
+                  Characters only
+                  {filterMode === 'characters' && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toggleHiddenSection('lorebook')}>
+                <DropdownMenuItem onClick={() => handleFilterChange('lorebook')}>
                   <Book className="h-4 w-4 mr-2" />
-                  Lorebook
-                  {!hiddenSections.has('lorebook') && <span className="ml-auto">✓</span>}
+                  Lorebook only
+                  {filterMode === 'lorebook' && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
-                {hiddenSections.size > 0 && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setHiddenSections(new Set())}
-                      className="text-muted-foreground"
-                    >
-                      Show all sections
-                    </DropdownMenuItem>
-                  </>
-                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -367,11 +356,11 @@ export function EditorSidebarNew({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {/* Chapters & Scenes Section */}
-        {!hiddenSections.has('chapters') && (
+        {showChapters && (
           <div className="space-y-1">
             <button
               onClick={() => toggleSection('chapters')}
-              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
+              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-accent rounded-md text-sm font-semibold"
             >
               {expandedSections.has('chapters') ? (
                 <ChevronDown className="h-4 w-4" />
@@ -383,34 +372,31 @@ export function EditorSidebarNew({
             </button>
 
             {expandedSections.has('chapters') && (
-              <div className="ml-2 space-y-1">
-                {filteredChapters.map(chapter => (
+              <div className="ml-4 space-y-0.5 mt-0.5">
+                {filteredChapters.map((chapter, index) => (
                   <div key={chapter.id} className="space-y-0.5">
                     <div className="w-full flex items-center gap-1 group">
                       <button
                         onClick={() => onSelectChapter(chapter.id)}
-                        className={`flex-1 flex items-center gap-2 px-2 py-1 text-sm rounded-md min-w-0 ${
-                          selectedChapterId === chapter.id
-                            ? 'bg-accent text-accent-foreground'
+                        className={`flex-1 flex items-center gap-2 px-2 py-1.5 text-sm rounded-md min-w-0 transition-colors ${
+                          selectedChapterId === chapter.id && selectedViewType === undefined
+                            ? 'bg-primary/10 text-primary'
                             : 'hover:bg-accent/50'
                         }`}
                       >
-                        <Book className="h-4 w-4 flex-shrink-0" />
-                        <span className="flex-1 text-left font-medium truncate">
-                          {chapter.title}
+                        <span className="text-xs text-muted-foreground font-mono w-4 flex-shrink-0">
+                          {index + 1}
                         </span>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                          {chapter.wordCount}
-                        </span>
+                        <span className="flex-1 text-left truncate">{chapter.title}</span>
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                           >
-                            <MoreVertical className="h-3 w-3" />
+                            <MoreVertical className="h-3.5 w-3.5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -421,7 +407,7 @@ export function EditorSidebarNew({
                               setRenameDialogOpen(true)
                             }}
                           >
-                            <Edit className="h-3 w-3 mr-2" />
+                            <Edit className="h-3.5 w-3.5 mr-2" />
                             Rename
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -429,7 +415,7 @@ export function EditorSidebarNew({
                             onClick={() => handleDeleteChapter(chapter.id)}
                             className="text-destructive focus:text-destructive"
                           >
-                            <Trash2 className="h-3 w-3 mr-2" />
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
                             Delete Chapter
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -443,79 +429,82 @@ export function EditorSidebarNew({
         )}
 
         {/* Characters Section */}
-        {!hiddenSections.has('characters') && (
+        {showCharacters && (
           <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => toggleSection('characters')}
-                className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-              >
-                {expandedSections.has('characters') ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-                <Users className="h-4 w-4" />
-                <span className="flex-1 text-left">Characters ({characters.length})</span>
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={e => {
-                  e.stopPropagation()
-                  router.push(`/characters/${project.id}`)
-                }}
-                title="Manage Characters"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <button
+              onClick={() => toggleSection('characters')}
+              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-accent rounded-md text-sm font-semibold"
+            >
+              {expandedSections.has('characters') ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <Users className="h-4 w-4" />
+              <span className="flex-1 text-left">Characters ({characters.length})</span>
+            </button>
 
             {expandedSections.has('characters') && (
-              <div className="ml-2 space-y-0.5">
+              <div className="ml-4 space-y-0.5 mt-0.5">
                 {characters.length === 0 ? (
-                  <div className="text-xs text-muted-foreground px-2 py-1">No characters yet</div>
+                  <div className="text-xs text-muted-foreground px-2 py-1.5">No characters yet</div>
                 ) : (
                   characters.slice(0, 7).map(character => (
-                    <div
-                      key={character.id}
-                      className={`group flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer ${
-                        selectedViewType === 'character' && selectedViewId === character.id
-                          ? 'bg-accent text-accent-foreground'
-                          : 'hover:bg-accent/50'
-                      }`}
-                      onClick={() => onViewCharacter?.(character)}
-                    >
+                    <div key={character.id} className="w-full flex items-center gap-1 group">
                       <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          togglePinCharacter(character.id)
-                        }}
-                        className="flex-shrink-0"
+                        onClick={() => onViewCharacter?.(character)}
+                        className={`flex-1 flex items-center gap-2 px-2 py-1.5 text-sm rounded-md min-w-0 transition-colors ${
+                          selectedViewType === 'character' && selectedViewId === character.id
+                            ? 'bg-primary/10 text-primary'
+                            : 'hover:bg-accent/50'
+                        }`}
                       >
-                        <Star
-                          className={`h-3.5 w-3.5 ${
-                            pinnedCharacters.has(character.id)
-                              ? 'fill-yellow-500 text-yellow-500'
-                              : 'text-muted-foreground'
-                          }`}
-                        />
+                        <span className="flex-1 text-left truncate">
+                          {character.name}
+                          {character.role && (
+                            <span className="text-muted-foreground"> ({character.role})</span>
+                          )}
+                        </span>
                       </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm truncate">{character.name}</div>
-                        {character.role && (
-                          <div className="text-xs text-muted-foreground truncate">
-                            {character.role}
-                          </div>
-                        )}
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                          >
+                            <MoreVertical className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setCharacterToEdit(character)
+                              setEditCharacterDialogOpen(true)
+                            }}
+                          >
+                            <Edit className="h-3.5 w-3.5 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setCharacterToEdit(character)
+                              setDeleteCharacterDialogOpen(true)
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   ))
                 )}
                 {characters.length > 7 && (
                   <button
-                    className="w-full text-left px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                    className="w-full text-left px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
                     onClick={() => router.push(`/characters/${project.id}`)}
                   >
                     ... and {characters.length - 7} more
@@ -527,39 +516,25 @@ export function EditorSidebarNew({
         )}
 
         {/* Lorebook Section */}
-        {!hiddenSections.has('lorebook') && (
+        {showLorebook && (
           <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => toggleSection('lorebook')}
-                className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-md text-sm font-medium"
-              >
-                {expandedSections.has('lorebook') ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-                <Book className="h-4 w-4" />
-                <span className="flex-1 text-left">Lorebook ({lorebookEntries.length})</span>
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={e => {
-                  e.stopPropagation()
-                  router.push(`/lorebook/${project.id}`)
-                }}
-                title="Manage Lorebook"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <button
+              onClick={() => toggleSection('lorebook')}
+              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-accent rounded-md text-sm font-semibold"
+            >
+              {expandedSections.has('lorebook') ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <Book className="h-4 w-4" />
+              <span className="flex-1 text-left">Lorebook ({lorebookEntries.length})</span>
+            </button>
 
             {expandedSections.has('lorebook') && (
-              <div className="ml-2 space-y-2">
+              <div className="ml-4 space-y-1.5 mt-0.5">
                 {lorebookEntries.length === 0 ? (
-                  <div className="text-xs text-muted-foreground px-2 py-1">
+                  <div className="text-xs text-muted-foreground px-2 py-1.5">
                     No lorebook entries yet
                   </div>
                 ) : (
@@ -567,7 +542,7 @@ export function EditorSidebarNew({
                     <div key={category} className="space-y-0.5">
                       <button
                         onClick={() => toggleLorebookCategory(category)}
-                        className="w-full flex items-center gap-2 px-2 py-1 hover:bg-accent/50 rounded-md text-sm"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent/50 rounded-md text-sm transition-colors"
                       >
                         {expandedLorebookCategories.has(category) ? (
                           <ChevronDown className="h-3.5 w-3.5" />
@@ -584,14 +559,15 @@ export function EditorSidebarNew({
                           {entries.slice(0, 5).map(entry => (
                             <div
                               key={entry.id}
-                              className={`group flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer ${
+                              className={`group flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
                                 selectedViewType === 'lorebook' && selectedViewId === entry.id
-                                  ? 'bg-accent text-accent-foreground'
+                                  ? 'bg-primary/10 text-primary'
                                   : 'hover:bg-accent/50'
                               }`}
                               onClick={() => onViewLorebook?.(entry)}
                             >
-                              <span className="flex-1 text-xs truncate">{entry.key}</span>
+                              <Circle className="h-2 w-2 fill-current flex-shrink-0 opacity-50" />
+                              <span className="flex-1 text-sm truncate">{entry.key}</span>
                               <span className="text-xs text-muted-foreground flex-shrink-0">
                                 {entry.useCount}
                               </span>
@@ -599,7 +575,7 @@ export function EditorSidebarNew({
                           ))}
                           {entries.length > 5 && (
                             <button
-                              className="w-full text-left px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                              className="w-full text-left px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
                               onClick={() => router.push(`/lorebook/${project.id}`)}
                             >
                               ... and {entries.length - 5} more
@@ -638,6 +614,48 @@ export function EditorSidebarNew({
             </Button>
             <Button onClick={handleRenameChapter} disabled={!newChapterTitle.trim()}>
               Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Character Dialog - Not Implemented */}
+      <Dialog open={editCharacterDialogOpen} onOpenChange={setEditCharacterDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Character</DialogTitle>
+            <DialogDescription>
+              This feature is not yet implemented. Please use the Characters page to edit
+              characters.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCharacterDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => router.push(`/characters/${project.id}`)}>
+              Go to Characters Page
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Character Dialog - Not Implemented */}
+      <Dialog open={deleteCharacterDialogOpen} onOpenChange={setDeleteCharacterDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Character</DialogTitle>
+            <DialogDescription>
+              This feature is not yet implemented. Please use the Characters page to delete
+              characters.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteCharacterDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => router.push(`/characters/${project.id}`)}>
+              Go to Characters Page
             </Button>
           </DialogFooter>
         </DialogContent>
