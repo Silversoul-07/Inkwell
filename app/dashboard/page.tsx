@@ -14,7 +14,12 @@ export default async function DashboardPage() {
   }
 
   // Initialize defaults on first login (checks if already done)
-  await initUserDefaults(session.user.id)
+  const initResult = await initUserDefaults(session.user.id)
+
+  // Log initialization result for debugging
+  if (initResult.error) {
+    console.error('User defaults initialization failed:', initResult.error)
+  }
 
   const projects = await prisma.project.findMany({
     where: {
