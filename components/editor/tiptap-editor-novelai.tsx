@@ -3,24 +3,11 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useEffect, useState, useCallback, useRef } from 'react'
-import {
-  Loader2,
-  X,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Heading1,
-  Heading2,
-  Strikethrough,
-  Code,
-} from 'lucide-react'
+import { Bold, Italic, List, ListOrdered, Heading1, Heading2 } from 'lucide-react'
 import { AlternativesDialog } from './alternatives-dialog'
 import { EditorContextMenu } from './editor-context-menu'
-import { Button } from '@/components/ui/button'
 import { processTemplate, buildEditorVariables } from '@/lib/template-processor'
 import { EditorBottomToolbar } from './editor-bottom-toolbar'
-import { cn } from '@/lib/utils'
 
 interface Scene {
   id: string
@@ -61,20 +48,14 @@ export function TiptapEditorNovelAI({
   projectMetadata,
 }: TiptapEditorNovelAIProps) {
   const [wordCount, setWordCount] = useState(chapter.wordCount || 0)
-  const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [hasSelection, setHasSelection] = useState(false)
   const [selectedText, setSelectedText] = useState('')
-  const [aiGeneratedRange, setAiGeneratedRange] = useState<{
-    from: number
-    to: number
-  } | null>(null)
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [alternatives, setAlternatives] = useState<string[]>([])
 
   // Template-based prompt generation
-  const [useCustomTemplates, setUseCustomTemplates] = useState(true)
   const [selectedTemplates, setSelectedTemplates] = useState<Record<string, any>>({})
 
   // Writing mode state
@@ -154,7 +135,7 @@ export function TiptapEditorNovelAI({
     [selectedText, editor, projectMetadata]
   )
 
-  // Auto-save functionality with versioning
+  // Immediate save functionality
   const saveContent = useCallback(async () => {
     if (!editor) return
 
@@ -162,9 +143,8 @@ export function TiptapEditorNovelAI({
     const text = editor.getText()
     const words = text.trim() ? text.trim().split(/\s+/).length : 0
 
-    setIsSaving(true)
     try {
-      // Update the chapter content
+      // Update the chapter content immediately
       const chapterResponse = await fetch(`/api/chapters/${chapter.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -180,17 +160,23 @@ export function TiptapEditorNovelAI({
       console.error('Error saving content:', error)
       // Show user-facing error notification
       alert('Failed to save your work. Please check your connection and try again.')
-    } finally {
-      setIsSaving(false)
     }
   }, [editor, chapter.id])
 
-  // Auto-save effect
+  // Save on content changes with debouncing
   useEffect(() => {
-    const interval = settings?.autoSaveInterval || 30
-    const timer = setInterval(saveContent, interval * 1000)
-    return () => clearInterval(timer)
-  }, [saveContent, settings])
+    if (!editor) return
+
+    const handleUpdate = () => {
+      // Save immediately on content changes
+      saveContent()
+    }
+
+    editor.on('update', handleUpdate)
+    return () => {
+      editor.off('update', handleUpdate)
+    }
+  }, [editor, saveContent])
 
   // Save on unmount
   useEffect(() => {
@@ -300,14 +286,6 @@ export function TiptapEditorNovelAI({
             }
           }
         }
-
-        // Mark the generated text range
-        if (generatedText) {
-          setAiGeneratedRange({
-            from: insertPos,
-            to: insertPos + generatedText.length,
-          })
-        }
       } catch (error: any) {
         console.error('AI generation error:', error)
         alert(error.message || 'Failed to generate AI content')
@@ -321,13 +299,13 @@ export function TiptapEditorNovelAI({
   // Build prompt using template or fallback to default
   const buildPrompt = useCallback(
     (action: string, fallbackPrompt: string, customText?: string) => {
-      if (useCustomTemplates && selectedTemplates[action]?.template) {
+      if (selectedTemplates[action]?.template) {
         const variables = buildPromptVariables(action, customText)
         return processTemplate(selectedTemplates[action].template, variables)
       }
       return fallbackPrompt
     },
-    [useCustomTemplates, selectedTemplates, buildPromptVariables]
+    [selectedTemplates, buildPromptVariables]
   )
 
   // AI Actions
@@ -350,18 +328,6 @@ export function TiptapEditorNovelAI({
     const prompt = buildPrompt(
       'rephrase',
       `Rephrase this text while keeping the same meaning: "${selectedText}"`,
-      selectedText
-    )
-    generateAI(prompt, true)
-  }
-
-  const handleExpand = () => {
-    if (!editor) return
-    const { from, to } = editor.state.selection
-    const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    const prompt = buildPrompt(
-      'expand',
-      `Expand on this text with more detail and description: "${selectedText}"`,
       selectedText
     )
     generateAI(prompt, true)
@@ -463,36 +429,9 @@ export function TiptapEditorNovelAI({
     setShowAlternatives(false)
   }
 
-  const handleUndo = () => {
-    ;(editor as any)?.chain().focus().undo().run()
-  }
-
-  const handleRedo = () => {
-    ;(editor as any)?.chain().focus().redo().run()
-  }
-
-  const handleInsertText = (text: string) => {
-    if (!editor) return
-    const pos = editor.state.selection.to
-    editor.chain().focus().insertContentAt(pos, `\n\n${text}`).run()
-  }
-
-  const handleReplaceSelection = (text: string) => {
-    if (!editor) return
-    const { from, to } = editor.state.selection
-    editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, text).run()
-  }
-
-  const dismissAIHighlight = () => {
-    setAiGeneratedRange(null)
-  }
-
   const fontSize = settings?.editorFontSize || 18
   const lineHeight = settings?.editorLineHeight || 1.8
   const maxWidth = settings?.editorWidth || 56 // Wider default for desktop
-
-  const canUndo = (editor as any)?.can().undo() || false
-  const canRedo = (editor as any)?.can().redo() || false
 
   const formatItems = [
     {
